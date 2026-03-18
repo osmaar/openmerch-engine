@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    allowedHosts: true,
     fs: {
       allow: [path.resolve(__dirname, '../..')],
     },
