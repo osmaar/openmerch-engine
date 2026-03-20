@@ -32,6 +32,9 @@ importers:
 
   apps/demo:
     dependencies:
+      '@openmerch/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@openmerch/editor':
         specifier: workspace:*
         version: link:../../packages/editor

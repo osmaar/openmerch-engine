@@ -8,6 +8,8 @@ export interface Product {
 export interface ProductZone {
   id: string;
   name: string;
+  baseImageWidthMM: number;
+  baseImageHeightMM: number;
   printAreaWidthMM: number;
   printAreaHeightMM: number;
   printAreaXMM: number;

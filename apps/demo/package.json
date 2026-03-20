@@ -11,6 +11,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
+    "@openmerch/core": "workspace:*",
     "@openmerch/editor": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

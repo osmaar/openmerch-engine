@@ -97,8 +97,15 @@ The editor embeds via iframe on the product page. When a customer finishes their
 
 ## Roadmap
 
-- [x] Monorepo setup
+- [x] Monorepo setup (pnpm + Turborepo + ESLint + Prettier + Vitest + CI)
 - [ ] Canvas editor core (Phase 1)
+  - [x] T-shirt mockup with front/back zone selector
+  - [x] Image upload (button + drag & drop) and text layers
+  - [x] Move, scale, rotate with snap guides and rotation snap
+  - [x] Keyboard shortcuts (Delete, Ctrl+C/X/V/Z)
+  - [ ] Contextual toolbar (font, color, opacity, transform)
+  - [ ] Layers panel (reorder, show/hide, lock)
+  - [ ] Undo/redo full support
 - [ ] 2D preview and PNG export (Phase 2)
 - [ ] Per-technique validation and embroidery files (Phase 3)
 - [ ] WooCommerce integration (Phase 4)
