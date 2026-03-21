@@ -103,7 +103,11 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Image upload (button + drag & drop) and text layers
   - [x] Move, scale, rotate with snap guides and rotation snap
   - [x] Keyboard shortcuts (Delete, Ctrl+C/X/V/Z)
-  - [ ] Contextual toolbar (font, color, opacity, transform)
+  - [x] Image toolbar (replace, crop, remove bg, 36 filters, fill/tint, opacity)
+  - [x] Text toolbar (font, size, color, bold/italic/underline, align, case, effects)
+  - [x] Arrange, position, and transform popovers for all layer types
+  - [x] Text effects (curved, bridge, oblique) via SVG TextPath
+  - [ ] Sidebar panel (product, images, text, layers, cliparts, shapes)
   - [ ] Layers panel (reorder, show/hide, lock)
   - [ ] Undo/redo full support
 - [ ] 2D preview and PNG export (Phase 2)
