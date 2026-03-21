@@ -5,6 +5,7 @@ export type {
   BaseLayer,
   ImageLayer,
   TextLayer,
+  TextEffect,
   ShapeLayer,
 } from './design.js';
 
