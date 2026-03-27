@@ -22,6 +22,8 @@ export interface BaseLayer {
   rotation: number;
   scaleX: number;
   scaleY: number;
+  skewX: number;
+  skewY: number;
   opacity: number;
   locked: boolean;
   visible: boolean;
@@ -30,8 +32,12 @@ export interface BaseLayer {
 export interface ImageLayer extends BaseLayer {
   type: 'image';
   src: string;
+  originalSrc: string;
   originalWidthMM: number;
   originalHeightMM: number;
+  activeFilter?: number;
+  tint?: string;
+  tintOpacity?: number;
 }
 
 export interface TextLayer extends BaseLayer {
@@ -41,6 +47,20 @@ export interface TextLayer extends BaseLayer {
   fontSize: number;
   fill: string;
   align: 'left' | 'center' | 'right';
+  letterSpacing: number;
+  lineHeight: number;
+  fontStyle: string;
+  textDecoration: string;
+  textEffect: TextEffect;
+}
+
+export interface TextEffect {
+  type: 'none' | 'curved' | 'bridge' | 'wave';
+  radius: number;
+  spacing: number;
+  curve: number;
+  height: number;
+  offset: number;
 }
 
 export interface ShapeLayer extends BaseLayer {

@@ -41,7 +41,12 @@ interface EditorState {
   copyLayer: () => void;
   cutLayer: () => void;
   pasteLayer: () => void;
+  moveLayerUp: (layerId: string) => void;
+  moveLayerDown: (layerId: string) => void;
+  replaceImage: (layerId: string, newSrc: string, widthPx: number, heightPx: number) => void;
+  applyFilter: (layerId: string, filteredSrc: string, filterIndex: number) => void;
   undo: () => void;
+  getSelectedLayer: () => DesignLayer | undefined;
 }
 
 function pushHistory(state: EditorState): Pick<EditorState, 'history' | 'historyIndex'> {
@@ -142,6 +147,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       id: crypto.randomUUID(),
       type: 'image',
       src,
+      originalSrc: src,
       originalWidthMM: layerWidthMM,
       originalHeightMM: layerHeightMM,
       x: (zone.canvasWidthMM - layerWidthMM) / 2,
@@ -149,9 +155,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
+      skewX: 0,
+      skewY: 0,
       opacity: 1,
       locked: false,
       visible: true,
+      activeFilter: 0,
     };
 
     const hist = pushHistory(state);
@@ -188,11 +197,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       fontSize: 24,
       fill: '#000000',
       align: 'center',
+      letterSpacing: 0,
+      lineHeight: 1.2,
+      fontStyle: 'normal',
+      textDecoration: '',
+      textEffect: { type: 'none', radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 },
       x: zone.canvasWidthMM * 0.25,
       y: zone.canvasHeightMM * 0.4,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
+      skewX: 0,
+      skewY: 0,
       opacity: 1,
       locked: false,
       visible: true,
@@ -324,6 +340,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
+      skewX: 0,
+      skewY: 0,
     };
 
     // Re-center the layer
@@ -428,6 +446,144 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       },
       selectedLayerId: pasted.id,
     });
+  },
+
+  moveLayerUp: (layerId: string) => {
+    const state = get();
+    const { design, activeZoneId } = state;
+    if (!design) return;
+
+    const zone = design.zones[activeZoneId];
+    if (!zone) return;
+
+    const idx = zone.layers.findIndex((l) => l.id === layerId);
+    if (idx < 0 || idx >= zone.layers.length - 1) return;
+
+    const newLayers = [...zone.layers];
+    [newLayers[idx], newLayers[idx + 1]] = [newLayers[idx + 1]!, newLayers[idx]!];
+
+    const hist = pushHistory(state);
+    set({
+      ...hist,
+      design: {
+        ...design,
+        zones: { ...design.zones, [activeZoneId]: { ...zone, layers: newLayers } },
+      },
+    });
+  },
+
+  moveLayerDown: (layerId: string) => {
+    const state = get();
+    const { design, activeZoneId } = state;
+    if (!design) return;
+
+    const zone = design.zones[activeZoneId];
+    if (!zone) return;
+
+    const idx = zone.layers.findIndex((l) => l.id === layerId);
+    if (idx <= 0) return;
+
+    const newLayers = [...zone.layers];
+    [newLayers[idx - 1], newLayers[idx]] = [newLayers[idx]!, newLayers[idx - 1]!];
+
+    const hist = pushHistory(state);
+    set({
+      ...hist,
+      design: {
+        ...design,
+        zones: { ...design.zones, [activeZoneId]: { ...zone, layers: newLayers } },
+      },
+    });
+  },
+
+  replaceImage: (layerId: string, newSrc: string, widthPx: number, heightPx: number) => {
+    const state = get();
+    const { design, activeZoneId } = state;
+    if (!design) return;
+
+    const zone = design.zones[activeZoneId];
+    if (!zone) return;
+
+    const layer = zone.layers.find((l) => l.id === layerId);
+    if (!layer || layer.type !== 'image') return;
+
+    const imgAspect = widthPx / heightPx;
+    const maxW = zone.canvasWidthMM * 0.8;
+    const maxH = zone.canvasHeightMM * 0.8;
+
+    let w: number;
+    let h: number;
+    if (imgAspect > maxW / maxH) {
+      w = maxW;
+      h = maxW / imgAspect;
+    } else {
+      h = maxH;
+      w = maxH * imgAspect;
+    }
+
+    const hist = pushHistory(state);
+    set({
+      ...hist,
+      design: {
+        ...design,
+        zones: {
+          ...design.zones,
+          [activeZoneId]: {
+            ...zone,
+            layers: zone.layers.map((l) =>
+              l.id === layerId
+                ? ({
+                    ...l,
+                    src: newSrc,
+                    originalSrc: newSrc,
+                    originalWidthMM: w,
+                    originalHeightMM: h,
+                    scaleX: 1,
+                    scaleY: 1,
+                    rotation: 0,
+                    activeFilter: 0,
+                  } as DesignLayer)
+                : l,
+            ),
+          },
+        },
+      },
+    });
+  },
+
+  applyFilter: (layerId: string, filteredSrc: string, filterIndex: number) => {
+    const state = get();
+    const { design, activeZoneId } = state;
+    if (!design) return;
+
+    const zone = design.zones[activeZoneId];
+    if (!zone) return;
+
+    const hist = pushHistory(state);
+    set({
+      ...hist,
+      design: {
+        ...design,
+        zones: {
+          ...design.zones,
+          [activeZoneId]: {
+            ...zone,
+            layers: zone.layers.map((l) =>
+              l.id === layerId
+                ? ({ ...l, src: filteredSrc, activeFilter: filterIndex } as DesignLayer)
+                : l,
+            ),
+          },
+        },
+      },
+    });
+  },
+
+  getSelectedLayer: () => {
+    const { design, activeZoneId, selectedLayerId } = get();
+    if (!design || !selectedLayerId) return undefined;
+    const zone = design.zones[activeZoneId];
+    return zone?.layers.find((l) => l.id === selectedLayerId);
   },
 
   undo: () => {

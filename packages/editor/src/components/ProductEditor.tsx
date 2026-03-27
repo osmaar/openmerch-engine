@@ -9,6 +9,7 @@ import { SnapGuides, calculateSnapGuides } from './SnapGuides.js';
 import type { SnapGuide } from './SnapGuides.js';
 import { ZoneSelector } from './ZoneSelector.js';
 import { Toolbar } from './Toolbar.js';
+import { ContextToolbar } from './contextual/ContextToolbar.js';
 import type Konva from 'konva';
 
 interface ProductEditorProps {
@@ -175,6 +176,7 @@ function CanvasView({ zone, width, height }: CanvasViewProps) {
   return (
     <>
       <Toolbar />
+      <ContextToolbar />
       <Stage
         width={width}
         height={height}
