@@ -25,25 +25,25 @@ export const tshirtProduct: Product = {
     {
       id: 'front',
       name: 'Front',
-      // Full image maps to these real-world dimensions (mm)
+      // Full image maps to these real-world dimensions (mm) — square image
       baseImageWidthMM: 500,
-      baseImageHeightMM: 595,
+      baseImageHeightMM: 500,
       // Printable zone: real production size (mm)
       printAreaWidthMM: 200,
-      printAreaHeightMM: 300,
+      printAreaHeightMM: 250,
       // Printable zone: position relative to image top-left (mm)
       // Adjust these to align the dashed rectangle with the mockup
       printAreaXMM: 150,
-      printAreaYMM: 120,
+      printAreaYMM: 130,
       baseImageUrl: '/products/tshirt/basic_tshirt_front.png',
     },
     {
       id: 'back',
       name: 'Back',
       baseImageWidthMM: 500,
-      baseImageHeightMM: 595,
+      baseImageHeightMM: 500,
       printAreaWidthMM: 200,
-      printAreaHeightMM: 330,
+      printAreaHeightMM: 280,
       printAreaXMM: 150,
       printAreaYMM: 100,
       baseImageUrl: '/products/tshirt/basic_tshirt_back.png',

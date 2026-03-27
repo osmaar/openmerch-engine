@@ -1,15 +1,19 @@
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { Stage, Layer, Image, Rect } from 'react-konva';
 import type { Product, ProductZone } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 import { useImage } from '../hooks/useImage.js';
+import { useColoredProduct } from '../hooks/useColoredProduct.js';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js';
 import { DesignLayer } from './DesignLayer.js';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides.js';
 import type { SnapGuide } from './SnapGuides.js';
-import { ZoneSelector } from './ZoneSelector.js';
-import { Toolbar } from './Toolbar.js';
-import { ContextToolbar } from './contextual/ContextToolbar.js';
+import { NavBar } from './NavBar.js';
+import { SidebarPanel } from './sidebar/SidebarPanel.js';
+import { TopToolbar } from './TopToolbar.js';
+import { UndoRedoControls } from './UndoRedoControls.js';
+import { StageNavigator } from './StageNavigator.js';
+import { ZoomControls } from './ZoomControls.js';
 import type Konva from 'konva';
 
 interface ProductEditorProps {
@@ -18,7 +22,7 @@ interface ProductEditorProps {
   height?: number;
 }
 
-export function ProductEditor({ product, width = 800, height = 700 }: ProductEditorProps) {
+export function ProductEditor({ product }: ProductEditorProps) {
   const { setProduct, activeZoneId, addImageLayer } = useEditorStore();
   useKeyboardShortcuts();
 
@@ -52,20 +56,50 @@ export function ProductEditor({ product, width = 800, height = 700 }: ProductEdi
 
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        background: '#f5f5f5',
+      }}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      <ZoneSelector zones={product.zones} />
-      <CanvasView zone={activeProductZone} width={width} height={height} />
+      {/* Global navigation bar */}
+      <NavBar />
+
+      {/* Main content: sidebar + canvas area */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      {/* Sidebar */}
+      <SidebarPanel />
+
+      {/* Main area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Top toolbar — contextual only */}
+        <TopToolbar />
+
+        {/* Canvas area — fills remaining space */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <CanvasView zone={activeProductZone} />
+          </div>
+
+          {/* Floating zone navigator — right side */}
+          <StageNavigator product={product} />
+
+          {/* Floating undo/redo — top right */}
+          <UndoRedoControls />
+        </div>
+      </div>
+      </div>
     </div>
   );
 }
 
 interface CanvasViewProps {
   zone: ProductZone;
-  width: number;
-  height: number;
 }
 
 interface CanvasLayout {
@@ -80,8 +114,14 @@ interface CanvasLayout {
   pxPerMM: number;
 }
 
-function CanvasView({ zone, width, height }: CanvasViewProps) {
-  const [baseImage, status] = useImage(zone.baseImageUrl);
+function CanvasView({ zone }: CanvasViewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<Konva.Stage>(null);
+  const [size, setSize] = useState({ width: 800, height: 600 });
+  const [_zoom, setZoom] = useState(1);
+  const productColor = useEditorStore((s) => s.productColor);
+  const [rawImage, status] = useImage(zone.baseImageUrl);
+  const baseImage = useColoredProduct(rawImage, productColor);
   const design = useEditorStore((s) => s.design);
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
@@ -89,13 +129,30 @@ function CanvasView({ zone, width, height }: CanvasViewProps) {
 
   const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([]);
 
+  // Auto-resize canvas to fill container
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setSize({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  const { width, height } = size;
   const designZone = design?.zones[activeZoneId];
   const layers = designZone?.layers ?? [];
 
   const layout: CanvasLayout | null = useMemo(() => {
-    if (!baseImage) return null;
+    if (!rawImage || !baseImage) return null;
 
-    const imgAspect = baseImage.width / baseImage.height;
+    const imgAspect = rawImage.width / rawImage.height;
     const canvasAspect = width / height;
 
     let imgW: number;
@@ -119,7 +176,15 @@ function CanvasView({ zone, width, height }: CanvasViewProps) {
     const printH = zone.printAreaHeightMM * pxPerMM;
 
     return { imgX, imgY, imgW, imgH, printX, printY, printW, printH, pxPerMM };
-  }, [baseImage, width, height, zone]);
+  }, [rawImage, baseImage, width, height, zone]);
+
+  // Sync canvas offset to store so Position popover can use it
+  const setCanvasOffsetMM = useEditorStore((s) => s.setCanvasOffsetMM);
+  useEffect(() => {
+    if (layout) {
+      setCanvasOffsetMM(layout.imgX / layout.pxPerMM, layout.imgY / layout.pxPerMM);
+    }
+  }, [layout, setCanvasOffsetMM]);
 
   const handleStageClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
@@ -130,7 +195,6 @@ function CanvasView({ zone, width, height }: CanvasViewProps) {
     [selectLayer],
   );
 
-  // Handle drag move for snap guides
   const handleDragMove = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
       if (!layout) return;
@@ -148,7 +212,6 @@ function CanvasView({ zone, width, height }: CanvasViewProps) {
 
       setSnapGuides(guides);
 
-      // Apply snap
       if (snapX !== null) {
         node.x(node.x() + (snapX - rect.x));
       }
@@ -163,81 +226,110 @@ function CanvasView({ zone, width, height }: CanvasViewProps) {
     setSnapGuides([]);
   }, []);
 
-  if (status === 'loading' || !baseImage || !layout) {
-    return (
-      <Stage width={width} height={height}>
-        <Layer>
-          <Rect x={0} y={0} width={width} height={height} fill="#f0f0f0" />
-        </Layer>
-      </Stage>
-    );
-  }
+  // Zoom with mouse wheel
+  const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+    const scaleBy = 1.08;
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    newScale = Math.max(0.3, Math.min(5, newScale));
+
+    stage.scale({ x: newScale, y: newScale });
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+    stage.position(newPos);
+    setZoom(newScale);
+  }, []);
 
   return (
-    <>
-      <Toolbar />
-      <ContextToolbar />
-      <Stage
-        width={width}
-        height={height}
-        onClick={handleStageClick}
-        onTap={handleStageClick}
-        onDragMove={handleDragMove}
-        onDragEnd={handleDragEnd}
-      >
-        {/* Background + mockup image (not interactive) */}
-        <Layer listening={false}>
-          <Rect id="background" x={0} y={0} width={width} height={height} fill="#f0f0f0" />
-          <Image
-            image={baseImage}
-            x={layout.imgX}
-            y={layout.imgY}
-            width={layout.imgW}
-            height={layout.imgH}
-          />
-        </Layer>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
+      {(status === 'loading' || !baseImage || !layout) ? (
+        <Stage width={width} height={height}>
+          <Layer>
+            <Rect x={0} y={0} width={width} height={height} fill="#f0f0f0" />
+          </Layer>
+        </Stage>
+      ) : (
+        <Stage
+          ref={stageRef}
+          width={width}
+          height={height}
+          onClick={handleStageClick}
+          onTap={handleStageClick}
+          onDragMove={handleDragMove}
+          onDragEnd={handleDragEnd}
+          onWheel={handleWheel}
+          draggable={_zoom > 1}
+        >
+          <Layer listening={false}>
+            <Rect id="background" x={0} y={0} width={width} height={height} fill="#f0f0f0" />
+            <Image
+              image={baseImage}
+              x={layout.imgX}
+              y={layout.imgY}
+              width={layout.imgW}
+              height={layout.imgH}
+            />
+          </Layer>
 
-        {/* Design layers — NO clip, so user can grab elements outside the print zone */}
-        <Layer>
-          {layers
-            .filter((l) => l.visible)
-            .map((layer) => (
-              <DesignLayer
-                key={layer.id}
-                layer={{
-                  ...layer,
-                  x: layer.x + zone.printAreaXMM,
-                  y: layer.y + zone.printAreaYMM,
-                }}
-                pxPerMM={layout.pxPerMM}
-                isSelected={selectedLayerId === layer.id}
-                printOriginXMM={zone.printAreaXMM}
-                printOriginYMM={zone.printAreaYMM}
-              />
-            ))}
-        </Layer>
+          <Layer>
+            {layers
+              .filter((l) => l.visible)
+              .map((layer) => (
+                <DesignLayer
+                  key={layer.id}
+                  layer={{
+                    ...layer,
+                    x: layer.x + zone.printAreaXMM,
+                    y: layer.y + zone.printAreaYMM,
+                  }}
+                  pxPerMM={layout.pxPerMM}
+                  isSelected={selectedLayerId === layer.id}
+                  printOriginXMM={zone.printAreaXMM}
+                  printOriginYMM={zone.printAreaYMM}
+                />
+              ))}
+          </Layer>
 
-        {/* Print zone border + snap guides */}
-        <Layer listening={false}>
-          <Rect
-            x={layout.printX}
-            y={layout.printY}
-            width={layout.printW}
-            height={layout.printH}
-            stroke="#4A90D9"
-            strokeWidth={1.5}
-            dash={[6, 4]}
-          />
+          <Layer listening={false}>
+            <Rect
+              x={layout.printX}
+              y={layout.printY}
+              width={layout.printW}
+              height={layout.printH}
+              stroke="#4A90D9"
+              strokeWidth={1.5}
+              dash={[6, 4]}
+            />
 
-          <SnapGuides
-            guides={snapGuides}
-            printX={layout.printX}
-            printY={layout.printY}
-            printW={layout.printW}
-            printH={layout.printH}
-          />
-        </Layer>
-      </Stage>
-    </>
+            <SnapGuides
+              guides={snapGuides}
+              printX={layout.printX}
+              printY={layout.printY}
+              printW={layout.printW}
+              printH={layout.printH}
+            />
+          </Layer>
+        </Stage>
+      )}
+
+      {/* Zoom controls */}
+      <ZoomControls stageRef={stageRef} zoom={_zoom} setZoom={setZoom} />
+    </div>
   );
 }

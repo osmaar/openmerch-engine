@@ -101,10 +101,9 @@ function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     e.target.getStage()!.container().style.cursor = 'pointer';
-    updateLayer(layer.id, {
-      x: e.target.x() / pxPerMM - printOriginXMM,
-      y: e.target.y() / pxPerMM - printOriginYMM,
-    });
+    const newX = e.target.x() / pxPerMM - printOriginXMM;
+    const newY = e.target.y() / pxPerMM - printOriginYMM;
+    updateLayer(layer.id, { x: newX, y: newY });
   };
 
   const handleTransformEnd = () => {

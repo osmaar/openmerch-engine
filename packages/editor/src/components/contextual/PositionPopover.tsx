@@ -19,7 +19,12 @@ interface PositionPopoverProps {
   onClose: () => void;
 }
 
-function getLayerSizeMM(layer: DesignLayer): { w: number; h: number } {
+function getFreshLayerSize(layerId: string): { w: number; h: number } {
+  const store = useEditorStore.getState();
+  const zone = store.design?.zones[store.activeZoneId];
+  const layer = zone?.layers.find((l) => l.id === layerId);
+  if (!layer) return { w: 0, h: 0 };
+
   if (layer.type === 'image') {
     const img = layer as ImageLayer;
     return {
@@ -27,26 +32,36 @@ function getLayerSizeMM(layer: DesignLayer): { w: number; h: number } {
       h: img.originalHeightMM * Math.abs(img.scaleY),
     };
   }
-  // For text, approximate — scale-based
   return { w: 50 * Math.abs(layer.scaleX), h: 20 * Math.abs(layer.scaleY) };
 }
 
-export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: PositionPopoverProps) {
-  const { updateLayer } = useEditorStore();
 
-  const size = getLayerSizeMM(layer);
+export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: PositionPopoverProps) {
+  const updateLayer = useEditorStore((s) => s.updateLayer);
 
   const positionTo = (xAlign: 'left' | 'center' | 'right', yAlign: 'top' | 'center' | 'bottom') => {
-    let x = layer.x;
-    let y = layer.y;
+    const size = getFreshLayerSize(layer.id);
+    const { canvasOffsetMM } = useEditorStore.getState();
 
-    if (xAlign === 'left') x = 0;
-    else if (xAlign === 'center') x = (zoneWidthMM - size.w) / 2;
-    else if (xAlign === 'right') x = zoneWidthMM - size.w;
+    // Coordinates in store include the canvas offset (imgX/pxPerMM)
+    // Zone-relative 0 = canvasOffsetMM.x in store coordinates
+    const baseX = canvasOffsetMM.x;
+    const baseY = canvasOffsetMM.y;
 
-    if (yAlign === 'top') y = 0;
-    else if (yAlign === 'center') y = (zoneHeightMM - size.h) / 2;
-    else if (yAlign === 'bottom') y = zoneHeightMM - size.h;
+    let x = baseX;
+    let y = baseY;
+
+    switch (xAlign) {
+      case 'left': x = baseX; break;
+      case 'center': x = baseX + (zoneWidthMM - size.w) / 2; break;
+      case 'right': x = baseX + zoneWidthMM - size.w; break;
+    }
+
+    switch (yAlign) {
+      case 'top': y = baseY; break;
+      case 'center': y = baseY + (zoneHeightMM - size.h) / 2; break;
+      case 'bottom': y = baseY + zoneHeightMM - size.h; break;
+    }
 
     updateLayer(layer.id, { x, y });
   };
@@ -102,7 +117,7 @@ export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: P
   };
 
   return (
-    <div style={popoverStyle}>
+    <div style={popoverStyle} onClick={(e) => e.stopPropagation()}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Position</span>
         <button
@@ -113,13 +128,11 @@ export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: P
         </button>
       </div>
 
-      {/* Lock toggle */}
       <button style={lockBtn} onClick={handleLock}>
         {layer.locked ? <Lock size={14} /> : <Unlock size={14} />}
         {layer.locked ? 'Unlock Position' : 'Lock Position'}
       </button>
 
-      {/* Position grid: 3x3 + center */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
         <button style={iconBtn} onClick={() => positionTo('left', 'top')} title="Top Left">
           <AlignStartVertical size={16} />

@@ -25,9 +25,18 @@ interface EditorState {
   clipboard: DesignLayer | null;
   history: HistoryEntry[];
   historyIndex: number;
+  productColor: string;
+  sizes: Record<string, number>;
+  canvasOffsetMM: { x: number; y: number };
+  gallery: { id: string; src: string; name: string }[];
 
   setProduct: (product: Product) => void;
   setActiveZone: (zoneId: string) => void;
+  setProductColor: (color: string) => void;
+  setSizeQuantity: (size: string, qty: number) => void;
+  setCanvasOffsetMM: (x: number, y: number) => void;
+  addToGallery: (src: string, name: string) => void;
+  removeFromGallery: (id: string) => void;
   getActiveProductZone: () => ProductZone | undefined;
   getActiveDesignZone: () => DesignZone | undefined;
 
@@ -76,6 +85,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   clipboard: null,
   history: [],
   historyIndex: -1,
+  productColor: '#FFFFFF',
+  sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+  canvasOffsetMM: { x: 0, y: 0 },
+  gallery: [],
 
   setProduct: (product: Product) => {
     const design: Design = {
@@ -107,6 +120,30 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   setActiveZone: (zoneId: string) => {
     set({ activeZoneId: zoneId, selectedLayerId: null });
+  },
+
+  setProductColor: (color: string) => {
+    set({ productColor: color });
+  },
+
+  setSizeQuantity: (size: string, qty: number) => {
+    const sizes = { ...get().sizes };
+    sizes[size] = Math.max(0, qty);
+    set({ sizes });
+  },
+
+  setCanvasOffsetMM: (x: number, y: number) => {
+    set({ canvasOffsetMM: { x, y } });
+  },
+
+  addToGallery: (src: string, name: string) => {
+    const { gallery } = get();
+    set({ gallery: [...gallery, { id: crypto.randomUUID(), src, name }] });
+  },
+
+  removeFromGallery: (id: string) => {
+    const { gallery } = get();
+    set({ gallery: gallery.filter((g) => g.id !== id) });
   },
 
   getActiveProductZone: () => {
@@ -150,8 +187,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       originalSrc: src,
       originalWidthMM: layerWidthMM,
       originalHeightMM: layerHeightMM,
-      x: (zone.canvasWidthMM - layerWidthMM) / 2,
-      y: (zone.canvasHeightMM - layerHeightMM) / 2,
+      x: get().canvasOffsetMM.x + (zone.canvasWidthMM - layerWidthMM) / 2,
+      y: get().canvasOffsetMM.y + (zone.canvasHeightMM - layerHeightMM) / 2,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -202,8 +239,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       fontStyle: 'normal',
       textDecoration: '',
       textEffect: { type: 'none', radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 },
-      x: zone.canvasWidthMM * 0.25,
-      y: zone.canvasHeightMM * 0.4,
+      x: get().canvasOffsetMM.x + zone.canvasWidthMM * 0.25,
+      y: get().canvasOffsetMM.y + zone.canvasHeightMM * 0.4,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -345,12 +382,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     };
 
     // Re-center the layer
+    const offset = get().canvasOffsetMM;
     if (layer.type === 'image') {
-      updates.x = (zone.canvasWidthMM - layer.originalWidthMM) / 2;
-      updates.y = (zone.canvasHeightMM - layer.originalHeightMM) / 2;
+      updates.x = offset.x + (zone.canvasWidthMM - layer.originalWidthMM) / 2;
+      updates.y = offset.y + (zone.canvasHeightMM - layer.originalHeightMM) / 2;
     } else {
-      updates.x = zone.canvasWidthMM * 0.25;
-      updates.y = zone.canvasHeightMM * 0.4;
+      updates.x = offset.x + zone.canvasWidthMM * 0.25;
+      updates.y = offset.y + zone.canvasHeightMM * 0.4;
     }
 
     const hist = pushHistory(state);
