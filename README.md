@@ -106,7 +106,7 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Image toolbar (replace, crop, remove bg, 36 filters, fill/tint, opacity)
   - [x] Text toolbar (font, size, color, bold/italic/underline, align, case, effects)
   - [x] Arrange, position, and transform popovers for all layer types
-  - [x] Text effects (curved, bridge, oblique) via SVG TextPath
+  - [x] Text effects (curved, oblique) with per-character rendering
   - [ ] Sidebar panel (product, images, text, layers, cliparts, shapes)
   - [ ] Layers panel (reorder, show/hide, lock)
   - [ ] Undo/redo full support

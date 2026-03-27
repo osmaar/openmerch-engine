@@ -1,10 +1,10 @@
-import { useRef, useEffect } from 'react';
-import { Image, Text, TextPath, Transformer } from 'react-konva';
+import { useRef, useEffect, useMemo } from 'react';
+import { Image, Text, Rect as KRect, Group, Transformer } from 'react-konva';
 import type { DesignLayer as DesignLayerType } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 import { useImage } from '../hooks/useImage.js';
 import { useTintedImage } from '../hooks/useTintedImage.js';
-import { generateTextPath } from '../utils/textPaths.js';
+import { CurvedText } from './CurvedText.js';
 import type Konva from 'konva';
 
 
@@ -247,24 +247,7 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
   const effect = layer.textEffect;
   const hasEffect = effect && effect.type !== 'none';
 
-  // Estimate text width for path generation
-  const estimatedWidth = layer.text.length * layer.fontSize * 0.6;
-  const pathData = hasEffect ? generateTextPath(effect, estimatedWidth) : null;
-
-  const commonProps = {
-    x,
-    y,
-    fontSize: layer.fontSize,
-    fontFamily: layer.fontFamily,
-    fontStyle: layer.fontStyle ?? 'normal',
-    fill: layer.fill,
-    letterSpacing: layer.letterSpacing ?? 0,
-    scaleX: layer.scaleX,
-    scaleY: layer.scaleY,
-    skewX: layer.skewX ?? 0,
-    skewY: layer.skewY ?? 0,
-    rotation: layer.rotation,
-    opacity: layer.opacity,
+  const interactionProps = {
     draggable: !layer.locked,
     onMouseEnter: (e: Konva.KonvaEventObject<MouseEvent>) => { e.target.getStage()!.container().style.cursor = 'pointer'; },
     onMouseLeave: (e: Konva.KonvaEventObject<MouseEvent>) => { e.target.getStage()!.container().style.cursor = 'default'; },
@@ -277,23 +260,68 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
     onTransformEnd: handleTransformEnd,
   };
 
+  // Estimate hit area for curved text group
+  const hitArea = useMemo(() => {
+    if (!hasEffect) return { w: 0, h: 0 };
+    const estW = layer.text.length * layer.fontSize * 0.7;
+    const estH = layer.fontSize * 3;
+    return { w: estW, h: estH };
+  }, [hasEffect, layer.text, layer.fontSize]);
+
   return (
     <>
-      {pathData ? (
-        <TextPath
-          ref={shapeRef as unknown as React.RefObject<Konva.TextPath>}
-          text={layer.text}
-          data={pathData}
-          {...commonProps}
-        />
+      {hasEffect ? (
+        <Group
+          ref={shapeRef as unknown as React.RefObject<Konva.Group>}
+          x={x}
+          y={y}
+          scaleX={layer.scaleX}
+          scaleY={layer.scaleY}
+          skewX={layer.skewX ?? 0}
+          skewY={layer.skewY ?? 0}
+          rotation={layer.rotation}
+          opacity={layer.opacity}
+          {...interactionProps}
+        >
+          {/* Invisible hit area so the group is always clickable */}
+          <KRect
+            x={-hitArea.w / 2}
+            y={-hitArea.h / 2}
+            width={hitArea.w}
+            height={hitArea.h}
+            fill="transparent"
+          />
+          <CurvedText
+            text={layer.text}
+            effect={effect}
+            fontSize={layer.fontSize}
+            fontFamily={layer.fontFamily}
+            fontStyle={layer.fontStyle ?? 'normal'}
+            fill={layer.fill}
+            letterSpacing={layer.letterSpacing ?? 0}
+          />
+        </Group>
       ) : (
         <Text
           ref={shapeRef}
           text={layer.text}
+          x={x}
+          y={y}
+          fontSize={layer.fontSize}
+          fontFamily={layer.fontFamily}
+          fontStyle={layer.fontStyle ?? 'normal'}
           textDecoration={layer.textDecoration ?? ''}
+          fill={layer.fill}
           align={layer.align}
+          letterSpacing={layer.letterSpacing ?? 0}
           lineHeight={layer.lineHeight ?? 1.2}
-          {...commonProps}
+          scaleX={layer.scaleX}
+          scaleY={layer.scaleY}
+          skewX={layer.skewX ?? 0}
+          skewY={layer.skewY ?? 0}
+          rotation={layer.rotation}
+          opacity={layer.opacity}
+          {...interactionProps}
         />
       )}
       {isSelected && (

@@ -6,7 +6,7 @@ export function generateTextPath(
 ): string | null {
   if (effect.type === 'none') return null;
 
-  const w = Math.max(textWidth, 100);
+  const w = Math.max(textWidth, 80);
   const r = effect.radius;
 
   switch (effect.type) {
@@ -15,32 +15,59 @@ export function generateTextPath(
     case 'bridge':
       return bridgePath(w, r);
     case 'wave':
-      return wavePath(w, r);
+      return obliquePath(w, r);
     default:
       return null;
   }
 }
 
-// Arc curve: positive radius = curve up, negative = curve down
+// CURVED: Circular arc — text follows a large arc from left to right
+// Positive radius = arc bends upward (text curves up like a smile)
+// Negative radius = arc bends downward (text curves down like a frown)
+// Based on Lumise reference: wide, gentle arc
 function curvedPath(width: number, radius: number): string {
-  const r = Math.max(Math.abs(radius), width / 2 + 1);
-  const sweep = radius >= 0 ? 0 : 1;
-  return `M 0,0 A ${r},${r} 0 0,${sweep} ${width},0`;
+  // The arc radius must be at least half the width to form a valid arc
+  const absR = Math.max(Math.abs(radius), width * 0.4);
+
+  // Calculate the sagitta (height of the arc) to position text properly
+  const halfW = width / 2;
+  const sagitta = absR - Math.sqrt(Math.max(0, absR * absR - halfW * halfW));
+
+  if (radius >= 0) {
+    // Arc upward: start and end are at the bottom, peak is at the top
+    return `M 0,${sagitta} A ${absR},${absR} 0 0,1 ${width},${sagitta}`;
+  } else {
+    // Arc downward: start and end are at the top, dip is at the bottom
+    return `M 0,0 A ${absR},${absR} 0 0,0 ${width},0`;
+  }
 }
 
-// Bridge: quadratic bezier that arches in the middle
+// BRIDGE: Parabolic arch — center is high, edges are low
+// Based on Lumise reference: smooth quadratic bezier forming a bridge/arch
 function bridgePath(width: number, radius: number): string {
-  const h = Math.abs(radius) * 0.5;
+  const height = Math.abs(radius) * 0.6;
   const mid = width / 2;
-  const dir = radius >= 0 ? -1 : 1;
-  return `M 0,0 Q ${mid},${dir * h} ${width},0`;
+
+  if (radius >= 0) {
+    // Bridge up: center rises
+    return `M 0,${height} Q ${mid},${-height * 0.2} ${width},${height}`;
+  } else {
+    // Bridge down: center dips
+    return `M 0,0 Q ${mid},${height * 1.2} ${width},0`;
+  }
 }
 
-// Oblique/Wave: S-curve using cubic bezier
-function wavePath(width: number, amplitude: number): string {
-  const h = Math.abs(amplitude) * 0.3;
-  const q1 = width / 4;
-  const q2 = width / 2;
-  const q3 = (width * 3) / 4;
-  return `M 0,0 C ${q1},${-h} ${q1},${-h} ${q2},0 C ${q3},${h} ${q3},${h} ${width},0`;
+// OBLIQUE: Diagonal ascending line with optional gentle curve
+// Based on Lumise reference: text goes from bottom-left to top-right at an angle
+function obliquePath(width: number, radius: number): string {
+  // The "radius" here controls how steep the diagonal is
+  const rise = Math.abs(radius) * 0.5;
+
+  if (radius >= 0) {
+    // Ascending: bottom-left to top-right
+    return `M 0,${rise} L ${width},0`;
+  } else {
+    // Descending: top-left to bottom-right
+    return `M 0,0 L ${width},${rise}`;
+  }
 }

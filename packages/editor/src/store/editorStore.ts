@@ -201,7 +201,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       lineHeight: 1.2,
       fontStyle: 'normal',
       textDecoration: '',
-      textEffect: { type: 'none', radius: 150, spacing: 0, curve: 0, height: 0, offset: 0 },
+      textEffect: { type: 'none', radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 },
       x: zone.canvasWidthMM * 0.25,
       y: zone.canvasHeightMM * 0.4,
       rotation: 0,

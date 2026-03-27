@@ -11,7 +11,6 @@ interface TextEffectsPopoverProps {
 const EFFECT_TYPES: { type: TextEffect['type']; label: string }[] = [
   { type: 'none', label: 'Normal' },
   { type: 'curved', label: 'Curved' },
-  { type: 'bridge', label: 'Bridge' },
   { type: 'wave', label: 'Oblique' },
 ];
 
