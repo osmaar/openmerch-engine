@@ -107,10 +107,25 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Text toolbar (font, size, color, bold/italic/underline, align, case, effects)
   - [x] Arrange, position, and transform popovers for all layer types
   - [x] Text effects (curved, oblique) with per-character rendering
-  - [ ] Sidebar panel (product, images, text, layers, cliparts, shapes)
-  - [ ] Layers panel (reorder, show/hide, lock)
+  - [x] Fullscreen layout with sidebar, top toolbar, floating controls
+  - [x] NavBar (Print, Help, Languages, Cart — placeholders for backend)
+  - [x] Sidebar: Product (color picker, sizes), Image (upload + gallery), Text (effect tiles + fonts), Layers (reorder, show/hide, lock, rename)
+  - [x] Zoom (scroll + controls) and pan (drag when zoomed)
+  - [x] Stage navigator (floating front/back switcher)
+  - [x] QR code generator (transparent background)
+  - [x] Product color tinting (auto-detect background type)
+  - [x] Cliparts (Iconify API — 200,000+ icons from 10+ collections)
+  - [x] Shapes (9 shapes with contextual toolbar: fill, stroke, opacity)
+  - [x] Photos (Unsplash API integration with search)
+  - [x] Backgrounds (Unsplash API with 10 texture/pattern categories)
+  - [x] AI Image generation (Pollinations.ai — 5 models, 8 styles, 1024x1024)
+  - [x] Google Fonts (120+ fonts with instant search)
+  - [x] Toggle print zone visibility (preview mode)
+  - [x] Compositing multiply effect (fabric texture blending)
   - [ ] Undo/redo full support
-- [ ] 2D preview and PNG export (Phase 2)
+  - [ ] PNG/SVG export
+- [ ] Backend API and admin panel (Phase 2)
+- [ ] 2D preview with displacement maps (Phase 2)
 - [ ] Per-technique validation and embroidery files (Phase 3)
 - [ ] WooCommerce integration (Phase 4)
 - [ ] Shopify integration (Post-MVP)

@@ -1,4 +1,4 @@
 export { ProductEditor } from './components/ProductEditor.js';
-export { ZoneSelector } from './components/ZoneSelector.js';
+export { SidebarPanel } from './components/sidebar/SidebarPanel.js';
 export { Toolbar } from './components/Toolbar.js';
 export { useEditorStore } from './store/editorStore.js';

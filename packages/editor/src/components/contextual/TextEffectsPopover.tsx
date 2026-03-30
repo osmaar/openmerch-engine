@@ -8,10 +8,10 @@ interface TextEffectsPopoverProps {
   onClose: () => void;
 }
 
-const EFFECT_TYPES: { type: TextEffect['type']; label: string }[] = [
-  { type: 'none', label: 'Normal' },
-  { type: 'curved', label: 'Curved' },
-  { type: 'wave', label: 'Oblique' },
+const EFFECT_TYPES: { type: TextEffect['type']; label: string; image: string }[] = [
+  { type: 'none', label: 'Normal', image: '/assets/text-effects/normal.svg' },
+  { type: 'curved', label: 'Curved', image: '/assets/text-effects/curved.svg' },
+  { type: 'wave', label: 'Oblique', image: '/assets/text-effects/oblique.svg' },
 ];
 
 export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) {
@@ -53,19 +53,6 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
     gap: 10,
   };
 
-  const effectBtn = (t: TextEffect['type']): React.CSSProperties => ({
-    padding: '6px 10px',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: effect.type === t ? '#4A90D9' : '#ddd',
-    borderRadius: 6,
-    background: effect.type === t ? '#EBF2FA' : '#fff',
-    color: effect.type === t ? '#4A90D9' : '#555',
-    cursor: 'pointer',
-    fontSize: 11,
-    fontWeight: effect.type === t ? 600 : 400,
-    textAlign: 'center',
-  });
 
   const rowStyle: React.CSSProperties = {
     display: 'flex',
@@ -110,14 +97,23 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
       />
 
       {/* Effect type grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
         {EFFECT_TYPES.map((et) => (
           <button
             key={et.type}
-            style={effectBtn(et.type)}
             onClick={() => updateEffect({ type: et.type })}
+            title={et.label}
+            style={{
+              padding: 4,
+              borderWidth: 2,
+              borderStyle: 'solid',
+              borderColor: effect.type === et.type ? '#4A90D9' : '#e0e0e0',
+              borderRadius: 6,
+              background: effect.type === et.type ? '#EBF2FA' : '#fff',
+              cursor: 'pointer',
+            }}
           >
-            {et.label}
+            <img src={et.image} alt={et.label} style={{ width: '100%', height: 40, objectFit: 'contain' }} />
           </button>
         ))}
       </div>
