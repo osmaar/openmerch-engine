@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
-import { Image, Text, Rect as KRect, Group, Transformer } from 'react-konva';
+import { Image, Text, Rect as KRect, Circle, RegularPolygon, Star, Line, Group, Transformer } from 'react-konva';
 import type { DesignLayer as DesignLayerType } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 import { useImage } from '../hooks/useImage.js';
@@ -31,6 +31,17 @@ export function DesignLayer({ layer, pxPerMM, isSelected, printOriginXMM, printO
   if (layer.type === 'text') {
     return (
       <TextLayerView
+        layer={layer}
+        pxPerMM={pxPerMM}
+        isSelected={isSelected}
+        printOriginXMM={printOriginXMM}
+        printOriginYMM={printOriginYMM}
+      />
+    );
+  }
+  if (layer.type === 'shape') {
+    return (
+      <ShapeLayerView
         layer={layer}
         pxPerMM={pxPerMM}
         isSelected={isSelected}
@@ -134,6 +145,7 @@ function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
         skewY={layer.skewY ?? 0}
         rotation={layer.rotation}
         opacity={layer.opacity}
+        globalCompositeOperation={isSelected ? 'source-over' : 'multiply'}
         draggable={!layer.locked}
         onMouseEnter={(e) => { e.target.getStage()!.container().style.cursor = 'pointer'; }}
         onMouseLeave={(e) => { e.target.getStage()!.container().style.cursor = 'default'; }}
@@ -280,6 +292,7 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           skewY={layer.skewY ?? 0}
           rotation={layer.rotation}
           opacity={layer.opacity}
+          globalCompositeOperation={isSelected ? 'source-over' : 'multiply'}
           {...interactionProps}
         >
           {/* Invisible hit area so the group is always clickable */}
@@ -320,6 +333,7 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           skewY={layer.skewY ?? 0}
           rotation={layer.rotation}
           opacity={layer.opacity}
+          globalCompositeOperation={isSelected ? 'source-over' : 'multiply'}
           {...interactionProps}
         />
       )}
@@ -328,6 +342,121 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           ref={trRef}
           keepRatio={false}
           enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+          {...TRANSFORMER_CONFIG}
+        />
+      )}
+    </>
+  );
+}
+
+// === Shape Layer ===
+interface ShapeLayerViewProps {
+  layer: DesignLayerType & { type: 'shape' };
+  pxPerMM: number;
+  isSelected: boolean;
+  printOriginXMM: number;
+  printOriginYMM: number;
+}
+
+function ShapeLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOriginYMM }: ShapeLayerViewProps) {
+  const shapeRef = useRef<Konva.Shape>(null);
+  const trRef = useRef<Konva.Transformer>(null);
+  const { selectLayer, updateLayer } = useEditorStore();
+
+  useEffect(() => {
+    if (isSelected && trRef.current && shapeRef.current) {
+      trRef.current.nodes([shapeRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    }
+  }, [isSelected]);
+
+  const x = layer.x * pxPerMM;
+  const y = layer.y * pxPerMM;
+  const w = layer.widthMM * pxPerMM;
+  const h = layer.heightMM * pxPerMM;
+
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const newX = e.target.x() / pxPerMM - printOriginXMM;
+    const newY = e.target.y() / pxPerMM - printOriginYMM;
+    updateLayer(layer.id, { x: newX, y: newY });
+  };
+
+  const handleTransformEnd = () => {
+    const node = shapeRef.current;
+    if (!node) return;
+    updateLayer(layer.id, {
+      x: node.x() / pxPerMM - printOriginXMM,
+      y: node.y() / pxPerMM - printOriginYMM,
+      scaleX: node.scaleX(),
+      scaleY: node.scaleY(),
+      rotation: node.rotation(),
+    });
+  };
+
+  const commonProps = {
+    x, y,
+    fill: layer.fill,
+    stroke: layer.stroke,
+    strokeWidth: layer.strokeWidth,
+    scaleX: layer.scaleX,
+    scaleY: layer.scaleY,
+    rotation: layer.rotation,
+    opacity: layer.opacity,
+    globalCompositeOperation: (isSelected ? 'source-over' : 'multiply') as GlobalCompositeOperation,
+    draggable: !layer.locked,
+    onClick: () => selectLayer(layer.id),
+    onTap: () => selectLayer(layer.id),
+    onDragEnd: handleDragEnd,
+    onTransformEnd: handleTransformEnd,
+  };
+
+  const renderShape = () => {
+    switch (layer.shapeType) {
+      case 'rect':
+        return <KRect ref={shapeRef as unknown as React.RefObject<Konva.Rect>} width={w} height={h} {...commonProps} />;
+      case 'rounded-rect':
+        return <KRect ref={shapeRef as unknown as React.RefObject<Konva.Rect>} width={w} height={h} cornerRadius={w * 0.15} {...commonProps} />;
+      case 'circle':
+        return <Circle ref={shapeRef as unknown as React.RefObject<Konva.Circle>} radius={w / 2} {...commonProps} />;
+      case 'triangle':
+        return <RegularPolygon ref={shapeRef as unknown as React.RefObject<Konva.RegularPolygon>} sides={3} radius={w / 2} {...commonProps} />;
+      case 'pentagon':
+        return <RegularPolygon ref={shapeRef as unknown as React.RefObject<Konva.RegularPolygon>} sides={5} radius={w / 2} {...commonProps} />;
+      case 'hexagon':
+        return <RegularPolygon ref={shapeRef as unknown as React.RefObject<Konva.RegularPolygon>} sides={6} radius={w / 2} {...commonProps} />;
+      case 'star':
+        return <Star ref={shapeRef as unknown as React.RefObject<Konva.Star>} numPoints={5} innerRadius={w * 0.38} outerRadius={w / 2} {...commonProps} />;
+      case 'diamond':
+        return <RegularPolygon ref={shapeRef as unknown as React.RefObject<Konva.RegularPolygon>} sides={4} radius={w / 2} {...commonProps} />;
+      case 'arrow':
+        return <Line ref={shapeRef as unknown as React.RefObject<Konva.Line>} points={[0, 0, w, 0]} {...commonProps} hitStrokeWidth={20} pointerLength={w * 0.2} pointerWidth={w * 0.15} />;
+      case 'cross': {
+        const t = w * 0.3;
+        const cx = w / 2;
+        const cy = h / 2;
+        return <Line ref={shapeRef as unknown as React.RefObject<Konva.Line>} points={[
+          cx - t / 2, 0, cx + t / 2, 0,
+          cx + t / 2, cy - t / 2, w, cy - t / 2,
+          w, cy + t / 2, cx + t / 2, cy + t / 2,
+          cx + t / 2, h, cx - t / 2, h,
+          cx - t / 2, cy + t / 2, 0, cy + t / 2,
+          0, cy - t / 2, cx - t / 2, cy - t / 2,
+        ]} closed {...commonProps} />;
+      }
+      case 'line':
+        return <Line ref={shapeRef as unknown as React.RefObject<Konva.Line>} points={[0, 0, w, 0]} hitStrokeWidth={20} {...commonProps} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      {renderShape()}
+      {isSelected && (
+        <Transformer
+          ref={trRef}
+          keepRatio={false}
           {...TRANSFORMER_CONFIG}
         />
       )}

@@ -126,6 +126,7 @@ function CanvasView({ zone }: CanvasViewProps) {
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
   const selectLayer = useEditorStore((s) => s.selectLayer);
+  const showPrintZone = useEditorStore((s) => s.showPrintZone);
 
   const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([]);
 
@@ -307,15 +308,17 @@ function CanvasView({ zone }: CanvasViewProps) {
           </Layer>
 
           <Layer listening={false}>
-            <Rect
-              x={layout.printX}
-              y={layout.printY}
-              width={layout.printW}
-              height={layout.printH}
-              stroke="#4A90D9"
-              strokeWidth={1.5}
-              dash={[6, 4]}
-            />
+            {showPrintZone && (
+              <Rect
+                x={layout.printX}
+                y={layout.printY}
+                width={layout.printW}
+                height={layout.printH}
+                stroke="#4A90D9"
+                strokeWidth={1.5}
+                dash={[6, 4]}
+              />
+            )}
 
             <SnapGuides
               guides={snapGuides}

@@ -7,6 +7,7 @@ import type {
   DesignLayer,
   ImageLayer,
   TextLayer,
+  ShapeLayer,
 } from '@openmerch/core';
 
 // Undo history entry: snapshot of layers for the active zone
@@ -29,8 +30,13 @@ interface EditorState {
   sizes: Record<string, number>;
   canvasOffsetMM: { x: number; y: number };
   gallery: { id: string; src: string; name: string }[];
+  showPrintZone: boolean;
+  unsplashKey: string;
+  pollinationsKey: string;
 
   setProduct: (product: Product) => void;
+  setUnsplashKey: (key: string) => void;
+  setPollinationsKey: (key: string) => void;
   setActiveZone: (zoneId: string) => void;
   setProductColor: (color: string) => void;
   setSizeQuantity: (size: string, qty: number) => void;
@@ -42,6 +48,7 @@ interface EditorState {
 
   addImageLayer: (src: string, widthPx: number, heightPx: number) => void;
   addTextLayer: () => void;
+  addShapeLayer: (shapeType: ShapeLayer['shapeType']) => void;
   updateLayer: (layerId: string, updates: Partial<DesignLayer>) => void;
   removeLayer: (layerId: string) => void;
   selectLayer: (layerId: string | null) => void;
@@ -89,6 +96,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
   canvasOffsetMM: { x: 0, y: 0 },
   gallery: [],
+  showPrintZone: true,
+  unsplashKey: '',
+  pollinationsKey: '',
 
   setProduct: (product: Product) => {
     const design: Design = {
@@ -130,6 +140,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const sizes = { ...get().sizes };
     sizes[size] = Math.max(0, qty);
     set({ sizes });
+  },
+
+  setUnsplashKey: (key: string) => {
+    set({ unsplashKey: key });
+  },
+
+  setPollinationsKey: (key: string) => {
+    set({ pollinationsKey: key });
   },
 
   setCanvasOffsetMM: (x: number, y: number) => {
@@ -241,6 +259,60 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       textEffect: { type: 'none', radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 },
       x: get().canvasOffsetMM.x + zone.canvasWidthMM * 0.25,
       y: get().canvasOffsetMM.y + zone.canvasHeightMM * 0.4,
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+      skewX: 0,
+      skewY: 0,
+      opacity: 1,
+      locked: false,
+      visible: true,
+    };
+
+    const hist = pushHistory(state);
+
+    set({
+      ...hist,
+      design: {
+        ...design,
+        zones: {
+          ...design.zones,
+          [activeZoneId]: {
+            ...zone,
+            layers: [...zone.layers, layer],
+          },
+        },
+      },
+      selectedLayerId: layer.id,
+    });
+  },
+
+  addShapeLayer: (shapeType: ShapeLayer['shapeType']) => {
+    const state = get();
+    const { design, activeZoneId } = state;
+    if (!design) return;
+
+    const zone = design.zones[activeZoneId];
+    if (!zone) return;
+
+    const sizeMM = 40;
+    const offset = get().canvasOffsetMM;
+
+    const isLineType = shapeType === 'line' || shapeType === 'arrow';
+
+    const layer: ShapeLayer = {
+      id: crypto.randomUUID(),
+      type: 'shape',
+      shapeType,
+      fill: isLineType ? 'transparent' : 'transparent',
+      stroke: '#333333',
+      strokeWidth: isLineType ? 3 : 2,
+      widthMM: sizeMM,
+      heightMM: shapeType === 'line' ? 0 : sizeMM,
+      sides: shapeType === 'triangle' ? 3 : shapeType === 'star' ? 5 : undefined,
+      innerRadius: shapeType === 'star' ? sizeMM * 0.4 : undefined,
+      x: offset.x + (zone.canvasWidthMM - sizeMM) / 2,
+      y: offset.y + (zone.canvasHeightMM - sizeMM) / 2,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,

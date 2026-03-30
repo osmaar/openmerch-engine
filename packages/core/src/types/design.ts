@@ -65,10 +65,12 @@ export interface TextEffect {
 
 export interface ShapeLayer extends BaseLayer {
   type: 'shape';
-  shapeType: 'rect' | 'circle' | 'ellipse';
+  shapeType: 'rect' | 'circle' | 'triangle' | 'star' | 'line' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow' | 'rounded-rect' | 'cross';
   fill: string;
   stroke: string;
   strokeWidth: number;
   widthMM: number;
   heightMM: number;
+  sides?: number;
+  innerRadius?: number;
 }

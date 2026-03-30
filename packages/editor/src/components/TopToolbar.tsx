@@ -4,7 +4,8 @@ import QRCode from 'qrcode';
 import { useEditorStore } from '../store/editorStore.js';
 import { ImageToolbar } from './contextual/ImageToolbar.js';
 import { TextToolbar } from './contextual/TextToolbar.js';
-import type { ImageLayer, TextLayer } from '@openmerch/core';
+import { ShapeToolbar } from './contextual/ShapeToolbar.js';
+import type { ImageLayer, TextLayer, ShapeLayer } from '@openmerch/core';
 
 export function TopToolbar() {
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
@@ -157,6 +158,10 @@ export function TopToolbar() {
 
       {selectedLayer?.type === 'text' && (
         <TextToolbar layer={selectedLayer as TextLayer} />
+      )}
+
+      {selectedLayer?.type === 'shape' && (
+        <ShapeToolbar layer={selectedLayer as ShapeLayer} />
       )}
     </div>
   );

@@ -1,4 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const loadedFonts = new Set<string>();
+function loadGoogleFont(name: string) {
+  if (loadedFonts.has(name) || ['Arial','Helvetica','Georgia','Times New Roman','Impact','Courier New','Verdana'].includes(name)) return;
+  loadedFonts.add(name);
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+  document.head.appendChild(link);
+}
 import {
   Type,
   Sparkles,
@@ -25,16 +35,17 @@ import { PositionPopover } from './PositionPopover.js';
 import { TransformPopover } from './TransformPopover.js';
 
 const FONT_OPTIONS = [
-  'Arial',
-  'Helvetica',
-  'Georgia',
-  'Times New Roman',
-  'Courier New',
-  'Verdana',
-  'Impact',
-  'Comic Sans MS',
-  'Trebuchet MS',
-  'Palatino',
+  // Google Fonts — popular for design
+  'Oswald', 'Bebas Neue', 'Anton', 'Pacifico', 'Permanent Marker',
+  'Righteous', 'Bangers', 'Bungee', 'Creepster', 'Press Start 2P',
+  'Black Ops One', 'Russo One', 'Orbitron', 'Audiowide', 'Monoton',
+  'Lobster', 'Dancing Script', 'Caveat', 'Satisfy', 'Great Vibes',
+  'Playfair Display', 'Merriweather', 'Lora', 'Cinzel', 'Cormorant Garamond',
+  'Montserrat', 'Raleway', 'Poppins', 'Quicksand', 'Comfortaa',
+  'Roboto', 'Open Sans', 'Lato', 'Inter', 'Nunito',
+  // System fonts as fallback
+  'Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Impact',
+  'Courier New', 'Verdana',
 ];
 
 interface TextToolbarProps {
@@ -90,12 +101,21 @@ export function TextToolbar({ layer }: TextToolbarProps) {
     maxWidth: 120,
   };
 
+  // Load Google Fonts on mount + when font changes
+  useEffect(() => {
+    FONT_OPTIONS.forEach(loadGoogleFont);
+  }, []);
+
+  useEffect(() => {
+    loadGoogleFont(layer.fontFamily);
+  }, [layer.fontFamily]);
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
       <select
         style={selectStyle}
         value={layer.fontFamily}
-        onChange={(e) => updateLayer(layer.id, { fontFamily: e.target.value })}
+        onChange={(e) => { loadGoogleFont(e.target.value); updateLayer(layer.id, { fontFamily: e.target.value }); }}
       >
         {FONT_OPTIONS.map((f) => (
           <option key={f} value={f}>{f}</option>

@@ -6,13 +6,21 @@ import {
   Layers,
   Shapes,
   Sticker,
+  Camera,
+  Wallpaper,
+  Sparkles,
 } from 'lucide-react';
 import { ProductTab } from './tabs/ProductTab.js';
 import { ImageTab } from './tabs/ImageTab.js';
 import { TextTab } from './tabs/TextTab.js';
 import { LayersTab } from './tabs/LayersTab.js';
+import { ClipartsTab } from './tabs/ClipartsTab.js';
+import { ShapesTab } from './tabs/ShapesTab.js';
+import { PhotosTab } from './tabs/PhotosTab.js';
+import { BackgroundsTab } from './tabs/BackgroundsTab.js';
+import { AiImageTab } from './tabs/AiImageTab.js';
 
-type TabId = 'product' | 'image' | 'text' | 'layers' | 'shapes' | 'cliparts';
+type TabId = 'product' | 'image' | 'text' | 'layers' | 'shapes' | 'cliparts' | 'photos' | 'backgrounds' | 'ai';
 
 interface TabDef {
   id: TabId;
@@ -23,10 +31,13 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: 'product', label: 'Product', icon: ShirtIcon },
   { id: 'image', label: 'Image', icon: ImageIcon },
+  { id: 'photos', label: 'Photos', icon: Camera },
+  { id: 'ai', label: 'AI Image', icon: Sparkles },
   { id: 'text', label: 'Text', icon: Type },
-  { id: 'layers', label: 'Layers', icon: Layers },
   { id: 'cliparts', label: 'Cliparts', icon: Sticker },
   { id: 'shapes', label: 'Shapes', icon: Shapes },
+  { id: 'backgrounds', label: 'Backgrnd', icon: Wallpaper },
+  { id: 'layers', label: 'Layers', icon: Layers },
 ];
 
 export function SidebarPanel() {
@@ -52,6 +63,7 @@ export function SidebarPanel() {
         borderRightColor: '#e0e0e0',
         paddingTop: 8,
         gap: 2,
+        overflowY: 'auto',
       }}>
         {TABS.map((tab) => {
           const Icon = tab.icon;
@@ -67,7 +79,7 @@ export function SidebarPanel() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 2,
-                padding: '8px 4px',
+                padding: '7px 4px',
                 borderWidth: 0,
                 borderRightWidth: 2,
                 borderRightStyle: 'solid',
@@ -75,18 +87,19 @@ export function SidebarPanel() {
                 background: isActive ? '#EBF2FA' : 'transparent',
                 color: isActive ? '#4A90D9' : '#777',
                 cursor: 'pointer',
-                fontSize: 9,
+                fontSize: 8,
                 fontWeight: isActive ? 600 : 400,
+                flexShrink: 0,
               }}
             >
-              <Icon size={18} />
+              <Icon size={16} />
               {tab.label}
             </button>
           );
         })}
       </div>
 
-      {/* Tab content / contextual panel */}
+      {/* Tab content */}
       <div style={{
         width: 280,
         overflowY: 'auto',
@@ -96,28 +109,14 @@ export function SidebarPanel() {
       }}>
         {activeTab === 'product' && <ProductTab />}
         {activeTab === 'image' && <ImageTab />}
+        {activeTab === 'photos' && <PhotosTab />}
         {activeTab === 'text' && <TextTab />}
+        {activeTab === 'cliparts' && <ClipartsTab />}
+        {activeTab === 'shapes' && <ShapesTab />}
+        {activeTab === 'backgrounds' && <BackgroundsTab />}
+        {activeTab === 'ai' && <AiImageTab />}
         {activeTab === 'layers' && <LayersTab />}
-        {activeTab === 'cliparts' && <ComingSoon label="Cliparts" />}
-        {activeTab === 'shapes' && <ComingSoon label="Shapes" />}
       </div>
-    </div>
-  );
-}
-
-function ComingSoon({ label }: { label: string }) {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: 200,
-      gap: 8,
-      color: '#aaa',
-    }}>
-      <span style={{ fontSize: 14, fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 12 }}>Coming soon</span>
     </div>
   );
 }

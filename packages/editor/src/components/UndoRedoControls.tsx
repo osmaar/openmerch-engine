@@ -1,8 +1,8 @@
-import { Undo2, Redo2 } from 'lucide-react';
+import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import { useEditorStore } from '../store/editorStore.js';
 
 export function UndoRedoControls() {
-  const { undo, historyIndex } = useEditorStore();
+  const { undo, historyIndex, showPrintZone } = useEditorStore();
 
   const canUndo = historyIndex >= 0;
 
@@ -20,6 +20,10 @@ export function UndoRedoControls() {
     padding: 0,
     boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
   });
+
+  const togglePrintZone = () => {
+    useEditorStore.setState({ showPrintZone: !showPrintZone });
+  };
 
   return (
     <div
@@ -45,6 +49,19 @@ export function UndoRedoControls() {
         title="Redo (coming soon)"
       >
         <Redo2 size={16} />
+      </button>
+
+      <div style={{ width: 1, height: 32, background: '#e0e0e0' }} />
+
+      <button
+        style={{
+          ...btnStyle(true),
+          color: showPrintZone ? '#4A90D9' : '#aaa',
+        }}
+        onClick={togglePrintZone}
+        title={showPrintZone ? 'Hide print zone guides' : 'Show print zone guides'}
+      >
+        {showPrintZone ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
     </div>
   );
