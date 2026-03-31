@@ -7,18 +7,24 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Early development — not ready for production use yet.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API) in progress.
 
 ---
 
-## Features (Planned)
+## Features
 
-- **Visual canvas editor** — upload images, add text, move, scale, rotate elements
-- **Multi-zone support** — design front, back, and sleeves independently
-- **Realistic 2D previews** — composited mockups with lighting overlays
-- **Print-ready file generation** — PNG at 300 DPI, SVG vector, DST/PES embroidery files
-- **Per-technique validation** — DPI checks, color limits, embroidery constraints
-- **WooCommerce plugin** — embed the editor in any product page via iframe
+- **Visual canvas editor** — upload images, add text, shapes, cliparts. Move, scale, rotate with snap guides
+- **AI image generation** — powered by Pollinations.ai with 5 models and 8 styles (1024x1024)
+- **200,000+ cliparts** — Iconify API integration with 10+ icon collections
+- **Photos & backgrounds** — Unsplash API with search and category browsing
+- **120+ Google Fonts** — instant search, dynamic loading
+- **Multi-zone support** — design front and back independently
+- **9 geometric shapes** — rectangle, circle, triangle, star, diamond, pentagon, hexagon, cross, rounded-rect
+- **QR code generator** — transparent background, add to any design
+- **Product color tinting** — change t-shirt color in real-time (12 colors)
+- **Export PNG/SVG** — 600 DPI, with or without mockup base, front + back
+- **20+ keyboard shortcuts** — undo/redo, duplicate, move, zoom, download
+- **Full toolbar** — filters, fill, crop, remove background, arrange, position, transform
 - **Self-hosted** — your data, your server, Docker Compose in one command
 
 ---
@@ -126,7 +132,7 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Full keyboard shortcuts (20+ shortcuts including arrow key movement)
   - [x] Out-of-zone transparency feedback (elements fade when outside print area)
   - [x] Remove background modal (threshold-based, AI-powered coming in Phase 2)
-  - [ ] Undo/redo full support
+  - [x] Undo/redo full support
 - [ ] Backend API and admin panel (Phase 2)
 - [ ] 2D preview with displacement maps (Phase 2)
 - [ ] Per-technique validation and embroidery files (Phase 3)

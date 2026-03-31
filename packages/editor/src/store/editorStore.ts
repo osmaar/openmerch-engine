@@ -64,6 +64,7 @@ interface EditorState {
   replaceImage: (layerId: string, newSrc: string, widthPx: number, heightPx: number) => void;
   applyFilter: (layerId: string, filteredSrc: string, filterIndex: number) => void;
   undo: () => void;
+  redo: () => void;
   getSelectedLayer: () => DesignLayer | undefined;
 }
 
@@ -716,8 +717,48 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const zone = design.zones[activeZoneId];
     if (!zone) return;
 
+    // Save current state as a redo point (append after current index if not already there)
+    const currentLayers = JSON.parse(JSON.stringify(zone.layers)) as DesignLayer[];
+    const redoEntry = { zoneId: activeZoneId, layers: currentLayers };
+    const newHistory = [...history];
+
+    // Insert redo entry after current index if it doesn't exist
+    if (historyIndex + 1 >= newHistory.length || JSON.stringify(newHistory[historyIndex + 1]) !== JSON.stringify(redoEntry)) {
+      newHistory.splice(historyIndex + 1, newHistory.length - historyIndex - 1, redoEntry);
+    }
+
     set({
+      history: newHistory,
       historyIndex: historyIndex - 1,
+      selectedLayerId: null,
+      design: {
+        ...design,
+        zones: {
+          ...design.zones,
+          [activeZoneId]: {
+            ...zone,
+            layers: entry.layers,
+          },
+        },
+      },
+    });
+  },
+
+  redo: () => {
+    const { design, activeZoneId, history, historyIndex } = get();
+    if (!design) return;
+
+    const nextIndex = historyIndex + 2; // +1 is the redo point we saved, +2 skips to it
+    if (nextIndex >= history.length) return;
+
+    const entry = history[nextIndex];
+    if (!entry || entry.zoneId !== activeZoneId) return;
+
+    const zone = design.zones[activeZoneId];
+    if (!zone) return;
+
+    set({
+      historyIndex: historyIndex + 1,
       selectedLayerId: null,
       design: {
         ...design,

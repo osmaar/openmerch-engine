@@ -66,10 +66,10 @@ export function useKeyboardShortcuts() {
           return;
         }
 
-        // Ctrl+Shift+Z — Redo (placeholder)
+        // Ctrl+Shift+Z — Redo
         if (e.key === 'z' && shift) {
           e.preventDefault();
-          // TODO: implement redo
+          useEditorStore.getState().redo();
           return;
         }
 
