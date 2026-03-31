@@ -33,6 +33,9 @@ interface EditorState {
   showPrintZone: boolean;
   stageRef: { current: unknown } | null;
   canvasLayout: { printX: number; printY: number; printW: number; printH: number; pxPerMM: number } | null;
+  savedDesignId: string | null;
+  isSaving: boolean;
+  lastSavedAt: string | null;
   unsplashKey: string;
   pollinationsKey: string;
 
@@ -102,6 +105,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   showPrintZone: true,
   stageRef: null,
   canvasLayout: null,
+  savedDesignId: null,
+  isSaving: false,
+  lastSavedAt: null,
   unsplashKey: '',
   pollinationsKey: '',
 

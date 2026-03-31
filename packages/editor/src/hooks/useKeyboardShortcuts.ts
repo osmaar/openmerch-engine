@@ -131,10 +131,38 @@ export function useKeyboardShortcuts() {
           return;
         }
 
-        // Ctrl+S — Save (placeholder, prevent browser save)
+        // Ctrl+S — Save design
         if (e.key === 's' && !shift) {
           e.preventDefault();
-          // TODO: save to my designs (requires backend)
+          import('../services/api.js').then(({ saveDesign, updateDesign }) => {
+            const store = useEditorStore.getState();
+            if (!store.design || !store.product) return;
+
+            store.isSaving = true;
+            useEditorStore.setState({ isSaving: true });
+
+            const data = {
+              productId: store.product.id,
+              name: 'My Design',
+              designData: store.design,
+            };
+
+            const promise = store.savedDesignId
+              ? updateDesign(store.savedDesignId, { designData: store.design })
+              : saveDesign(data);
+
+            promise
+              .then((result) => {
+                useEditorStore.setState({
+                  savedDesignId: result.id,
+                  isSaving: false,
+                  lastSavedAt: new Date().toISOString(),
+                });
+              })
+              .catch(() => {
+                useEditorStore.setState({ isSaving: false });
+              });
+          });
           return;
         }
 
