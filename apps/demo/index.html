@@ -8,6 +8,12 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: system-ui, sans-serif; background: #1a1a1a; color: #fff; }
       #root { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      /* Thin scrollbars */
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+      ::-webkit-scrollbar-thumb:hover { background: #bbb; }
     </style>
   </head>
   <body>

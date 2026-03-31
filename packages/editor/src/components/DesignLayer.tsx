@@ -97,10 +97,16 @@ function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
   const { selectLayer, updateLayer } = useEditorStore();
 
   useEffect(() => {
-    if (isSelected && trRef.current && shapeRef.current) {
-      trRef.current.nodes([shapeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    }
+    const attach = () => {
+      if (isSelected && trRef.current && shapeRef.current) {
+        trRef.current.nodes([shapeRef.current]);
+        trRef.current.getLayer()?.batchDraw();
+      }
+    };
+    attach();
+    // Retry after a frame in case the node wasn't mounted yet
+    const raf = requestAnimationFrame(attach);
+    return () => cancelAnimationFrame(raf);
   }, [isSelected]);
 
   if (!image) return null;
@@ -180,10 +186,16 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
   const { selectLayer, updateLayer } = useEditorStore();
 
   useEffect(() => {
-    if (isSelected && trRef.current && shapeRef.current) {
-      trRef.current.nodes([shapeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    }
+    const attach = () => {
+      if (isSelected && trRef.current && shapeRef.current) {
+        trRef.current.nodes([shapeRef.current]);
+        trRef.current.getLayer()?.batchDraw();
+      }
+    };
+    attach();
+    // Retry after a frame in case the node wasn't mounted yet
+    const raf = requestAnimationFrame(attach);
+    return () => cancelAnimationFrame(raf);
   }, [isSelected]);
 
   const x = layer.x * pxPerMM;
@@ -364,10 +376,16 @@ function ShapeLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
   const { selectLayer, updateLayer } = useEditorStore();
 
   useEffect(() => {
-    if (isSelected && trRef.current && shapeRef.current) {
-      trRef.current.nodes([shapeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    }
+    const attach = () => {
+      if (isSelected && trRef.current && shapeRef.current) {
+        trRef.current.nodes([shapeRef.current]);
+        trRef.current.getLayer()?.batchDraw();
+      }
+    };
+    attach();
+    // Retry after a frame in case the node wasn't mounted yet
+    const raf = requestAnimationFrame(attach);
+    return () => cancelAnimationFrame(raf);
   }, [isSelected]);
 
   const x = layer.x * pxPerMM;

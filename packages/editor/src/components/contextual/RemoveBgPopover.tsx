@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 
 interface RemoveBgPopoverProps {
   imageSrc: string;
@@ -14,15 +14,10 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [threshold, setThreshold] = useState(100);
   const [mode, setMode] = useState<BgMode>('light');
-  const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     const img = new window.Image();
-    img.onload = () => {
-      setImgEl(img);
-      const scale = Math.min(1, 240 / img.width, 180 / img.height);
-      setPreviewScale(scale);
-    };
+    img.onload = () => setImgEl(img);
     img.src = imageSrc;
   }, [imageSrc]);
 
@@ -46,12 +41,10 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
       const brightness = (r + g + b) / 3;
 
       if (mode === 'light') {
-        // Remove light background: pixels brighter than threshold become transparent
         if (brightness > 255 - threshold) {
           data[i + 3] = 0;
         }
       } else {
-        // Remove dark background: pixels darker than threshold become transparent
         if (brightness < threshold) {
           data[i + 3] = 0;
         }
@@ -62,7 +55,7 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
     return offscreen;
   }, [imgEl, threshold, mode]);
 
-  // Draw preview
+  // Draw preview at full modal size
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imgEl) return;
@@ -70,27 +63,30 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = imgEl.width * previewScale;
-    const h = imgEl.height * previewScale;
+    // Scale to fit the modal preview area
+    const maxW = 500;
+    const maxH = 400;
+    const scale = Math.min(1, maxW / imgEl.width, maxH / imgEl.height);
+    const w = imgEl.width * scale;
+    const h = imgEl.height * scale;
     canvas.width = w;
     canvas.height = h;
 
-    // Checkerboard background to show transparency
-    const tileSize = 8;
+    // Checkerboard background
+    const tileSize = 10;
     for (let y = 0; y < h; y += tileSize) {
       for (let x = 0; x < w; x += tileSize) {
-        const isEven = ((x / tileSize) + (y / tileSize)) % 2 === 0;
+        const isEven = (Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0;
         ctx.fillStyle = isEven ? '#e0e0e0' : '#fff';
         ctx.fillRect(x, y, tileSize, tileSize);
       }
     }
 
-    // Process and draw
     const processed = processImage();
     if (processed) {
       ctx.drawImage(processed, 0, 0, w, h);
     }
-  }, [imgEl, threshold, mode, previewScale, processImage]);
+  }, [imgEl, threshold, mode, processImage]);
 
   const handleApply = () => {
     const processed = processImage();
@@ -99,111 +95,151 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
     }
   };
 
-  const popoverStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '100%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    marginTop: 6,
-    background: '#fff',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-    padding: 14,
-    zIndex: 100,
-    width: 280,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-  };
-
-  const modeBtn = (m: BgMode): React.CSSProperties => ({
-    padding: '5px 12px',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: mode === m ? '#4A90D9' : '#ccc',
-    borderRadius: 5,
-    background: mode === m ? '#EBF2FA' : '#fff',
-    color: mode === m ? '#4A90D9' : '#555',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: mode === m ? 600 : 400,
-  });
-
-  const applyBtn: React.CSSProperties = {
-    padding: '6px 14px',
-    borderWidth: 0,
-    borderRadius: 6,
-    background: '#4A90D9',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: 13,
-    fontWeight: 500,
-  };
-
   return (
-    <div style={popoverStyle}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Remove Background</span>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            borderWidth: 0,
-            cursor: 'pointer',
-            color: '#999',
-            padding: 2,
-            display: 'flex',
-          }}
-        >
-          <X size={16} />
-        </button>
-      </div>
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+    }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{
+        background: '#fff',
+        borderRadius: 12,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+        width: '90%',
+        maxWidth: 600,
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '14px 18px',
+          borderBottomWidth: 1,
+          borderBottomStyle: 'solid',
+          borderBottomColor: '#eee',
+        }}>
+          <span style={{ fontWeight: 600, fontSize: 15, color: '#333' }}>Remove Background</span>
+          <button onClick={onClose} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 4, display: 'flex' }}>
+            <X size={18} />
+          </button>
+        </div>
 
-      {/* Preview */}
-      <div
-        style={{
+        {/* Preview */}
+        <div style={{
+          flex: 1,
           display: 'flex',
           justifyContent: 'center',
-          background: '#f5f5f5',
-          borderRadius: 6,
-          padding: 8,
-        }}
-      >
-        <canvas ref={canvasRef} style={{ display: 'block', borderRadius: 4 }} />
-      </div>
+          alignItems: 'center',
+          padding: 20,
+          background: '#fafafa',
+          minHeight: 300,
+        }}>
+          <canvas ref={canvasRef} style={{ display: 'block', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+        </div>
 
-      {/* Mode */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button style={modeBtn('light')} onClick={() => setMode('light')}>
-          Light BG
-        </button>
-        <button style={modeBtn('dark')} onClick={() => setMode('dark')}>
-          Dark BG
-        </button>
-      </div>
+        {/* Controls */}
+        <div style={{
+          padding: '16px 18px',
+          borderTopWidth: 1,
+          borderTopStyle: 'solid',
+          borderTopColor: '#eee',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}>
+          {/* Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#FFF8E1', borderRadius: 6, fontSize: 11, color: '#F57F17' }}>
+            <AlertTriangle size={14} />
+            Basic removal — AI-powered removal coming soon with backend integration
+          </div>
 
-      {/* Threshold slider */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: '#666', whiteSpace: 'nowrap' }}>Threshold</span>
-        <input
-          type="range"
-          min={0}
-          max={200}
-          value={threshold}
-          onChange={(e) => setThreshold(Number(e.target.value))}
-          style={{ flex: 1, cursor: 'pointer' }}
-        />
-        <span style={{ fontSize: 12, color: '#666', minWidth: 28, textAlign: 'right' }}>{threshold}</span>
-      </div>
+          {/* Mode */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>Mode</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(['light', 'dark'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  style={{
+                    padding: '6px 16px',
+                    borderWidth: 1,
+                    borderStyle: 'solid',
+                    borderColor: mode === m ? '#4A90D9' : '#ddd',
+                    borderRadius: 6,
+                    background: mode === m ? '#EBF2FA' : '#fff',
+                    color: mode === m ? '#4A90D9' : '#555',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: mode === m ? 600 : 400,
+                  }}
+                >
+                  {m === 'light' ? 'Light Background' : 'Dark Background'}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Apply */}
-      <button style={applyBtn} onClick={handleApply}>
-        Apply
-      </button>
+          {/* Threshold */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>Deep</span>
+            <input
+              type="range"
+              min={0}
+              max={200}
+              value={threshold}
+              onChange={(e) => setThreshold(Number(e.target.value))}
+              style={{ flex: 1, cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 12, color: '#888', minWidth: 30, textAlign: 'right' }}>{threshold}</span>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '8px 18px',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: '#ddd',
+                borderRadius: 6,
+                background: '#fff',
+                color: '#666',
+                cursor: 'pointer',
+                fontSize: 13,
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleApply}
+              style={{
+                padding: '8px 18px',
+                borderWidth: 0,
+                borderRadius: 6,
+                background: '#4A90D9',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

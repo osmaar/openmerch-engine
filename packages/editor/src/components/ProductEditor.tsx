@@ -187,6 +187,25 @@ function CanvasView({ zone }: CanvasViewProps) {
     }
   }, [layout, setCanvasOffsetMM]);
 
+  // Expose stage ref and layout to store for export
+  useEffect(() => {
+    useEditorStore.setState({ stageRef: stageRef as { current: unknown } });
+  }, []);
+
+  useEffect(() => {
+    if (layout) {
+      useEditorStore.setState({
+        canvasLayout: {
+          printX: layout.printX,
+          printY: layout.printY,
+          printW: layout.printW,
+          printH: layout.printH,
+          pxPerMM: layout.pxPerMM,
+        },
+      });
+    }
+  }, [layout]);
+
   const handleStageClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (e.target === e.target.getStage() || e.target.attrs.id === 'background') {
@@ -219,13 +238,35 @@ function CanvasView({ zone }: CanvasViewProps) {
       if (snapY !== null) {
         node.y(node.y() + (snapY - rect.y));
       }
+
+      // Check if element is completely outside print zone — fade it
+      const updatedRect = node.getClientRect({ relativeTo: node.getStage() ?? undefined });
+      const isOutside =
+        updatedRect.x + updatedRect.width < layout.printX ||
+        updatedRect.x > layout.printX + layout.printW ||
+        updatedRect.y + updatedRect.height < layout.printY ||
+        updatedRect.y > layout.printY + layout.printH;
+
+      node.opacity(isOutside ? 0.25 : 1);
     },
     [layout],
   );
 
-  const handleDragEnd = useCallback(() => {
+  const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
     setSnapGuides([]);
-  }, []);
+
+    // Keep faded if dropped outside print zone
+    if (layout) {
+      const rect = e.target.getClientRect({ relativeTo: e.target.getStage() ?? undefined });
+      const isOutside =
+        rect.x + rect.width < layout.printX ||
+        rect.x > layout.printX + layout.printW ||
+        rect.y + rect.height < layout.printY ||
+        rect.y > layout.printY + layout.printH;
+
+      e.target.opacity(isOutside ? 0.25 : 1);
+    }
+  }, [layout]);
 
   // Zoom with mouse wheel
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {

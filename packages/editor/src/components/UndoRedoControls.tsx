@@ -2,9 +2,10 @@ import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import { useEditorStore } from '../store/editorStore.js';
 
 export function UndoRedoControls() {
-  const { undo, historyIndex, showPrintZone } = useEditorStore();
+  const { undo, redo, historyIndex, history, showPrintZone } = useEditorStore();
 
   const canUndo = historyIndex >= 0;
+  const canRedo = historyIndex + 2 < history.length;
 
   const btnStyle = (enabled: boolean): React.CSSProperties => ({
     display: 'flex',
@@ -44,9 +45,10 @@ export function UndoRedoControls() {
         <Undo2 size={16} />
       </button>
       <button
-        style={btnStyle(false)}
-        disabled={true}
-        title="Redo (coming soon)"
+        style={btnStyle(canRedo)}
+        onClick={() => canRedo && redo()}
+        disabled={!canRedo}
+        title="Redo (Ctrl+Shift+Z)"
       >
         <Redo2 size={16} />
       </button>
