@@ -37,9 +37,12 @@ export function NavBar() {
       zIndex: 200,
     }}>
       {/* Logo */}
-      <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginRight: 20, letterSpacing: 0.5 }}>
+      <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginRight: 12, letterSpacing: 0.5 }}>
         OpenMerch
       </div>
+
+      {/* Save indicator */}
+      <SaveIndicator />
 
       {/* Left items */}
       <NavItem label="Print" icon={Printer} isActive={activeMenu === 'print'} onClick={() => toggle('print')} />
@@ -103,6 +106,23 @@ export function NavBar() {
       {activeMenu === 'cart' && <CartDropdown onClose={close} />}
     </div>
   );
+}
+
+function SaveIndicator() {
+  const isSaving = useEditorStore((s) => s.isSaving);
+  const lastSavedAt = useEditorStore((s) => s.lastSavedAt);
+
+  if (isSaving) {
+    return <span style={{ fontSize: 10, color: '#aaa', marginRight: 8 }}>Saving...</span>;
+  }
+
+  if (lastSavedAt) {
+    const time = new Date(lastSavedAt);
+    const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return <span style={{ fontSize: 10, color: '#6a6' , marginRight: 8 }}>Saved {timeStr}</span>;
+  }
+
+  return <span style={{ fontSize: 10, color: '#888', marginRight: 8 }}>Ctrl+S to save</span>;
 }
 
 function NavItem({ label, icon: Icon, isActive, onClick, badge }: {

@@ -134,6 +134,16 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Remove background modal (threshold-based, AI-powered coming in Phase 2)
   - [x] Undo/redo full support
 - [ ] Backend API and admin panel (Phase 2)
+  - [x] Fastify server with REST endpoints (/api/v1/)
+  - [x] PostgreSQL database with Drizzle ORM (products, designs, assets, jobs, settings)
+  - [x] MinIO storage integration (S3-compatible, self-hosted)
+  - [x] Docker Compose infrastructure (PostgreSQL + Redis + MinIO)
+  - [x] Backend documentation with architecture diagrams
+  - [ ] Admin panel (merchant configuration UI)
+  - [ ] Editor ↔ API integration (save/load designs, upload to MinIO)
+  - [ ] BullMQ production job queue
+  - [ ] Settings API (API keys management)
+  - [ ] rembg AI-powered background removal (Python)
 - [ ] 2D preview with displacement maps (Phase 2)
 - [ ] Per-technique validation and embroidery files (Phase 3)
 - [ ] WooCommerce integration (Phase 4)
