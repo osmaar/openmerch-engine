@@ -31,6 +31,7 @@ type PopoverName = 'removeBg' | 'filters' | 'fill' | 'arrange' | 'position' | 't
 export function ImageToolbar({ layer }: ImageToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCrop, setShowCrop] = useState(false);
+  const [showRemoveBg, setShowRemoveBg] = useState(false);
   const [activePopover, setActivePopover] = useState<PopoverName>(null);
   const {
     updateLayer,
@@ -67,15 +68,15 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
       <ToolbarButton icon={ImagePlus} tooltip="Replace image" onClick={handleReplace} />
       <ToolbarButton icon={Crop} tooltip="Crop image" onClick={() => { setShowCrop(true); setActivePopover(null); }} />
 
-      <PopoverAnchor isOpen={activePopover === 'removeBg'} popover={
-        <RemoveBgPopover imageSrc={layer.src} onClose={() => setActivePopover(null)} onApply={(processedSrc) => {
+      <ToolbarButton icon={Eraser} tooltip="Remove background" onClick={() => setShowRemoveBg(true)} />
+
+      {showRemoveBg && (
+        <RemoveBgPopover imageSrc={layer.src} onClose={() => setShowRemoveBg(false)} onApply={(processedSrc) => {
           const img = new window.Image();
-          img.onload = () => { replaceImage(layer.id, processedSrc, img.width, img.height); setActivePopover(null); };
+          img.onload = () => { replaceImage(layer.id, processedSrc, img.width, img.height); setShowRemoveBg(false); };
           img.src = processedSrc;
         }} />
-      }>
-        <ToolbarButton icon={Eraser} tooltip="Remove background" onClick={() => toggle('removeBg')} active={activePopover === 'removeBg'} />
-      </PopoverAnchor>
+      )}
 
       <PopoverAnchor isOpen={activePopover === 'filters'} popover={
         <FiltersPopover imageSrc={layer.src} originalSrc={layer.originalSrc} activeFilterIndex={layer.activeFilter ?? 0} onClose={() => setActivePopover(null)} onApply={(processedSrc, filterIndex) => { applyFilter(layer.id, processedSrc, filterIndex); setActivePopover(null); }} />

@@ -8,7 +8,10 @@ import {
   X,
   Download,
   Check,
+  Loader,
 } from 'lucide-react';
+import { exportDesign } from '../utils/exportDesign.js';
+import { useEditorStore } from '../store/editorStore.js';
 
 export function NavBar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -156,22 +159,27 @@ function Dropdown({ children, align = 'left', onClose }: {
 }) {
   void onClose;
   return (
-    <div style={{
-      position: 'absolute',
-      top: 42,
-      ...(align === 'left' ? { left: 0 } : { right: 0 }),
-      background: '#fff',
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: '#e0e0e0',
-      borderRadius: '0 0 8px 8px',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-      color: '#333',
-      minWidth: 280,
-      maxHeight: '70vh',
-      overflowY: 'auto',
-      zIndex: 300,
-    }}>
+    <div
+      className="navbar-dropdown"
+      style={{
+        position: 'absolute',
+        top: 42,
+        ...(align === 'left' ? { left: 0 } : { right: 0 }),
+        background: '#fff',
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: '#e0e0e0',
+        borderRadius: '0 0 8px 8px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+        color: '#333',
+        minWidth: 280,
+        maxHeight: '70vh',
+        overflowY: 'auto',
+        zIndex: 300,
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#ddd transparent',
+      }}
+    >
       {children}
     </div>
   );
@@ -204,7 +212,27 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
   const [format, setFormat] = useState<'png' | 'svg'>('png');
   const [unit, setUnit] = useState<'cm' | 'inch' | 'px'>('cm');
   const [includeBase, setIncludeBase] = useState(false);
-  const [hideOverflow, setHideOverflow] = useState(true);
+  const hideOverflow = true;
+  const [includeBack, setIncludeBack] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Get state from store
+  const activeZoneId = useEditorStore((s) => s.activeZoneId);
+  const canvasLayout = useEditorStore((s) => s.canvasLayout);
+  const pxPerMM = canvasLayout?.pxPerMM ?? 1;
+  const widthMM = canvasLayout ? canvasLayout.printW / pxPerMM : 0;
+  const heightMM = canvasLayout ? canvasLayout.printH / pxPerMM : 0;
+
+  const formatSize = (mm: number): string => {
+    switch (unit) {
+      case 'cm': return (mm / 10).toFixed(1);
+      case 'inch': return (mm / 25.4).toFixed(1);
+      case 'px': return Math.round(mm / 25.4 * 300).toString();
+    }
+  };
+
+  const unitLabel = unit === 'px' ? 'px (300 DPI)' : unit;
 
   const rowStyle: React.CSSProperties = {
     display: 'flex',
@@ -245,48 +273,41 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div style={rowStyle}>
-        <span>Custom size</span>
-        <input
-          type="text"
-          defaultValue="21 x 29.7"
-          style={{
-            width: 90,
-            padding: '3px 6px',
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: '#ddd',
-            borderRadius: 4,
-            fontSize: 12,
-            textAlign: 'center',
-          }}
-        />
-      </div>
+      {format === 'png' && (
+        <>
+          <div style={rowStyle}>
+            <span>Size</span>
+            <span style={{ fontSize: 12, color: '#333', fontWeight: 500 }}>
+              {formatSize(widthMM)} x {formatSize(heightMM)} {unitLabel}
+            </span>
+          </div>
 
-      <div style={rowStyle}>
-        <span>Unit</span>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {(['cm', 'inch', 'px'] as const).map((u) => (
-            <button
-              key={u}
-              onClick={() => setUnit(u)}
-              style={{
-                padding: '3px 8px',
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: unit === u ? '#4A90D9' : '#ddd',
-                borderRadius: 4,
-                background: unit === u ? '#EBF2FA' : '#fff',
-                color: unit === u ? '#4A90D9' : '#666',
-                cursor: 'pointer',
-                fontSize: 11,
-              }}
-            >
-              {u}
-            </button>
-          ))}
-        </div>
-      </div>
+          <div style={rowStyle}>
+            <span>Unit</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['cm', 'inch', 'px'] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setUnit(u)}
+                  style={{
+                    padding: '3px 8px',
+                    borderWidth: 1,
+                    borderStyle: 'solid',
+                    borderColor: unit === u ? '#4A90D9' : '#ddd',
+                    borderRadius: 4,
+                    background: unit === u ? '#EBF2FA' : '#fff',
+                    color: unit === u ? '#4A90D9' : '#666',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                  }}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       <div style={rowStyle}>
         <span>Include base?</span>
@@ -294,21 +315,38 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
       </div>
 
       <div style={rowStyle}>
-        <span>Hide overflow?</span>
-        <ToggleSwitch value={hideOverflow} onChange={setHideOverflow} />
+        <span>Include {activeZoneId === 'front' ? 'back' : 'front'}?</span>
+        <ToggleSwitch value={includeBack} onChange={setIncludeBack} />
       </div>
+
+      {exportError && (
+        <div style={{ padding: '6px 14px', fontSize: 11, color: '#E65100', background: '#FFF3E0' }}>
+          {exportError}
+        </div>
+      )}
 
       <div style={{ padding: '10px 14px' }}>
         <button
-          onClick={() => { /* TODO: implement download */ }}
+          onClick={async () => {
+            setExporting(true);
+            setExportError(null);
+            try {
+              await exportDesign({ format, includeBase, hideOverflow, includeBack });
+              onClose();
+            } catch (err) {
+              setExportError(err instanceof Error ? err.message : 'Export failed');
+            }
+            setExporting(false);
+          }}
+          disabled={exporting}
           style={{
             width: '100%',
             padding: '8px 14px',
             borderWidth: 0,
             borderRadius: 6,
-            background: '#4A90D9',
+            background: exporting ? '#999' : '#4A90D9',
             color: '#fff',
-            cursor: 'pointer',
+            cursor: exporting ? 'default' : 'pointer',
             fontSize: 13,
             fontWeight: 500,
             display: 'flex',
@@ -317,8 +355,17 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
             gap: 6,
           }}
         >
-          <Download size={14} />
-          Download
+          {exporting ? (
+            <>
+              <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download size={14} />
+              Download
+            </>
+          )}
         </button>
       </div>
     </Dropdown>
@@ -332,7 +379,19 @@ function HelpDropdown({ onClose }: { onClose: () => void }) {
     { keys: 'Ctrl + C', desc: 'Copy selected element' },
     { keys: 'Ctrl + X', desc: 'Cut selected element' },
     { keys: 'Ctrl + V', desc: 'Paste element' },
+    { keys: 'Ctrl + D', desc: 'Duplicate selected element' },
+    { keys: 'Ctrl + A', desc: 'Select last element' },
+    { keys: 'Ctrl + E', desc: 'Clear all elements' },
     { keys: 'Ctrl + Z', desc: 'Undo' },
+    { keys: 'Ctrl+Shift+Z', desc: 'Redo' },
+    { keys: 'Ctrl + S', desc: 'Save design' },
+    { keys: 'Ctrl+Shift+S', desc: 'Download design (PNG)' },
+    { keys: 'Ctrl + P', desc: 'Print (mockup PNG)' },
+    { keys: 'Ctrl + +', desc: 'Zoom in' },
+    { keys: 'Ctrl + -', desc: 'Zoom out' },
+    { keys: 'Ctrl + 0', desc: 'Reset zoom' },
+    { keys: '← ↑ → ↓', desc: 'Move element 1px' },
+    { keys: 'Shift + arrows', desc: 'Move element 10px' },
     { keys: 'Double click', desc: 'Edit text inline' },
     { keys: 'Scroll', desc: 'Zoom in/out' },
     { keys: 'Drag canvas', desc: 'Pan (when zoomed)' },

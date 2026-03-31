@@ -28,13 +28,13 @@ export const tshirtProduct: Product = {
       // Full image maps to these real-world dimensions (mm) — square image
       baseImageWidthMM: 500,
       baseImageHeightMM: 500,
-      // Printable zone: real production size (mm)
+      // Printable zone: real production size (mm) — standard 20x30cm
       printAreaWidthMM: 200,
-      printAreaHeightMM: 250,
+      printAreaHeightMM: 300,
       // Printable zone: position relative to image top-left (mm)
       // Adjust these to align the dashed rectangle with the mockup
       printAreaXMM: 150,
-      printAreaYMM: 130,
+      printAreaYMM: 105,
       baseImageUrl: '/products/tshirt/basic_tshirt_front.png',
     },
     {
@@ -43,9 +43,9 @@ export const tshirtProduct: Product = {
       baseImageWidthMM: 500,
       baseImageHeightMM: 500,
       printAreaWidthMM: 200,
-      printAreaHeightMM: 280,
+      printAreaHeightMM: 300,
       printAreaXMM: 150,
-      printAreaYMM: 100,
+      printAreaYMM: 90,
       baseImageUrl: '/products/tshirt/basic_tshirt_back.png',
     },
   ],

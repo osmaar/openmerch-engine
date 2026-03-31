@@ -31,6 +31,8 @@ interface EditorState {
   canvasOffsetMM: { x: number; y: number };
   gallery: { id: string; src: string; name: string }[];
   showPrintZone: boolean;
+  stageRef: { current: unknown } | null;
+  canvasLayout: { printX: number; printY: number; printW: number; printH: number; pxPerMM: number } | null;
   unsplashKey: string;
   pollinationsKey: string;
 
@@ -97,6 +99,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   canvasOffsetMM: { x: 0, y: 0 },
   gallery: [],
   showPrintZone: true,
+  stageRef: null,
+  canvasLayout: null,
   unsplashKey: '',
   pollinationsKey: '',
 
@@ -232,8 +236,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           },
         },
       },
-      selectedLayerId: layer.id,
+      selectedLayerId: null,
     });
+    // Delay selection so Konva node mounts before Transformer attaches
+    setTimeout(() => set({ selectedLayerId: layer.id }), 50);
   },
 
   addTextLayer: () => {
@@ -283,8 +289,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           },
         },
       },
-      selectedLayerId: layer.id,
+      selectedLayerId: null,
     });
+    // Delay selection so Konva node mounts before Transformer attaches
+    setTimeout(() => set({ selectedLayerId: layer.id }), 50);
   },
 
   addShapeLayer: (shapeType: ShapeLayer['shapeType']) => {
@@ -337,8 +345,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           },
         },
       },
-      selectedLayerId: layer.id,
+      selectedLayerId: null,
     });
+    // Delay selection so Konva node mounts before Transformer attaches
+    setTimeout(() => set({ selectedLayerId: layer.id }), 50);
   },
 
   updateLayer: (layerId: string, updates: Partial<DesignLayer>) => {

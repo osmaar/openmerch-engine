@@ -122,8 +122,11 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Google Fonts (120+ fonts with instant search)
   - [x] Toggle print zone visibility (preview mode)
   - [x] Compositing multiply effect (fabric texture blending)
+  - [x] PNG/SVG export (600 DPI, include base, include back, zoom-safe)
+  - [x] Full keyboard shortcuts (20+ shortcuts including arrow key movement)
+  - [x] Out-of-zone transparency feedback (elements fade when outside print area)
+  - [x] Remove background modal (threshold-based, AI-powered coming in Phase 2)
   - [ ] Undo/redo full support
-  - [ ] PNG/SVG export
 - [ ] Backend API and admin panel (Phase 2)
 - [ ] 2D preview with displacement maps (Phase 2)
 - [ ] Per-technique validation and embroidery files (Phase 3)
