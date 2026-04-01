@@ -1,0 +1,27 @@
+@import '@mantine/core/styles.css';
+@import '@mantine/notifications/styles.css';
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Fix Mantine Badge label overflow */
+.mantine-Badge-label {
+  overflow: visible !important;
+}
+
+/* Thin scrollbars everywhere */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--mantine-color-gray-4); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--mantine-color-gray-5); }
+
+/* Dark mode scrollbar */
+[data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb { background: var(--mantine-color-dark-4); }
+[data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--mantine-color-dark-3); }
+
+/* Firefox thin scrollbar */
+* { scrollbar-width: thin; scrollbar-color: var(--mantine-color-gray-4) transparent; }
+[data-mantine-color-scheme="dark"] * { scrollbar-color: var(--mantine-color-dark-4) transparent; }
+
+/* Mantine Modal body scroll */
+.mantine-Modal-body { scrollbar-width: thin; }
+.mantine-ScrollArea-scrollbar { width: 4px !important; }
