@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API) in progress.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel) in progress — Admin Panel UI complete, pending API integration.
 
 ---
 
@@ -25,6 +25,7 @@ OpenMerch Engine lets any ecommerce store offer visual product customization dir
 - **Export PNG/SVG** — 600 DPI, with or without mockup base, front + back
 - **20+ keyboard shortcuts** — undo/redo, duplicate, move, zoom, download
 - **Full toolbar** — filters, fill, crop, remove background, arrange, position, transform
+- **Admin panel** — merchant dashboard to manage products, templates, cliparts, fonts, printing types, orders, languages, and settings
 - **Self-hosted** — your data, your server, Docker Compose in one command
 
 ---
@@ -65,6 +66,7 @@ pnpm dev
 ```
 
 Editor demo will be available at `http://localhost:3000`
+Admin panel will be available at `http://localhost:5173`
 
 ---
 
@@ -79,7 +81,8 @@ openmerch-engine/
 │   ├── renderer/     # 2D compositing engine (Sharp)
 │   └── embroidery/   # Python microservice (DST/PES generation)
 ├── apps/
-│   └── demo/         # Standalone demo app
+│   ├── demo/         # Standalone demo app
+│   └── admin/        # Merchant admin panel (Mantine UI)
 ├── plugins/
 │   └── plugin-woocommerce/   # WooCommerce PHP plugin
 └── products/
@@ -139,7 +142,10 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] MinIO storage integration (S3-compatible, self-hosted)
   - [x] Docker Compose infrastructure (PostgreSQL + Redis + MinIO)
   - [x] Backend documentation with architecture diagrams
-  - [ ] Admin panel (merchant configuration UI)
+  - [x] Admin panel UI (products, templates, cliparts, shapes, fonts, printing types, orders, languages, settings)
+  - [x] Mantine modals for confirmations + toast notifications
+  - [x] Dark mode support across all admin pages
+  - [ ] Admin panel ↔ API integration (connect UI to real endpoints)
   - [ ] Editor ↔ API integration (save/load designs, upload to MinIO)
   - [ ] BullMQ production job queue
   - [ ] Settings API (API keys management)
