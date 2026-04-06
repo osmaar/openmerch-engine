@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel) in progress — Admin Panel UI complete, pending API integration.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel) in progress — Admin Panel fully connected to API with PostgreSQL. Next: editor↔API integration.
 
 ---
 
@@ -145,7 +145,10 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Admin panel UI (products, templates, cliparts, shapes, fonts, printing types, orders, languages, settings)
   - [x] Mantine modals for confirmations + toast notifications
   - [x] Dark mode support across all admin pages
-  - [ ] Admin panel ↔ API integration (connect UI to real endpoints)
+  - [x] Admin panel ↔ API integration (all modules connected to PostgreSQL via REST API)
+  - [x] Database schema expansion (8 new tables: templates, cliparts, shapes, fonts, printing_types, orders, languages, translations)
+  - [x] i18n system with JSON import/export, validation, 35 languages, editor + admin separation
+  - [x] File uploads to MinIO (cliparts, fonts) with FontFace preview
   - [ ] Editor ↔ API integration (save/load designs, upload to MinIO)
   - [ ] BullMQ production job queue
   - [ ] Settings API (API keys management)

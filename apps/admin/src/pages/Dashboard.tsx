@@ -2,27 +2,37 @@ import { useEffect, useState } from 'react';
 import {
   Title, SimpleGrid, Paper, Text, Group, ThemeIcon, Button, Stack, Badge, Anchor, Divider,
 } from '@mantine/core';
-import { ShirtIcon, PenTool, Image, Activity, ExternalLink, Plus } from 'lucide-react';
-import { listProducts, listDesigns, checkHealth } from '../services/api.js';
+import { ShirtIcon, PenTool, Image, Activity, ExternalLink, Plus, ShoppingCart, Hexagon, Type } from 'lucide-react';
+import { listProducts, listDesigns, listTemplates, listCliparts, listShapes, listFonts, listOrders, checkHealth } from '../services/api.js';
 
 interface Stats {
   products: number;
   designs: number;
+  templates: number;
+  cliparts: number;
+  shapes: number;
+  fonts: number;
+  orders: number;
   apiStatus: string;
   version: string;
 }
 
 export function Dashboard() {
-  const [stats, setStats] = useState<Stats>({ products: 0, designs: 0, apiStatus: 'checking...', version: '' });
+  const [stats, setStats] = useState<Stats>({ products: 0, designs: 0, templates: 0, cliparts: 0, shapes: 0, fonts: 0, orders: 0, apiStatus: 'checking...', version: '' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       listProducts().catch(() => []),
       listDesigns().catch(() => []),
+      listTemplates().catch(() => []),
+      listCliparts().catch(() => []),
+      listShapes().catch(() => []),
+      listFonts().catch(() => []),
+      listOrders().catch(() => []),
       checkHealth().catch(() => ({ status: 'offline', version: '?' })),
-    ]).then(([products, designs, health]) => {
-      setStats({ products: products.length, designs: designs.length, apiStatus: health.status, version: health.version });
+    ]).then(([products, designs, templates, cliparts, shapes, fonts, orders, health]) => {
+      setStats({ products: products.length, designs: designs.length, templates: templates.length, cliparts: cliparts.length, shapes: shapes.length, fonts: fonts.length, orders: orders.length, apiStatus: health.status, version: health.version });
       setLoading(false);
     });
   }, []);
@@ -39,7 +49,11 @@ export function Dashboard() {
   const cards = [
     { label: 'Products', value: stats.products, icon: ShirtIcon, color: 'blue' },
     { label: 'Designs', value: stats.designs, icon: PenTool, color: 'green' },
-    { label: 'Assets', value: 0, icon: Image, color: 'orange' },
+    { label: 'Templates', value: stats.templates, icon: Image, color: 'orange' },
+    { label: 'Cliparts', value: stats.cliparts, icon: Image, color: 'violet' },
+    { label: 'Shapes', value: stats.shapes, icon: Hexagon, color: 'cyan' },
+    { label: 'Fonts', value: stats.fonts, icon: Type, color: 'pink' },
+    { label: 'Orders', value: stats.orders, icon: ShoppingCart, color: 'teal' },
     { label: 'API Status', value: stats.apiStatus, icon: Activity, color: stats.apiStatus === 'ok' ? 'green' : 'red' },
   ];
 

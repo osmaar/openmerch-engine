@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Title, Button, Group, Paper, Table, TextInput, ActionIcon, Text, Badge, Modal, Stack,
   Tabs, Switch, NumberInput, Textarea, FileInput, Select, Checkbox, MultiSelect,
@@ -6,16 +6,8 @@ import {
 import { notifications } from '@mantine/notifications';
 import { Plus, Trash2, Search, Printer, Upload } from 'lucide-react';
 import { useConfirm } from '../hooks/useConfirm.js';
-
-interface PrintingType {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  active: boolean;
-  calculationMethod: string;
-  createdAt: string;
-}
+import { listPrintingTypes, createPrintingType, updatePrintingType, deletePrintingType } from '../services/api.js';
+import type { PrintingType } from '../services/api.js';
 
 const CALC_METHODS = [
   { value: 'elements', label: 'Text, Clipart, Images, Upload' },
@@ -27,14 +19,9 @@ const CALC_METHODS = [
   { value: 'acreage', label: 'Acreage design (square inch)' },
 ];
 
-const FAKE_PRINTINGS: PrintingType[] = [
-  { id: 'p1', title: 'Sublimation', description: 'Full color printing', thumbnailUrl: '', active: true, calculationMethod: 'area', createdAt: new Date().toISOString() },
-  { id: 'p2', title: 'Screen Printing', description: 'Max 8 colors', thumbnailUrl: '', active: true, calculationMethod: 'color', createdAt: new Date().toISOString() },
-  { id: 'p3', title: 'Embroidery', description: 'Thread-based, experimental', thumbnailUrl: '', active: false, calculationMethod: 'elements', createdAt: new Date().toISOString() },
-];
-
 export function PrintingTypes() {
-  const [printings, setPrintings] = useState<PrintingType[]>(FAKE_PRINTINGS);
+  const [printings, setPrintings] = useState<PrintingType[]>([]);
+  const [loading, setLoading] = useState(true);
   const confirm = useConfirm();
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState('');
@@ -44,15 +31,27 @@ export function PrintingTypes() {
   const [description, setDescription] = useState('');
   const [calcMethod, setCalcMethod] = useState('elements');
   const [active, setActive] = useState(true);
-  const [calcScope, setCalcScope] = useState('all'); // all | stage
+  const [calcScope, setCalcScope] = useState('all');
+
+  const load = () => {
+    setLoading(true);
+    listPrintingTypes().then(setPrintings).catch(() => setPrintings([])).finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
 
   const filtered = printings.filter((p) => !search.trim() || p.title.toLowerCase().includes(search.toLowerCase()));
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!title.trim()) return;
-    setPrintings([...printings, { id: `p-${Date.now()}`, title, description, thumbnailUrl: '', active, calculationMethod: calcMethod, createdAt: new Date().toISOString() }]);
-    notifications.show({ title: 'Printing type created', message: `"${title}" has been created successfully`, color: 'green' });
-    setTitle(''); setDescription(''); setCalcMethod('elements'); setActive(true); setShowCreate(false);
+    try {
+      await createPrintingType({ title, description, calculationMethod: calcMethod, active });
+      notifications.show({ title: 'Printing type created', message: `"${title}" has been created successfully`, color: 'green' });
+      setTitle(''); setDescription(''); setCalcMethod('elements'); setActive(true); setShowCreate(false);
+      load();
+    } catch (e) {
+      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+    }
   };
 
   return (
@@ -62,7 +61,7 @@ export function PrintingTypes() {
         <Button leftSection={<Plus size={16} />} onClick={() => setShowCreate(true)}>Add New Printing</Button>
       </Group>
 
-      <Modal opened={showCreate} onClose={() => setShowCreate(false)} title="Add New Printing Type" centered size="lg">
+      <Modal opened={showCreate} onClose={() => { setShowCreate(false); setTitle(''); setDescription(''); setCalcMethod('elements'); setActive(true); }} title="Add New Printing Type" centered size="lg">
         <Tabs defaultValue="general">
           <Tabs.List mb="md">
             <Tabs.Tab value="general">General</Tabs.Tab>
@@ -192,7 +191,9 @@ export function PrintingTypes() {
       </Paper>
 
       <Paper radius="md" withBorder style={{ overflow: 'visible' }}>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <Text c="dimmed" ta="center" p="xl" size="sm">Loading...</Text>
+        ) : filtered.length === 0 ? (
           <Stack align="center" p="xl" gap="xs"><Printer size={40} opacity={0.3} /><Text c="dimmed" size="sm">No printing types yet</Text></Stack>
         ) : (
           <Table striped highlightOnHover>
@@ -203,8 +204,8 @@ export function PrintingTypes() {
                   <Table.Td><Text size="sm" fw={500}>{p.title}</Text></Table.Td>
                   <Table.Td><Text size="xs" c="dimmed">{p.description}</Text></Table.Td>
                   <Table.Td><Badge size="xs" variant="light">{CALC_METHODS.find((m) => m.value === p.calculationMethod)?.label ?? p.calculationMethod}</Badge></Table.Td>
-                  <Table.Td><Badge variant="light" color={p.active ? 'green' : 'gray'} size="sm" style={{ cursor: 'pointer' }} onClick={() => setPrintings(printings.map((pr) => pr.id === p.id ? { ...pr, active: !pr.active } : pr))}>{p.active ? 'Active' : 'Inactive'}</Badge></Table.Td>
-                  <Table.Td><ActionIcon variant="subtle" color="red" onClick={() => confirm('Delete Printing Type', `Are you sure you want to delete "${p.title}"?`, () => { setPrintings(printings.filter((pr) => pr.id !== p.id)); notifications.show({ title: 'Printing type deleted', message: 'The printing type has been deleted', color: 'red' }); })}><Trash2 size={14} /></ActionIcon></Table.Td>
+                  <Table.Td><Badge variant="light" color={p.active ? 'green' : 'gray'} size="sm" style={{ cursor: 'pointer' }} onClick={async () => { await updatePrintingType(p.id, { active: !p.active }); load(); }}>{p.active ? 'Active' : 'Inactive'}</Badge></Table.Td>
+                  <Table.Td><ActionIcon variant="subtle" color="red" onClick={() => confirm('Delete Printing Type', `Are you sure you want to delete "${p.title}"?`, async () => { await deletePrintingType(p.id); notifications.show({ title: 'Printing type deleted', message: 'The printing type has been deleted', color: 'red' }); load(); })}><Trash2 size={14} /></ActionIcon></Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>
