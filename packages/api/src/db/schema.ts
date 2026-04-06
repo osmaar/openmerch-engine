@@ -22,6 +22,9 @@ export const designs = pgTable('designs', {
   name: varchar('name', { length: 255 }).default('Untitled Design'),
   designData: jsonb('design_data').notNull(),
   thumbnailUrl: text('thumbnail_url'),
+  status: varchar('status', { length: 50 }).notNull().default('draft'), // draft, cart, paid, cancelled
+  sizes: jsonb('sizes').notNull().default('{}'), // { "S": 2, "M": 1 }
+  productColor: varchar('product_color', { length: 20 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

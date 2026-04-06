@@ -46,7 +46,7 @@ export function App() {
         .then((r) => r.json())
         .then((products: { id: string; name: string; slug: string; zones: Product['zones'] }[]) => {
           const valid = products.find((p) =>
-            p.zones.length > 0 && p.zones[0].baseImageUrl
+            p.zones.length > 0 && p.zones[0]?.baseImageUrl
           );
           if (valid) {
             setProduct({ id: valid.id, name: valid.name, slug: valid.slug, zones: valid.zones });

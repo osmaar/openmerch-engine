@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + Editor Integration) in progress — Editor saves designs to DB, MinIO organized, ProductEdit functional. Next: cart flow + CMS integration.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + Editor Integration) in progress — Cart flow functional, editor saves designs on Add to Cart. Next: CMS integration + production jobs.
 
 ---
 
@@ -153,7 +153,8 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] MinIO storage organized by category (cliparts/, fonts/, products/, uploads/, production/)
   - [x] ProductEdit connected to API (load existing data, save changes)
   - [x] Configurable storage mode (Database/MinIO/Hybrid) in Settings
-  - [ ] Cart flow (Add to Cart → save design → checkout → production files)
+  - [x] Cart flow (Add to Cart saves design to DB, cart dropdown with qty controls, remove deletes from DB)
+  - [ ] Checkout flow (payment → production files generation)
   - [ ] BullMQ production job queue
   - [ ] Settings API (API keys management)
   - [ ] rembg AI-powered background removal (Python)

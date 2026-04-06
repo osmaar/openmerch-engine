@@ -16,6 +16,18 @@ interface HistoryEntry {
   layers: DesignLayer[];
 }
 
+export interface CartItem {
+  designId: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  sizes: Record<string, number>;
+  productColor: string;
+  productColorName: string;
+  totalUnits: number;
+  price: number;
+}
+
 const MAX_HISTORY = 50;
 
 interface EditorState {
@@ -38,8 +50,12 @@ interface EditorState {
   lastSavedAt: string | null;
   unsplashKey: string;
   pollinationsKey: string;
+  cartItems: CartItem[];
 
   setProduct: (product: Product) => void;
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (designId: string) => void;
+  clearCart: () => void;
   setUnsplashKey: (key: string) => void;
   setPollinationsKey: (key: string) => void;
   setActiveZone: (zoneId: string) => void;
@@ -110,6 +126,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   lastSavedAt: null,
   unsplashKey: '',
   pollinationsKey: '',
+  cartItems: [],
 
   setProduct: (product: Product) => {
     const design: Design = {
@@ -137,6 +154,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       history: [],
       historyIndex: -1,
     });
+  },
+
+  addToCart: (item: CartItem) => {
+    set({ cartItems: [...get().cartItems, item] });
+  },
+
+  removeFromCart: (designId: string) => {
+    set({ cartItems: get().cartItems.filter((i) => i.designId !== designId) });
+  },
+
+  clearCart: () => {
+    set({ cartItems: [] });
   },
 
   setActiveZone: (zoneId: string) => {
