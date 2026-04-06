@@ -48,7 +48,7 @@ export function Fonts() {
     try {
       let fileUrl: string | null = null;
       if (newFile) {
-        const asset = await uploadAsset(newFile);
+        const asset = await uploadAsset(newFile, 'font');
         fileUrl = asset.url;
       }
       await createFont({ name: newName, description: newDesc, fileUrl, isGoogle: !newFile, active: newActive });
