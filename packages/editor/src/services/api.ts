@@ -44,6 +44,9 @@ export interface SavedDesign {
   name: string;
   designData: unknown;
   thumbnailUrl: string | null;
+  status: string;
+  sizes: Record<string, number>;
+  productColor: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +55,9 @@ export async function saveDesign(data: {
   productId: string;
   name?: string;
   designData: unknown;
+  status?: string;
+  sizes?: Record<string, number>;
+  productColor?: string;
 }): Promise<SavedDesign> {
   return request('/designs', {
     method: 'POST',
@@ -63,6 +69,9 @@ export async function updateDesign(id: string, data: {
   name?: string;
   designData?: unknown;
   thumbnailUrl?: string;
+  status?: string;
+  sizes?: Record<string, number>;
+  productColor?: string;
 }): Promise<SavedDesign> {
   return request(`/designs/${id}`, {
     method: 'PUT',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Printer,
   HelpCircle,
@@ -9,9 +9,12 @@ import {
   Download,
   Check,
   Loader,
+  Trash2,
 } from 'lucide-react';
 import { exportDesign } from '../utils/exportDesign.js';
 import { useEditorStore } from '../store/editorStore.js';
+import type { CartItem } from '../store/editorStore.js';
+import { PRODUCT_COLORS } from './sidebar/tabs/ProductTab.js';
 
 export function NavBar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -53,28 +56,9 @@ export function NavBar() {
 
       {/* Right items */}
       <NavItem label="" icon={Globe} isActive={activeMenu === 'lang'} onClick={() => toggle('lang')} />
-      <div style={{ padding: '0 8px', fontSize: 12, color: '#aaa' }}>$0.00</div>
-      <NavItem label="" icon={ShoppingCart} isActive={activeMenu === 'cart'} onClick={() => toggle('cart')} badge={0} />
-      <button
-        style={{
-          padding: '5px 12px',
-          borderWidth: 0,
-          borderRadius: 4,
-          background: '#4A90D9',
-          color: '#fff',
-          cursor: 'pointer',
-          fontSize: 12,
-          fontWeight: 500,
-          marginLeft: 8,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-        }}
-        onClick={() => {}}
-        title="Coming soon — requires backend"
-      >
-        Add to Cart
-      </button>
+      <CartPrice />
+      <CartBadge isActive={activeMenu === 'cart'} onClick={() => toggle('cart')} />
+      <AddToCartButton onAdded={() => setActiveMenu('cart')} />
       <button
         style={{
           padding: '5px 12px',
@@ -104,6 +88,145 @@ export function NavBar() {
       {activeMenu === 'help' && <HelpDropdown onClose={close} />}
       {activeMenu === 'lang' && <LanguageDropdown onClose={close} />}
       {activeMenu === 'cart' && <CartDropdown onClose={close} />}
+    </div>
+  );
+}
+
+function CartPrice() {
+  const cartItems = useEditorStore((s) => s.cartItems);
+  const total = cartItems.reduce((sum, item) => sum + item.price * item.totalUnits, 0);
+  return <div style={{ padding: '0 8px', fontSize: 12, color: '#aaa' }}>${(total / 100).toFixed(2)}</div>;
+}
+
+function CartBadge({ isActive, onClick }: { isActive: boolean; onClick: () => void }) {
+  const totalUnits = useEditorStore((s) => s.cartItems.reduce((sum, i) => sum + i.totalUnits, 0));
+  return <NavItem label="" icon={ShoppingCart} isActive={isActive} onClick={onClick} badge={totalUnits} />;
+}
+
+function AddToCartButton({ onAdded }: { onAdded: () => void }) {
+  const [adding, setAdding] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  const showToast = (message: string, type: 'error' | 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Listen for sidebar "Add to Cart" button
+  const handleAddToCart = useCallback(async () => {
+    const store = useEditorStore.getState();
+    if (!store.design || !store.product) return;
+
+    const totalUnits = Object.values(store.sizes).reduce((a, b) => a + b, 0);
+    if (totalUnits === 0) {
+      showToast('Select at least one size and quantity in the Product tab.', 'error');
+      return;
+    }
+
+    const hasLayers = Object.values(store.design.zones).some((z) => z.layers.length > 0);
+    if (!hasLayers) {
+      showToast('Add at least one element to your design first.', 'error');
+      return;
+    }
+
+    setAdding(true);
+    try {
+      const { saveDesign, updateDesign } = await import('../services/api.js');
+      const data = {
+        productId: store.product.id,
+        name: `${store.product.name} — Custom Design`,
+        designData: store.design,
+        status: 'cart',
+        sizes: store.sizes,
+        productColor: store.productColor,
+      };
+
+      let result;
+      if (store.savedDesignId) {
+        result = await updateDesign(store.savedDesignId, { ...data, status: 'cart' });
+      } else {
+        result = await saveDesign(data);
+      }
+
+      const productImage = store.product.zones[0]?.baseImageUrl ?? '';
+      const colorEntry = PRODUCT_COLORS.find((c) => c.value === store.productColor);
+      const cartItem: CartItem = {
+        designId: result.id,
+        productId: store.product.id,
+        productName: store.product.name,
+        productImage,
+        sizes: { ...store.sizes },
+        productColor: store.productColor,
+        productColorName: colorEntry?.name ?? store.productColor,
+        totalUnits,
+        price: 0,
+      };
+
+      useEditorStore.setState({ savedDesignId: null });
+      store.addToCart(cartItem);
+      useEditorStore.setState({ sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } });
+
+      showToast('Added to cart!', 'success');
+      onAdded();
+    } catch (e) {
+      console.error('Failed to add to cart:', e);
+      showToast('Failed to add to cart. Please try again.', 'error');
+    } finally {
+      setAdding(false);
+    }
+  }, [onAdded]);
+
+  useEffect(() => {
+    const handler = () => { handleAddToCart(); };
+    window.addEventListener('openmerch:add-to-cart', handler);
+    return () => window.removeEventListener('openmerch:add-to-cart', handler);
+  }, [handleAddToCart]);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        style={{
+          padding: '5px 12px',
+          borderWidth: 0,
+          borderRadius: 4,
+          background: adding ? '#888' : '#4A90D9',
+          color: '#fff',
+          cursor: adding ? 'default' : 'pointer',
+          fontSize: 12,
+          fontWeight: 500,
+          marginLeft: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+        }}
+        onClick={handleAddToCart}
+        disabled={adding}
+      >
+        {adding ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <ShoppingCart size={12} />}
+        {adding ? 'Adding...' : 'Add to Cart'}
+      </button>
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: 52,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '12px 24px',
+          borderRadius: 10,
+          background: toast.type === 'error' ? '#c0392b' : '#27ae60',
+          color: '#fff',
+          fontSize: 14,
+          fontWeight: 500,
+          zIndex: 99999,
+          boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          {toast.type === 'success' ? <Check size={16} /> : <X size={16} />}
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }
@@ -491,38 +614,96 @@ function LanguageDropdown({ onClose }: { onClose: () => void }) {
 
 // Cart dropdown
 function CartDropdown({ onClose }: { onClose: () => void }) {
+  const cartItems = useEditorStore((s) => s.cartItems);
+  const removeFromCart = useEditorStore((s) => s.removeFromCart);
+  const [, forceUpdate] = useState(0);
+
+  const handleRemove = async (designId: string) => {
+    try {
+      const { deleteDesign } = await import('../services/api.js');
+      await deleteDesign(designId);
+    } catch { /* design may already be deleted */ }
+    removeFromCart(designId);
+  };
+
+  const updateItemQty = (designId: string, size: string, delta: number) => {
+    const items = useEditorStore.getState().cartItems;
+    const updated = items.map((item) => {
+      if (item.designId !== designId) return item;
+      const newSizes = { ...item.sizes };
+      newSizes[size] = Math.max(0, (newSizes[size] ?? 0) + delta);
+      const totalUnits = Object.values(newSizes).reduce((a, b) => a + b, 0);
+      return { ...item, sizes: newSizes, totalUnits };
+    });
+    useEditorStore.setState({ cartItems: updated });
+    forceUpdate((n) => n + 1);
+  };
+
+  const totalUnits = cartItems.reduce((sum, i) => sum + i.totalUnits, 0);
+
   return (
     <Dropdown align="right" onClose={onClose}>
-      <DropdownHeader title="My Cart" onClose={onClose} />
-      <div style={{
-        padding: '30px 14px',
-        textAlign: 'center',
-        color: '#aaa',
-        fontSize: 13,
-      }}>
-        <ShoppingCart size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
-        <div>Your cart is empty</div>
-      </div>
-      <div style={{ padding: '10px 14px', display: 'flex', gap: 8 }}>
-        <button
-          onClick={() => {}}
-          style={{
-            flex: 1,
-            padding: '8px 0',
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: '#ddd',
-            borderRadius: 6,
-            background: '#fff',
-            cursor: 'pointer',
-            fontSize: 12,
-            color: '#666',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-          }}
-        >
+      <DropdownHeader title={`My Cart (${cartItems.length})`} onClose={onClose} />
+      {cartItems.length === 0 ? (
+        <div style={{ padding: '30px 14px', textAlign: 'center', color: '#aaa', fontSize: 13 }}>
+          <ShoppingCart size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
+          <div>Your cart is empty</div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>Design a product and click "Add to Cart"</div>
+        </div>
+      ) : (
+        <div style={{ maxHeight: 350, overflow: 'auto' }}>
+          {cartItems.map((item) => {
+            const activeSizes = Object.entries(item.sizes).filter(([, q]) => q > 0);
+            return activeSizes.map(([size, qty]) => (
+              <div key={`${item.designId}-${size}`} style={{ padding: '10px 14px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Product thumbnail */}
+                <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', background: '#f8f8f8', border: '1px solid #eee', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {item.productImage ? (
+                    <img src={item.productImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <ShoppingCart size={16} color="#ccc" />
+                  )}
+                </div>
+                {/* Name + size */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.productName}</div>
+                  <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                    Size: <span style={{ fontWeight: 600, color: '#555' }}>{size}</span>
+                    <span title={item.productColorName} style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: item.productColor, border: '1px solid #ccc', marginLeft: 6, verticalAlign: -1, boxShadow: item.productColor === '#FFFFFF' ? 'inset 0 0 0 1px #ddd' : 'none' }} />
+                  </div>
+                </div>
+                {/* Qty controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: '#f0f0f0', borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
+                  <button onClick={() => updateItemQty(item.designId, size, -1)} style={{ width: 26, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 15, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                  <span style={{ fontSize: 12, fontWeight: 700, minWidth: 24, textAlign: 'center' }}>{qty}</span>
+                  <button onClick={() => updateItemQty(item.designId, size, 1)} style={{ width: 26, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 15, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                </div>
+                {/* Delete */}
+                <button
+                  onClick={() => handleRemove(item.designId)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#e74c3c', flexShrink: 0, opacity: 0.6, transition: 'opacity 0.15s' }}
+                  title="Remove from cart"
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ));
+          })}
+        </div>
+      )}
+      {/* Footer */}
+      {cartItems.length > 0 && (
+        <div style={{ padding: '10px 14px', borderTop: '1px solid #eee' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 12 }}>
+            <span style={{ color: '#888' }}>Total ({totalUnits} units)</span>
+            <span style={{ fontWeight: 700 }}>${(cartItems.reduce((s, i) => s + i.price * i.totalUnits, 0) / 100).toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+      <div style={{ padding: '6px 14px 10px', display: 'flex', gap: 8 }}>
+        <button onClick={() => { window.history.back(); }} style={{ flex: 1, padding: '8px 0', borderWidth: 1, borderStyle: 'solid', borderColor: '#ddd', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 12, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <ArrowLeft size={12} />
           Back to Shop
         </button>

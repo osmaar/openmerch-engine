@@ -1,7 +1,7 @@
-import { ShoppingBag, Minus, Plus } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
 
-const PRODUCT_COLORS = [
+export const PRODUCT_COLORS = [
   { name: 'White', value: '#FFFFFF' },
   { name: 'Black', value: '#222222' },
   { name: 'Navy', value: '#1B2A4A' },
@@ -111,6 +111,28 @@ export function ProductTab() {
         <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
           Total: {Object.values(sizes).reduce((a, b) => a + b, 0)} units
         </div>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('openmerch:add-to-cart'))}
+          style={{
+            width: '100%',
+            marginTop: 12,
+            padding: '10px 0',
+            borderWidth: 0,
+            borderRadius: 8,
+            background: '#4A90D9',
+            color: '#fff',
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+        >
+          <ShoppingCart size={14} />
+          Add to Cart
+        </button>
       </div>
     </div>
   );
