@@ -229,10 +229,11 @@ export const updateSettings = (entries: { key: string; value: string; isSecret?:
   request<Setting[]>('/settings', { method: 'PUT', body: JSON.stringify({ entries }) });
 
 // ─── Assets ──────────────────────────────────────────────────
-export const uploadAsset = async (file: File) => {
+export const uploadAsset = async (file: File, category?: 'clipart' | 'font' | 'template' | 'product' | 'upload') => {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await fetch(`${API_BASE}/api/v1/assets/upload`, { method: 'POST', body: formData });
+  const query = category ? `?category=${category}` : '';
+  const res = await fetch(`${API_BASE}/api/v1/assets/upload${query}`, { method: 'POST', body: formData });
   if (!res.ok) throw new Error('Upload failed');
   return res.json();
 };

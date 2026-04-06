@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Title, Tabs, Paper, TextInput, Textarea, NumberInput, Select, MultiSelect,
   Switch, Button, Group, Stack, Text, FileInput, Badge, ActionIcon, Divider,
   Checkbox, ColorInput, Table, Modal,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { ArrowLeft, Save, Plus, Trash2, Upload } from 'lucide-react';
+import { getProduct, createProduct, updateProduct } from '../services/api.js';
 
 interface Stage {
   id: string;
@@ -94,13 +96,73 @@ export function ProductEdit() {
   // Attributes
   const [attributes, setAttributes] = useState<Attribute[]>([]);
 
-  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showMaskInfo, setShowMaskInfo] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(!isNew);
 
-  const handleSave = () => {
-    // TODO: save to API
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  // Load existing product
+  useEffect(() => {
+    if (!isNew && id) {
+      setLoadingProduct(true);
+      getProduct(id).then((p) => {
+        setName(p.name);
+        setPrice(p.price / 100);
+        setDescription(p.description ?? '');
+        setCategories(p.categories ?? []);
+        setPrintingTechniques(p.printingTechniques ?? []);
+        setActive(p.active);
+        if (p.zones && (p.zones as Stage[]).length > 0) {
+          setStages((p.zones as Stage[]).map((z) => ({
+            id: z.id, name: z.name,
+            baseImageUrl: z.baseImageUrl ?? '',
+            baseImageWidthMM: z.baseImageWidthMM ?? 500, baseImageHeightMM: z.baseImageHeightMM ?? 500,
+            printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
+            printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
+            exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false,
+          })));
+        }
+      }).catch(() => {
+        notifications.show({ title: 'Error', message: 'Product not found', color: 'red' });
+        navigate('/products');
+      }).finally(() => setLoadingProduct(false));
+    }
+  }, [id, isNew, navigate]);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      notifications.show({ title: 'Error', message: 'Product name is required', color: 'red' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const data = {
+        name,
+        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        description,
+        price: Math.round(price * 100),
+        categories,
+        printingTechniques,
+        active,
+        zones: stages.map((s) => ({
+          id: s.id, name: s.name, baseImageUrl: s.baseImageUrl,
+          baseImageWidthMM: s.baseImageWidthMM, baseImageHeightMM: s.baseImageHeightMM,
+          printAreaWidthMM: s.printAreaWidthMM, printAreaHeightMM: s.printAreaHeightMM,
+          printAreaXMM: s.printAreaXMM, printAreaYMM: s.printAreaYMM,
+        })),
+      };
+      if (isNew) {
+        await createProduct(data as Parameters<typeof createProduct>[0]);
+        notifications.show({ title: 'Product created', message: `"${name}" has been created`, color: 'green' });
+      } else {
+        await updateProduct(id!, data);
+        notifications.show({ title: 'Product saved', message: `"${name}" has been updated`, color: 'green' });
+      }
+      navigate('/products');
+    } catch (e) {
+      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addStage = () => {
@@ -141,13 +203,17 @@ export function ProductEdit() {
     setAttributes(attributes.map((a, i) => i === idx ? { ...a, ...updates } : a));
   };
 
+  if (loadingProduct) {
+    return <Text c="dimmed" p="xl">Loading product...</Text>;
+  }
+
   return (
     <div>
       <Group mb="lg">
         <ActionIcon variant="subtle" color="gray" onClick={() => navigate('/products')}>
           <ArrowLeft size={20} />
         </ActionIcon>
-        <Title order={2}>{isNew ? 'Add New Product Base' : 'Edit Product Base'}</Title>
+        <Title order={2}>{isNew ? 'Add New Product Base' : `Edit: ${name || 'Product'}`}</Title>
       </Group>
 
       <Tabs defaultValue="details">
@@ -717,10 +783,10 @@ export function ProductEdit() {
           <Button variant="default" onClick={() => navigate('/products')}>Cancel</Button>
           <Button
             onClick={handleSave}
-            leftSection={saved ? null : <Save size={16} />}
-            color={saved ? 'green' : 'blue'}
+            leftSection={<Save size={16} />}
+            loading={saving}
           >
-            {saved ? 'Saved!' : 'Save Product'}
+            {isNew ? 'Create Product' : 'Save Product'}
           </Button>
         </Group>
       </Paper>

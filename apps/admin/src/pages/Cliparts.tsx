@@ -78,7 +78,7 @@ export function Cliparts() {
     try {
       let fileUrl: string | null = null;
       if (newFile) {
-        const asset = await uploadAsset(newFile);
+        const asset = await uploadAsset(newFile, 'clipart');
         fileUrl = asset.url;
       }
       await createClipart({
@@ -98,7 +98,7 @@ export function Cliparts() {
     try {
       const items = [];
       for (const f of bulkFiles) {
-        const asset = await uploadAsset(f.file);
+        const asset = await uploadAsset(f.file, 'clipart');
         items.push({ name: f.name.replace(/\.[^/.]+$/, ''), categories: bulkCategories, tags: bulkTags, fileUrl: asset.url, price: bulkPrice });
       }
       await bulkCreateCliparts(items);

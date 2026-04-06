@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Title, Paper, TextInput, PasswordInput, Button, Group, Text, Stack, Badge, Anchor, Divider,
+  Title, Paper, TextInput, PasswordInput, Button, Group, Text, Stack, Badge, Anchor, Divider, Select,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Save, ExternalLink } from 'lucide-react';
@@ -10,6 +10,7 @@ export function SettingsPage() {
   const [unsplashKey, setUnsplashKey] = useState('');
   const [pollinationsKey, setPollinationsKey] = useState('');
   const [storeName, setStoreName] = useState('');
+  const [storageMode, setStorageMode] = useState('database');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -19,6 +20,7 @@ export function SettingsPage() {
         if (s.key === 'store_name') setStoreName(s.value);
         if (s.key === 'unsplash_key' && !s.value.startsWith('••')) setUnsplashKey(s.value);
         if (s.key === 'pollinations_key' && !s.value.startsWith('••')) setPollinationsKey(s.value);
+        if (s.key === 'storage_mode') setStorageMode(s.value);
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -28,6 +30,7 @@ export function SettingsPage() {
     try {
       const entries: { key: string; value: string; isSecret?: boolean }[] = [
         { key: 'store_name', value: storeName },
+        { key: 'storage_mode', value: storageMode },
       ];
       if (unsplashKey) entries.push({ key: 'unsplash_key', value: unsplashKey, isSecret: true });
       if (pollinationsKey) entries.push({ key: 'pollinations_key', value: pollinationsKey, isSecret: true });
@@ -58,6 +61,28 @@ export function SettingsPage() {
             <Stack gap="sm">
               <PasswordInput label="Unsplash Access Key" placeholder="Get key at unsplash.com/developers" value={unsplashKey} onChange={(e) => setUnsplashKey(e.target.value)} />
               <PasswordInput label="Pollinations Key" placeholder="Get key at enter.pollinations.ai" value={pollinationsKey} onChange={(e) => setPollinationsKey(e.target.value)} />
+            </Stack>
+          </Paper>
+
+          <Paper p="lg" radius="md" withBorder>
+            <Text fw={600} size="sm" mb="md">Design Storage</Text>
+            <Stack gap="sm">
+              <Select
+                label="Storage Mode"
+                description="Where to store customer design images uploaded in the editor"
+                data={[
+                  { value: 'database', label: 'Database (Base64) — simple, no extra setup' },
+                  { value: 'minio', label: 'MinIO/S3 — recommended for production' },
+                  { value: 'hybrid', label: 'Hybrid — metadata in DB, files in MinIO' },
+                ]}
+                value={storageMode}
+                onChange={(v) => setStorageMode(v ?? 'database')}
+              />
+              <Text size="xs" c="dimmed">
+                {storageMode === 'database' && 'Images are stored as Base64 inside the design JSON in PostgreSQL. Simple but increases DB size. Good for development and small stores.'}
+                {storageMode === 'minio' && 'Images are uploaded to MinIO/S3 and the design stores only URLs. Recommended for production — keeps the DB lean and files are served directly.'}
+                {storageMode === 'hybrid' && 'Small images (<100KB) stay in the DB, larger ones go to MinIO. Balances simplicity and performance.'}
+              </Text>
             </Stack>
           </Paper>
 

@@ -5,15 +5,39 @@ import { minioClient, ensureBucket } from '../storage/minio.js';
 import { config } from '../config.js';
 import { randomUUID } from 'crypto';
 
+// Determine subfolder based on category query param or mime type
+function getStoragePath(category: string | undefined, filename: string): string {
+  const ext = filename.split('.').pop() ?? 'bin';
+  const id = randomUUID();
+
+  switch (category) {
+    case 'clipart':
+      return `assets/cliparts/${id}.${ext}`;
+    case 'font':
+      return `assets/fonts/${id}.${ext}`;
+    case 'template':
+      return `assets/templates/${id}.${ext}`;
+    case 'product':
+      return `assets/products/${id}.${ext}`;
+    case 'upload':
+      return `uploads/${id}.${ext}`;
+    case 'production':
+      return `production/${id}.${ext}`;
+    default:
+      return `assets/general/${id}.${ext}`;
+  }
+}
+
 export async function assetRoutes(app: FastifyInstance) {
   // POST /api/v1/assets/upload — upload a file
-  app.post('/api/v1/assets/upload', async (req, reply) => {
+  // Optional query param: ?category=clipart|font|template|product|upload|production
+  app.post<{ Querystring: { category?: string } }>('/api/v1/assets/upload', async (req, reply) => {
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: 'No file uploaded', code: 'NO_FILE' });
 
     const buffer = await file.toBuffer();
-    const ext = file.filename.split('.').pop() ?? 'bin';
-    const storageKey = `assets/${randomUUID()}.${ext}`;
+    const category = (req.query as { category?: string }).category;
+    const storageKey = getStoragePath(category, file.filename);
 
     await ensureBucket();
 
