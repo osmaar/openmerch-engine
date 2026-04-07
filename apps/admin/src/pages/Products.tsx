@@ -9,10 +9,12 @@ import { useNavigate } from 'react-router-dom';
 import { listProducts, createProduct, deleteProduct } from '../services/api.js';
 import type { Product } from '../services/api.js';
 import { useConfirm } from '../hooks/useConfirm.js';
+import { useT } from '../i18n/useTranslation.js';
 
 type SortOrder = 'az' | 'za' | 'newest' | 'oldest';
 
 export function Products() {
+  const t = useT();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -70,24 +72,24 @@ export function Products() {
       }],
     });
     setNewName(''); setNewSlug(''); setNewDescription(''); setShowCreate(false);
-    notifications.show({ title: 'Product created', message: `"${newName}" has been created successfully`, color: 'green' });
+    notifications.show({ title: t('Product created'), message: `"${newName}" ${t('has been created successfully')}`, color: 'green' });
     load();
   };
 
   const handleDelete = async (id: string) => {
-    confirm('Delete Product', 'Are you sure you want to delete this product? This action cannot be undone.', async () => {
+    confirm(t('Delete Product'), t('Are you sure you want to delete this product? This action cannot be undone.'), async () => {
       await deleteProduct(id).catch(() => {});
       setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
-      notifications.show({ title: 'Product deleted', message: 'The product has been deleted', color: 'red' });
+      notifications.show({ title: t('Product deleted'), message: t('The product has been deleted'), color: 'red' });
       load();
     });
   };
 
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;
-    confirm('Delete Products', `Are you sure you want to delete ${selected.size} product(s)? This action cannot be undone.`, async () => {
+    confirm(t('Delete Products'), `${t('Are you sure you want to delete')} ${selected.size} ${t('product(s)?')} ${t('This action cannot be undone.')}`, async () => {
       await Promise.all(Array.from(selected).map((id) => deleteProduct(id).catch(() => {})));
-      notifications.show({ title: 'Products deleted', message: `${selected.size} product(s) have been deleted`, color: 'red' });
+      notifications.show({ title: t('Products deleted'), message: `${selected.size} ${t('product(s) have been deleted')}`, color: 'red' });
       setSelected(new Set());
       load();
     });
@@ -116,17 +118,17 @@ export function Products() {
   return (
     <div>
       <Group justify="space-between" mb="lg">
-        <Title order={2}>Products Base</Title>
+        <Title order={2}>{t('Products Base')}</Title>
         <Button leftSection={<Plus size={16} />} onClick={() => navigate('/products/new')}>
-          Add New Product Base
+          {t('Add New Product Base')}
         </Button>
       </Group>
 
       {/* Create modal */}
-      <Modal opened={showCreate} onClose={() => setShowCreate(false)} title="New Product Base" centered size="md">
+      <Modal opened={showCreate} onClose={() => setShowCreate(false)} title={t('New Product Base')} centered size="md">
         <Stack>
           <TextInput
-            label="Name"
+            label={t('Name')}
             placeholder="Basic T-Shirt"
             value={newName}
             onChange={(e) => {
@@ -136,21 +138,21 @@ export function Products() {
             required
           />
           <TextInput
-            label="Slug"
+            label={t('Slug')}
             placeholder="basic-tshirt"
             value={newSlug}
             onChange={(e) => setNewSlug(e.target.value)}
             required
           />
           <TextInput
-            label="Description"
-            placeholder="Short description of this product"
+            label={t('Description')}
+            placeholder={t('Short description of this product')}
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
           />
           <Group justify="flex-end" mt="sm">
-            <Button variant="default" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newName.trim() || !newSlug.trim()}>Create Product</Button>
+            <Button variant="default" onClick={() => setShowCreate(false)}>{t('Cancel')}</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim() || !newSlug.trim()}>{t('Create Product')}</Button>
           </Group>
         </Stack>
       </Modal>
@@ -163,12 +165,12 @@ export function Products() {
             <Menu shadow="md" width={200}>
               <Menu.Target>
                 <Button variant="default" size="xs" disabled={selected.size === 0}>
-                  Bulk Actions ({selected.size})
+                  {t('Bulk Actions')} ({selected.size})
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Item color="red" leftSection={<Trash2 size={14} />} onClick={handleBulkDelete}>
-                  Delete Selected
+                  {t('Delete Selected')}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -180,21 +182,21 @@ export function Products() {
               value={sortOrder}
               onChange={(v) => { setSortOrder((v as SortOrder) ?? 'newest'); setPage(1); }}
               data={[
-                { value: 'az', label: 'Name A→Z' },
-                { value: 'za', label: 'Name Z→A' },
-                { value: 'newest', label: 'Newest First' },
-                { value: 'oldest', label: 'Oldest First' },
+                { value: 'az', label: t('Name A→Z') },
+                { value: 'za', label: t('Name Z→A') },
+                { value: 'newest', label: t('Newest First') },
+                { value: 'oldest', label: t('Oldest First') },
               ]}
               leftSection={<Filter size={14} />}
             />
 
-            <Text size="xs" c="dimmed">{filtered.length} product(s)</Text>
+            <Text size="xs" c="dimmed">{filtered.length} {t('product(s)')}</Text>
           </Group>
 
           {/* Search */}
           <TextInput
             size="xs"
-            placeholder="Search products..."
+            placeholder={t('Search products...')}
             leftSection={<Search size={14} />}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -206,12 +208,12 @@ export function Products() {
       {/* Table */}
       <Paper radius="md" withBorder style={{ overflow: 'visible' }}>
         {loading ? (
-          <Text c="dimmed" ta="center" p="xl" size="sm">Loading...</Text>
+          <Text c="dimmed" ta="center" p="xl" size="sm">{t('Loading...')}</Text>
         ) : filtered.length === 0 ? (
           <Stack align="center" p="xl" gap="xs">
             <ShirtIcon size={40} opacity={0.3} />
-            <Text c="dimmed" size="sm">{search ? 'No products match your search' : 'No products yet'}</Text>
-            {!search && <Text c="dimmed" size="xs">Click "Add New Product Base" to create one</Text>}
+            <Text c="dimmed" size="sm">{search ? t('No products match your search') : t('No products yet')}</Text>
+            {!search && <Text c="dimmed" size="xs">{t('Click "Add New Product Base" to create one')}</Text>}
           </Stack>
         ) : (
           <>
@@ -226,10 +228,10 @@ export function Products() {
                       onChange={toggleSelectAll}
                     />
                   </Table.Th>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Description</Table.Th>
-                  <Table.Th>Stages</Table.Th>
-                  <Table.Th>Status</Table.Th>
+                  <Table.Th>{t('Name')}</Table.Th>
+                  <Table.Th>{t('Description')}</Table.Th>
+                  <Table.Th>{t('Stages')}</Table.Th>
+                  <Table.Th>{t('Status')}</Table.Th>
                   <Table.Th w={100}></Table.Th>
                 </Table.Tr>
               </Table.Thead>
@@ -265,7 +267,7 @@ export function Products() {
                     </Table.Td>
                     <Table.Td>
                       <Badge variant="light" color="blue" size="sm">
-                        {Array.isArray(p.zones) ? p.zones.length : 0} stage(s)
+                        {Array.isArray(p.zones) ? p.zones.length : 0} {t('stage(s)')}
                       </Badge>
                     </Table.Td>
                     <Table.Td>
@@ -277,12 +279,12 @@ export function Products() {
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleToggleStatus(p.id)}
                       >
-                        Active
+                        {t('Active')}
                       </Badge>
                     </Table.Td>
                     <Table.Td>
                       <Group gap={4} justify="flex-end">
-                        <ActionIcon variant="subtle" color="blue" onClick={() => window.open(`http://localhost:3000?product=${p.id}`, '_blank')} title="Open in Editor">
+                        <ActionIcon variant="subtle" color="blue" onClick={() => window.open(`http://localhost:3000?product=${p.id}`, '_blank')} title={t('Open in Editor')}>
                           <ExternalLink size={16} />
                         </ActionIcon>
                         <Menu shadow="md" width={160} position="bottom-end">
@@ -293,17 +295,17 @@ export function Products() {
                           </Menu.Target>
                           <Menu.Dropdown>
                             <Menu.Item leftSection={<Pencil size={14} />} onClick={() => navigate(`/products/${p.id}/edit`)}>
-                              Edit Product
+                              {t('Edit Product')}
                             </Menu.Item>
                             <Menu.Item leftSection={<ExternalLink size={14} />} onClick={() => window.open(`http://localhost:3000?product=${p.id}`, '_blank')}>
-                              Open in Editor
+                              {t('Open in Editor')}
                             </Menu.Item>
                             <Menu.Item leftSection={<Power size={14} />} onClick={() => handleToggleStatus(p.id)}>
-                              Deactivate
+                              {t('Deactivate')}
                             </Menu.Item>
                             <Menu.Divider />
                             <Menu.Item color="red" leftSection={<Trash2 size={14} />} onClick={() => handleDelete(p.id)}>
-                              Delete
+                              {t('Delete')}
                             </Menu.Item>
                           </Menu.Dropdown>
                         </Menu>

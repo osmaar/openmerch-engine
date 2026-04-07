@@ -8,6 +8,7 @@ import { Plus, Search, Trash2, Download, Upload, ChevronDown, ChevronUp, AlertTr
 import { useConfirm } from '../hooks/useConfirm.js';
 import { listLanguages, createLanguage, updateLanguage, deleteLanguage, getTranslations, updateTranslations } from '../services/api.js';
 import type { Language, TranslationEntry } from '../services/api.js';
+import { useT } from '../i18n/useTranslation.js';
 
 const AVAILABLE_LANGUAGES = [
   { value: 'es', label: 'Spanish', flag: '\u{1F1EA}\u{1F1F8}' },
@@ -209,16 +210,270 @@ const EDITOR_TEXTS_BY_SECTION = {
 // Flat list used everywhere else (for state, validation, downloads)
 const EDITOR_TEXTS = Object.values(EDITOR_TEXTS_BY_SECTION).flat();
 
-const ADMIN_TEXTS = [
-  'Dashboard', 'Products', 'Designs', 'Templates', 'Cliparts', 'Shapes',
-  'Fonts', 'Printing', 'Orders', 'Settings', 'Languages', 'Assets',
-  'Add New', 'Edit', 'Delete', 'Save', 'Cancel', 'Confirm',
-  'Active', 'Inactive', 'Featured', 'Status', 'Actions', 'Name',
-  'Description', 'Created', 'Updated', 'Loading...', 'No results',
-  'Bulk Actions', 'Delete Selected', 'Search...', 'Filter',
-  'General', 'API Keys', 'Store Name', 'Are you sure?',
-  'This action cannot be undone', 'Successfully saved', 'Successfully deleted',
-];
+const ADMIN_TEXTS_BY_SECTION = {
+  'Sidebar & Navigation': [
+    'Dashboard', 'Products', 'Designs', 'All Designs', 'Templates',
+    'Assets', 'Cliparts', 'Shapes', 'Fonts', 'Printing', 'Orders',
+    'Settings', 'Languages', 'General',
+    'Light mode', 'Dark mode', 'Open Source',
+  ],
+  'Common Actions': [
+    'Add New', 'Edit', 'Delete', 'Save', 'Cancel', 'Confirm', 'Close',
+    'Remove', 'Upload', 'Download', 'View details', 'Open in Editor',
+    'Open Editor', 'Import JSON', 'Export', 'Copy JSON', 'Download JSON',
+    'Search...', 'Filter', 'Bulk Actions', 'Delete Selected',
+    'Newest First', 'Oldest First', 'Name A→Z', 'Name Z→A',
+    'Activate', 'Deactivate', 'Feature', 'Unfeature',
+    'Add to featured', 'Remove from featured', 'Share', 'Print',
+  ],
+  'Common States': [
+    'Active', 'Inactive', 'Featured', 'Status', 'Actions', 'Name',
+    'Description', 'Created', 'Updated', 'Loading...', 'No results', 'Coming soon',
+    'Online', 'Connected', 'Default', 'Custom', 'Source',
+    'Pending', 'Processing', 'Completed', 'Cancelled',
+  ],
+  'Notifications & Confirmations': [
+    'Are you sure?', 'Are you sure you want to delete',
+    'This action cannot be undone', 'This action cannot be undone.',
+    'Successfully saved', 'Successfully deleted', 'Error', 'Settings saved',
+    'Your settings have been saved successfully',
+    'has been added successfully', 'has been created successfully',
+    'has been added', 'has been created', 'has been removed', 'has been updated',
+    'Translations saved', 'All translations have been saved',
+    'Imported', 'translations imported successfully',
+    'Copied', 'JSON copied to clipboard',
+    'Name is required', 'File is required', 'SVG content is required',
+    'Invalid SVG. Must start with <svg> and end with </svg>',
+    'At least one file is required',
+    'Price must be greater than or equal to 0',
+    'At least one stage is required',
+    'Stage image is required',
+    // API errors
+    'Asset not found', 'Clipart not found', 'Design not found',
+    'Font not found', 'Language not found', 'Missing key',
+    'No file uploaded', 'Order not found', 'Printing type not found',
+    'Product not found', 'Shape not found', 'Template not found',
+    'Request failed', 'Network error', 'Unknown error',
+  ],
+  'Dashboard': [
+    'API Status', 'Quick Actions', 'New Product', 'MinIO Console',
+    'System Info', 'Database', 'Editor', 'Version', 'Storage',
+    'Health Check', 'Infrastructure',
+  ],
+  'Products': [
+    'Products Base', 'Add New Product Base', 'New Product Base',
+    'Create Product', 'Save Product', 'Edit Product', 'Loading product...',
+    'Search products...', 'No products yet', 'No products match your search',
+    'Click "Add New Product Base" to create one', 'Slug', 'Stages',
+    'Short description of this product', 'product(s)', 'stage(s)', 'Product',
+    'Delete Product', 'Delete Products', 'Product created', 'Product deleted',
+    'Product saved', 'Products deleted', 'Product not found',
+    'Product name is required', 'The product has been deleted',
+    'Are you sure you want to delete this product? This action cannot be undone.',
+    'product(s) have been deleted', 'product(s)?',
+  ],
+  'Designs': [
+    'Saved Designs', 'No designs yet', 'Customer Designs',
+    'Designs appear here when users save from the editor',
+    'Designs created by customers using the OpenMerch Editor. These are saved when a customer adds an item to cart or completes their design.',
+    'Search designs...', 'Search by name or product...', 'No designs match your search',
+    'Delete Design', 'Delete Designs', 'Design deleted', 'Designs deleted',
+    'The design has been deleted',
+    'Are you sure you want to delete this design? This action cannot be undone.',
+    'design(s)', 'design(s)?', 'design(s) have been deleted',
+    'Date range', 'From', 'To', 'Clear dates', 'Click to copy', 'Click to copy ID', 'Product ID',
+  ],
+  'Templates': [
+    'Design Templates', 'Add New Template', 'Save Template', 'Template',
+    'Pre-made designs that customers can use as a starting point in the editor. You upload them, customers customize them.',
+    'Design file is required',
+    'Search templates...', 'No templates yet', 'No templates match your filter',
+    'The name of template for displaying',
+    'Select one or more relevant categories', 'Select categories',
+    'Add related tags for the template', 'Type and press Enter',
+    'Upload design file', 'We support .json and image files (PNG, JPG, SVG) for preview',
+    'Click to upload or drag file here', 'Template preview',
+    'Base price for this template', 'Put template into the featured items list',
+    'Enable/Disable template on front-end', 'template(s)',
+    'Delete Template', 'Delete Templates', 'Template created', 'Template deleted',
+    'Templates deleted', 'The template has been deleted',
+    'Are you sure you want to delete this template? This action cannot be undone.',
+    'template(s) have been deleted', 'template(s)?',
+  ],
+  'Cliparts': [
+    'Add Multiple', 'Add Multiple Cliparts', 'Add New Clipart', 'Save Clipart',
+    'Upload clipart file', 'All media and SVG supported', 'Click to upload',
+    'Upload Cliparts', 'Click to select files or drag them here',
+    'PNG, JPG, SVG — select multiple files', 'Apply to all uploaded cliparts',
+    'Search cliparts...', 'No cliparts yet', 'No cliparts match',
+    'Clipart', 'Clipart(s)', 'clipart(s)', 'file(s) selected', 'Preview',
+    'Delete Clipart', 'Delete Cliparts', 'Clipart created', 'Clipart deleted',
+    'Cliparts deleted', 'Cliparts uploaded', 'The clipart has been deleted',
+    'Are you sure you want to delete this clipart? This action cannot be undone.',
+    'clipart(s) have been deleted', 'clipart(s) have been uploaded', 'clipart(s)?',
+  ],
+  'Shapes': [
+    'Add New Shape', 'Save Shape', 'Search shapes...', 'No shapes yet',
+    'SVG Content', 'Paste your SVG content here for preview',
+    'Controls the position of this shape in the editor list. Lower numbers appear first.',
+    'Delete Shape', 'Shape created', 'Shape deleted',
+    'The shape has been deleted', 'shape(s)',
+  ],
+  'Fonts': [
+    'Add New Font', 'Save Font', 'Search fonts...', 'No fonts yet',
+    'Name of the font for displaying', 'Preview Text', 'For previewing purpose',
+    'Upload Font', 'Select font file',
+    'Select your font file (.ttf, .otf, .woff, .woff2)',
+    'Enable/Disable font on front-end', 'Delete Font',
+    'Font added', 'Font deleted', 'The font has been deleted', 'font(s)',
+  ],
+  'Printing Types': [
+    'Printing Types', 'Add New Printing', 'Add New Printing Type', 'Save Printing',
+    'Printing Title', 'Printing Thumbnail', 'Upload preview image', 'Method',
+    'Describe this printing method', 'Price Ruler', 'Resources', 'Layout',
+    'Enable/Disable printing type on the design editor',
+    'Calculation Scope', 'Calculation Method', 'All stages', 'Stage by stage',
+    'Calculate price based on all stages or stage by stage',
+    'How to calculate the printing price',
+    'Price per element type', 'Price per color ($)', 'Price per paper size',
+    'Price of printing = Price per color × number of colors',
+    'Fixed price per stage ($)', 'Price per line ($)',
+    'Price per character ($)', 'Price per square inch ($)',
+    'Resource Permissions', 'Configure what resources are available for this printing method',
+    'Font', 'Image Upload', 'Shape', 'Background', 'Vector SVG',
+    'Show color picker', 'Advanced options', 'Advanced Options (when enabled)',
+    'Min font size', 'Max font size', 'Min text lines', 'Max text lines',
+    'Min letters', 'Max letters',
+    'Editable', 'Movable', 'Scalable', 'Removable', 'Rotatable',
+    'Select Components', 'Components to display per product',
+    'Select Actions', 'Actions on the editor menu tab',
+    'Select Toolbars', 'Toolbars for each component',
+    'Fill', 'Effects',
+    'No printing types yet', 'printing type(s)',
+    'Delete Printing Type', 'Printing type created', 'Printing type deleted',
+    'The printing type has been deleted',
+    'Text, Clipart, Images, Upload', 'One color', 'Size of area design (A0-A6)',
+    'Fixed price per stage', 'Per line', 'Per character', 'Acreage design (square inch)',
+  ],
+  'Orders': [
+    'Order', 'Order ID', 'Customer', 'Date', 'Design Files',
+    'Search by ID or customer...', 'No orders yet', 'Download design',
+    'order(s)',
+  ],
+  'Settings': [
+    'API Keys', 'Store Name', 'Unsplash Access Key', 'Pollinations Key',
+    'Get key at unsplash.com/developers', 'Get key at enter.pollinations.ai',
+    'Save Settings', 'Design Storage', 'Storage Mode',
+    'Where to store customer design images uploaded in the editor',
+    'Database (Base64) — simple, no extra setup',
+    'MinIO/S3 — recommended for production',
+    'Hybrid — metadata in DB, files in MinIO',
+    'Images are stored as Base64 inside the design JSON in PostgreSQL. Simple but increases DB size. Good for development and small stores.',
+    'Images are uploaded to MinIO/S3 and the design stores only URLs. Recommended for production — keeps the DB lean and files are served directly.',
+    'Small images (<100KB) stay in the DB, larger ones go to MinIO. Balances simplicity and performance.',
+  ],
+  'Languages Page': [
+    'Delete Language', 'Language added', 'Language deleted',
+    'All translations will be lost.',
+    'Add New Language', 'Add Language', 'Select Language', 'Choose a language',
+    'The language will be added as inactive. Activate it when translations are ready.',
+    'Import Translations', 'Language', 'Select language to import into',
+    'Section', 'Which part of the app are these translations for?',
+    'OpenMerch Editor (Frontend — what customers see)',
+    'Admin Panel (Backend — what merchants see)',
+    'Upload JSON file or paste content', 'Upload .json file', 'Select a .json file',
+    'or', 'Paste JSON content',
+    'Format: { "Original Text": "Translation" }. Keys starting with _ are ignored.',
+    'Validation Error', 'Warnings',
+    'Tip: Download translations from the table below, edit the JSON file externally, then re-import here. Unknown keys will be added as new translation entries. HTML and scripts are stripped for security.',
+    'Validate & Import', 'Language Selector in Editor',
+    'When enabled, customers can switch language from the design editor. When disabled, the editor uses English only.',
+    'No languages added yet. English is used by default.',
+    'Translations', 'translated', 'OpenMerch Editor', 'Admin Panel',
+    'Texts that your customers see in the product design editor (buttons, labels, messages).',
+    'Texts that merchants see in this admin dashboard (navigation, actions, labels).',
+    'Original (English)', 'Translation', 'Enter translation...',
+    'Save All Translations',
+  ],
+  'Product Edit — Details': [
+    'Details', 'Design', 'CMS Product', 'Auto-assigned',
+    'Automatically assigned when creating a WooCommerce/Shopify product',
+    'The name of the product base displays on the list',
+    'Enter product description...',
+    'Base price for products. Total cost depends on base price, attributes, and printing method',
+    'Regular Price ($)', 'Price per unit ($)',
+    'Select one or more categories. Helpful for sorting items',
+    'Configure Printing Techniques', 'Printing Techniques',
+    'Printing methods that can apply to this product base',
+    'Select printing methods',
+    'Enable/Disable product base on the switching products',
+  ],
+  'Product Edit — Design': [
+    'Product Stages', 'Add Stage', 'Remove stage',
+    'Product Preview & Design Area',
+    'Select product image (JPG, PNG, SVG)', 'Click to upload image',
+    'Change Image', 'Remove Image',
+    'Use as a Mask Layer', 'Enable product color change with mask image',
+    'What is a Mask Layer?', 'What is this?',
+    'A mask layer is a special product image that enables product color change in the editor.',
+    'When enabled, the product image is used as a mask — the white areas of the image will be filled with the selected product color, while keeping shadows, folds, and details visible.',
+    'How to use:',
+    '1. Upload a product image with a white or light colored product on a transparent or dark background.',
+    '2. Enable "Use as a Mask Layer" toggle.',
+    '3. In the editor, the product color selector will change the product color in real-time.',
+    'Got it',
+    'Edit Zone — Size for Printing', 'Printing Size',
+    'Select preset or customize',
+    'Width (mm)', 'Height (mm)', 'Offset X (mm)', 'Offset Y (mm)',
+    'Update Position (Center)', 'Reset All',
+    'Drag to set the design area. The dashed rectangle shows where customers can place their design.',
+    'Custom Design Configuration',
+    'Export Include Base', 'Export for printing includes product base image',
+    'Crop Marks & Bleed', 'Show guideline for crop marks & bleed on the editor',
+  ],
+  'Product Edit — Attributes': [
+    'Attributes', 'Product Attributes', 'Product Colors',
+    'Config attributes of products to use for add to cart',
+    'Add New Attribute', 'No attributes yet',
+    'Add attributes like Product Colors, Sizes, or custom options',
+    'Attribute', 'Attribute Type', 'Label', 'Dropdown', 'Input Text',
+    'e.g. Color, Size, Material',
+    'Used for Variations', 'Use to create product variations',
+    'Field Required', 'Set this attribute as required field before adding to cart',
+    'This attribute shows a text input field. Users can enter custom text when adding to cart.',
+    'Values', 'Add Value', 'No values yet — click "Add Value"',
+    'e.g. Navy Blue', 'e.g. Small', 'Extra Price',
+    'You can add an extra price for each attribute value. The product total will depend on base price + attributes + printing method.',
+    'Options', 'Min Quantity', 'Max Quantity',
+  ],
+  'Product Edit — Variations': [
+    'Variations', 'Product Variations',
+    'Based on your attributes, create all available variations',
+    'Regenerate', 'Bulk Edit Variations', 'Add New Variation',
+    'No variations yet',
+    'Go to the Attributes tab, add attributes with values, and check "Used for Variations"',
+    'Mark attributes as "Used for Variations" to generate combinations',
+    'variation(s) generated. Click "Expand" to edit details.',
+    'Expand', 'Collapse',
+    'Optional description for this variation',
+  ],
+  'Categories': [
+    'Categories', 'Category', 'Tags', 'Price', 'Price ($)', 'Free',
+    // Clipart categories
+    'Animals', 'Sports', 'Music', 'Food', 'Nature', 'Abstract',
+    'Skulls', 'Flames', 'Stars', 'Hearts', 'Arrows', 'Badges',
+    'Vintage', 'Tribal', 'Floral', 'Geometric',
+    // Template categories
+    'T-Shirts', 'Typography', 'Holidays', 'Business', 'Funny',
+    // Product Base categories
+    'Hoodies', 'Caps', 'Mugs', 'Phone Cases', 'Posters', 'Tote Bags',
+    // Printing techniques
+    'Sublimation', 'Screen Printing', 'Embroidery',
+    'DTG (Direct to Garment)', 'Heat Transfer', 'Vinyl', 'DTF (Direct to Film)',
+  ],
+};
+
+const ADMIN_TEXTS = Array.from(new Set(Object.values(ADMIN_TEXTS_BY_SECTION).flat()));
 
 const MAX_VALUE_LENGTH = 500;
 
@@ -265,24 +520,20 @@ function buildDownloadJson(translations: TranslationEntry[], section: string): s
   lines.push('  "_rules": "Do NOT change the keys (left side). Only translate the values (right side). Do NOT add HTML, scripts, or SQL. Keys starting with _ are ignored on import. Unknown keys will be skipped.",');
   lines.push('  "_example": "\\"Add to Cart\\": \\"Agregar al Carrito\\"",');
 
-  if (section.startsWith('Editor')) {
-    // Group by section for readability
-    const sectionEntries = Object.entries(EDITOR_TEXTS_BY_SECTION);
-    sectionEntries.forEach(([sectionName, keys], idx) => {
-      lines.push(`  "_section_${idx}": "═══ ${sectionName} ═══",`);
-      keys.forEach((key) => {
-        const value = map.get(key) ?? '';
-        const escKey = JSON.stringify(key);
-        const escVal = JSON.stringify(value);
-        lines.push(`  ${escKey}: ${escVal},`);
-      });
+  const sectionsMap = section.startsWith('Editor') ? EDITOR_TEXTS_BY_SECTION : ADMIN_TEXTS_BY_SECTION;
+  const sectionEntries = Object.entries(sectionsMap);
+  const seen = new Set<string>();
+  sectionEntries.forEach(([sectionName, keys], idx) => {
+    lines.push(`  "_section_${idx}": "═══ ${sectionName} ═══",`);
+    keys.forEach((key) => {
+      if (seen.has(key)) return;
+      seen.add(key);
+      const value = map.get(key) ?? '';
+      const escKey = JSON.stringify(key);
+      const escVal = JSON.stringify(value);
+      lines.push(`  ${escKey}: ${escVal},`);
     });
-  } else {
-    // Flat for admin
-    translations.forEach((t) => {
-      lines.push(`  ${JSON.stringify(t.originalText)}: ${JSON.stringify(t.translatedText)},`);
-    });
-  }
+  });
 
   // Remove trailing comma from last entry
   const last = lines[lines.length - 1];
@@ -294,6 +545,7 @@ function buildDownloadJson(translations: TranslationEntry[], section: string): s
 }
 
 export function Languages() {
+  const t = useT();
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
   const confirm = useConfirm();
@@ -345,10 +597,10 @@ export function Languages() {
     if (!lang) return;
     try {
       await createLanguage({ code: newLangCode, name: lang.label, flag: lang.flag });
-      notifications.show({ title: 'Language added', message: `${lang.label} has been added`, color: 'green' });
+      notifications.show({ title: t('Language added'), message: `${lang.label} ${t('has been added')}`, color: 'green' });
       setNewLangCode(null); setShowAdd(false); load();
     } catch (e) {
-      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+      notifications.show({ title: t('Error'), message: t((e as Error).message), color: 'red' });
     }
   };
 
@@ -358,9 +610,9 @@ export function Languages() {
   };
 
   const handleDeleteLang = (l: Language) => {
-    confirm('Delete Language', `Are you sure you want to delete ${l.name}? All translations will be lost.`, () => {
+    confirm(t('Delete Language'), `${t('Are you sure you want to delete')} ${l.name}? ${t('All translations will be lost.')}`, () => {
       deleteLanguage(l.id).then(() => {
-        notifications.show({ title: 'Language deleted', message: `${l.name} has been removed`, color: 'red' });
+        notifications.show({ title: t('Language deleted'), message: `${l.name} ${t('has been removed')}`, color: 'red' });
         if (selectedLang === l.code) setSelectedLang(null);
         load();
       });
@@ -375,10 +627,10 @@ export function Languages() {
         translatedText: sanitizeValue(t.translatedText),
       }));
       await updateTranslations(selectedLang, allEntries);
-      notifications.show({ title: 'Translations saved', message: 'All translations have been saved', color: 'green' });
+      notifications.show({ title: t('Translations saved'), message: t('All translations have been saved'), color: 'green' });
       setSelectedLang(null);
     } catch (e) {
-      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+      notifications.show({ title: t('Error'), message: t((e as Error).message), color: 'red' });
     }
   };
 
@@ -400,7 +652,7 @@ export function Languages() {
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(getJsonString()).then(() => {
-      notifications.show({ title: 'Copied', message: 'JSON copied to clipboard', color: 'green' });
+      notifications.show({ title: t('Copied'), message: t('JSON copied to clipboard'), color: 'green' });
     });
   };
 
@@ -433,7 +685,7 @@ export function Languages() {
       return;
     }
     updateTranslations(importLang, entries).then(() => {
-      notifications.show({ title: 'Imported', message: `${entries.length} translations imported successfully`, color: 'green' });
+      notifications.show({ title: t('Imported'), message: `${entries.length} ${t('translations imported successfully')}`, color: 'green' });
       if (selectedLang === importLang) {
         setSelectedLang(null);
         setTimeout(() => setSelectedLang(importLang), 100);
@@ -441,7 +693,7 @@ export function Languages() {
       setShowImport(false); setImportJson(''); setImportFile(null); setImportLang(null);
       setImportError(null); setImportWarnings([]);
     }).catch((e) => {
-      setImportError((e as Error).message);
+      setImportError(t((e as Error).message));
     });
   };
 
@@ -480,53 +732,53 @@ export function Languages() {
   return (
     <div>
       <Group justify="space-between" mb="lg">
-        <Title order={2}>Languages</Title>
+        <Title order={2}>{t('Languages')}</Title>
         <Group gap="xs">
-          <Button variant="light" leftSection={<Upload size={16} />} onClick={() => setShowImport(true)}>Import JSON</Button>
-          <Button leftSection={<Plus size={16} />} onClick={() => setShowAdd(true)}>Add New Language</Button>
+          <Button variant="light" leftSection={<Upload size={16} />} onClick={() => setShowImport(true)}>{t('Import JSON')}</Button>
+          <Button leftSection={<Plus size={16} />} onClick={() => setShowAdd(true)}>{t('Add New Language')}</Button>
         </Group>
       </Group>
 
       {/* Add language modal */}
-      <Modal opened={showAdd} onClose={() => { setShowAdd(false); setNewLangCode(null); }} title="Add New Language" centered>
+      <Modal opened={showAdd} onClose={() => { setShowAdd(false); setNewLangCode(null); }} title={t('Add New Language')} centered>
         <Stack>
-          <Select label="Select Language" placeholder="Choose a language" data={AVAILABLE_LANGUAGES.filter((l) => !languages.find((ll) => ll.code === l.value)).map((l) => ({ value: l.value, label: `${l.flag} ${l.label}` }))} value={newLangCode} onChange={setNewLangCode} searchable />
-          <Text size="xs" c="dimmed">The language will be added as inactive. Activate it when translations are ready.</Text>
+          <Select label={t('Select Language')} placeholder={t('Choose a language')} data={AVAILABLE_LANGUAGES.filter((l) => !languages.find((ll) => ll.code === l.value)).map((l) => ({ value: l.value, label: `${l.flag} ${l.label}` }))} value={newLangCode} onChange={setNewLangCode} searchable />
+          <Text size="xs" c="dimmed">{t('The language will be added as inactive. Activate it when translations are ready.')}</Text>
           <Group justify="flex-end">
-            <Button variant="default" onClick={() => { setShowAdd(false); setNewLangCode(null); }}>Cancel</Button>
-            <Button onClick={handleAddLanguage} disabled={!newLangCode}>Add Language</Button>
+            <Button variant="default" onClick={() => { setShowAdd(false); setNewLangCode(null); }}>{t('Cancel')}</Button>
+            <Button onClick={handleAddLanguage} disabled={!newLangCode}>{t('Add Language')}</Button>
           </Group>
         </Stack>
       </Modal>
 
       {/* Import JSON modal */}
-      <Modal opened={showImport} onClose={() => { setShowImport(false); setImportJson(''); setImportFile(null); setImportLang(null); setImportError(null); setImportWarnings([]); setImportSection('editor'); }} title="Import Translations" centered size="lg">
+      <Modal opened={showImport} onClose={() => { setShowImport(false); setImportJson(''); setImportFile(null); setImportLang(null); setImportError(null); setImportWarnings([]); setImportSection('editor'); }} title={t('Import Translations')} centered size="lg">
         <Stack>
-          <Select label="Language" placeholder="Select language to import into" data={languages.filter((l) => l.code !== 'en').map((l) => ({ value: l.code, label: `${l.flag} ${l.name}` }))} value={importLang} onChange={setImportLang} />
-          <Select label="Section" description="Which part of the app are these translations for?" data={[{ value: 'editor', label: 'OpenMerch Editor (Frontend — what customers see)' }, { value: 'admin', label: 'Admin Panel (Backend — what merchants see)' }]} value={importSection} onChange={(v) => setImportSection(v ?? 'editor')} />
+          <Select label={t('Language')} placeholder={t('Select language to import into')} data={languages.filter((l) => l.code !== 'en').map((l) => ({ value: l.code, label: `${l.flag} ${l.name}` }))} value={importLang} onChange={setImportLang} />
+          <Select label={t('Section')} description={t('Which part of the app are these translations for?')} data={[{ value: 'editor', label: t('OpenMerch Editor (Frontend — what customers see)') }, { value: 'admin', label: t('Admin Panel (Backend — what merchants see)') }]} value={importSection} onChange={(v) => setImportSection(v ?? 'editor')} />
 
-          <Text size="sm" fw={500}>Upload JSON file or paste content</Text>
-          <FileInput label="Upload .json file" placeholder="Select a .json file" accept=".json" leftSection={<Upload size={14} />} value={importFile} onChange={handleImportFileChange} />
-          <Text size="xs" c="dimmed" ta="center">— or —</Text>
-          <Textarea label="Paste JSON content" description='Format: { "Original Text": "Translation" }. Keys starting with _ are ignored.' placeholder='{ "Add to Cart": "Agregar al Carrito" }' value={importJson} onChange={(e) => { setImportJson(e.target.value); setImportError(null); }} minRows={6} disabled={!!importFile} />
+          <Text size="sm" fw={500}>{t('Upload JSON file or paste content')}</Text>
+          <FileInput label={t('Upload .json file')} placeholder={t('Select a .json file')} accept=".json" leftSection={<Upload size={14} />} value={importFile} onChange={handleImportFileChange} />
+          <Text size="xs" c="dimmed" ta="center">— {t('or')} —</Text>
+          <Textarea label={t('Paste JSON content')} description={t('Format: { "Original Text": "Translation" }. Keys starting with _ are ignored.')} placeholder='{ "Add to Cart": "Agregar al Carrito" }' value={importJson} onChange={(e) => { setImportJson(e.target.value); setImportError(null); }} minRows={6} disabled={!!importFile} />
 
           {importError && (
-            <Alert color="red" icon={<AlertTriangle size={16} />} title="Validation Error">
+            <Alert color="red" icon={<AlertTriangle size={16} />} title={t('Validation Error')}>
               {importError}
             </Alert>
           )}
           {importWarnings.length > 0 && (
-            <Alert color="yellow" icon={<AlertTriangle size={16} />} title="Warnings">
+            <Alert color="yellow" icon={<AlertTriangle size={16} />} title={t('Warnings')}>
               {importWarnings.map((w, i) => <Text key={i} size="xs">{w}</Text>)}
             </Alert>
           )}
 
           <Text size="xs" c="dimmed">
-            Tip: Download translations from the table below, edit the JSON file externally, then re-import here. Unknown keys will be added as new translation entries. HTML and scripts are stripped for security.
+            {t('Tip: Download translations from the table below, edit the JSON file externally, then re-import here. Unknown keys will be added as new translation entries. HTML and scripts are stripped for security.')}
           </Text>
           <Group justify="flex-end">
-            <Button variant="default" onClick={() => { setShowImport(false); setImportJson(''); setImportFile(null); setImportLang(null); setImportError(null); setImportWarnings([]); }}>Cancel</Button>
-            <Button onClick={handleImportSubmit} disabled={!importLang || (!importJson.trim() && !importFile)}>Validate & Import</Button>
+            <Button variant="default" onClick={() => { setShowImport(false); setImportJson(''); setImportFile(null); setImportLang(null); setImportError(null); setImportWarnings([]); }}>{t('Cancel')}</Button>
+            <Button onClick={handleImportSubmit} disabled={!importLang || (!importJson.trim() && !importFile)}>{t('Validate & Import')}</Button>
           </Group>
         </Stack>
       </Modal>
@@ -535,8 +787,8 @@ export function Languages() {
       <Paper p="md" radius="md" withBorder mb="md">
         <Group justify="space-between">
           <div>
-            <Text size="sm" fw={500}>Language Selector in Editor</Text>
-            <Text size="xs" c="dimmed">When enabled, customers can switch language from the design editor. When disabled, the editor uses English only.</Text>
+            <Text size="sm" fw={500}>{t('Language Selector in Editor')}</Text>
+            <Text size="xs" c="dimmed">{t('When enabled, customers can switch language from the design editor. When disabled, the editor uses English only.')}</Text>
           </div>
           <Switch checked={allowUserChange} onChange={(e) => setAllowUserChange(e.currentTarget.checked)} />
         </Group>
@@ -545,14 +797,14 @@ export function Languages() {
       {/* Languages list */}
       <Paper radius="md" withBorder mb="md" style={{ overflow: 'visible' }}>
         {loading ? (
-          <Text c="dimmed" ta="center" p="xl" size="sm">Loading...</Text>
+          <Text c="dimmed" ta="center" p="xl" size="sm">{t('Loading...')}</Text>
         ) : languages.length === 0 ? (
           <Stack align="center" p="xl" gap="xs">
-            <Text c="dimmed" size="sm">No languages added yet. English is used by default.</Text>
+            <Text c="dimmed" size="sm">{t('No languages added yet. English is used by default.')}</Text>
           </Stack>
         ) : (
           <Table striped highlightOnHover>
-            <Table.Thead><Table.Tr><Table.Th>Language</Table.Th><Table.Th>Status</Table.Th><Table.Th w={200}></Table.Th></Table.Tr></Table.Thead>
+            <Table.Thead><Table.Tr><Table.Th>{t('Language')}</Table.Th><Table.Th>{t('Status')}</Table.Th><Table.Th w={200}></Table.Th></Table.Tr></Table.Thead>
             <Table.Tbody>
               {languages.map((l) => (
                 <Table.Tr key={l.id}>
@@ -564,9 +816,9 @@ export function Languages() {
                   </Table.Td>
                   <Table.Td>
                     {l.code === 'en' ? (
-                      <Badge variant="light" color="green" size="sm">Default</Badge>
+                      <Badge variant="light" color="green" size="sm">{t('Default')}</Badge>
                     ) : (
-                      <Switch size="xs" checked={l.active} onChange={() => handleToggleActive(l)} label={l.active ? 'Active' : 'Inactive'} />
+                      <Switch size="xs" checked={l.active} onChange={() => handleToggleActive(l)} label={l.active ? t('Active') : t('Inactive')} />
                     )}
                   </Table.Td>
                   <Table.Td>
@@ -578,7 +830,7 @@ export function Languages() {
                           onClick={() => setSelectedLang(selectedLang === l.code ? null : l.code)}
                           rightSection={selectedLang === l.code ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         >
-                          Translations
+                          {t('Translations')}
                         </Button>
                         <ActionIcon variant="subtle" color="red" size="sm" onClick={() => handleDeleteLang(l)}><Trash2 size={14} /></ActionIcon>
                       </Group>
@@ -598,42 +850,42 @@ export function Languages() {
             <Group p="md" justify="space-between">
               <div>
                 <Text fw={500} size="sm">
-                  {languages.find((l) => l.code === selectedLang)?.flag} {languages.find((l) => l.code === selectedLang)?.name} — Translations
+                  {languages.find((l) => l.code === selectedLang)?.flag} {languages.find((l) => l.code === selectedLang)?.name} — {t('Translations')}
                 </Text>
-                <Text size="xs" c="dimmed">{translatedCount}/{currentTranslations.length} translated</Text>
+                <Text size="xs" c="dimmed">{translatedCount}/{currentTranslations.length} {t('translated')}</Text>
               </div>
               <Group gap="xs">
-                <Button variant="subtle" size="xs" leftSection={<Copy size={14} />} onClick={handleCopyJson}>Copy JSON</Button>
-              <Button variant="subtle" size="xs" leftSection={<Download size={14} />} onClick={handleDownloadJson}>Download JSON</Button>
-                <TextInput size="xs" placeholder="Search..." leftSection={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)} w={180} />
+                <Button variant="subtle" size="xs" leftSection={<Copy size={14} />} onClick={handleCopyJson}>{t('Copy JSON')}</Button>
+              <Button variant="subtle" size="xs" leftSection={<Download size={14} />} onClick={handleDownloadJson}>{t('Download JSON')}</Button>
+                <TextInput size="xs" placeholder={t('Search...')} leftSection={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)} w={180} />
               </Group>
             </Group>
 
             <Tabs.List px="md">
-              <Tabs.Tab value="editor">OpenMerch Editor</Tabs.Tab>
-              <Tabs.Tab value="admin">Admin Panel</Tabs.Tab>
+              <Tabs.Tab value="editor">{t('OpenMerch Editor')}</Tabs.Tab>
+              <Tabs.Tab value="admin">{t('Admin Panel')}</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="editor">
-              <Text size="xs" c="dimmed" px="md" pt="sm">Texts that your customers see in the product design editor (buttons, labels, messages).</Text>
+              <Text size="xs" c="dimmed" px="md" pt="sm">{t('Texts that your customers see in the product design editor (buttons, labels, messages).')}</Text>
             </Tabs.Panel>
             <Tabs.Panel value="admin">
-              <Text size="xs" c="dimmed" px="md" pt="sm">Texts that merchants see in this admin dashboard (navigation, actions, labels).</Text>
+              <Text size="xs" c="dimmed" px="md" pt="sm">{t('Texts that merchants see in this admin dashboard (navigation, actions, labels).')}</Text>
             </Tabs.Panel>
           </Tabs>
 
           <Table striped>
-            <Table.Thead><Table.Tr><Table.Th>Original (English)</Table.Th><Table.Th>Translation</Table.Th></Table.Tr></Table.Thead>
+            <Table.Thead><Table.Tr><Table.Th>{t('Original (English)')}</Table.Th><Table.Th>{t('Translation')}</Table.Th></Table.Tr></Table.Thead>
             <Table.Tbody>
-              {filteredTranslations.map((t) => {
-                const idx = currentTranslations.indexOf(t);
+              {filteredTranslations.map((entry) => {
+                const idx = currentTranslations.indexOf(entry);
                 return (
-                  <Table.Tr key={t.originalText}>
-                    <Table.Td><Text size="sm">{t.originalText}</Text></Table.Td>
+                  <Table.Tr key={entry.originalText}>
+                    <Table.Td><Text size="sm">{entry.originalText}</Text></Table.Td>
                     <Table.Td>
-                      <TextInput size="xs" placeholder="Enter translation..." value={t.translatedText} onChange={(e) => {
+                      <TextInput size="xs" placeholder={t('Enter translation...')} value={entry.translatedText} onChange={(e) => {
                         const nt = [...currentTranslations];
-                        nt[idx] = { ...t, translatedText: e.target.value };
+                        nt[idx] = { ...entry, translatedText: e.target.value };
                         setCurrentTranslations(nt);
                       }} />
                     </Table.Td>
@@ -643,8 +895,8 @@ export function Languages() {
             </Table.Tbody>
           </Table>
           <Group p="md" justify="flex-end">
-            <Button variant="default" onClick={() => setSelectedLang(null)}>Cancel</Button>
-            <Button onClick={handleSaveTranslations}>Save All Translations</Button>
+            <Button variant="default" onClick={() => setSelectedLang(null)}>{t('Cancel')}</Button>
+            <Button onClick={handleSaveTranslations}>{t('Save All Translations')}</Button>
           </Group>
         </Paper>
       )}

@@ -1,15 +1,28 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { ...options?.headers as Record<string, string> };
   if (options?.body) headers['Content-Type'] = 'application/json';
-  const res = await fetch(`${API_BASE}/api/v1${path}`, {
-    ...options,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/v1${path}`, { ...options, headers });
+  } catch {
+    throw new ApiError('Network error', 0, 'NETWORK_ERROR');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? `Request failed: ${res.status}`);
+    throw new ApiError(err.error ?? `Request failed: ${res.status}`, res.status, err.code);
   }
   return res.json();
 }

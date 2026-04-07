@@ -86,7 +86,7 @@ pnpm db:migrate
 
 ### 4. Seed Default Translations (i18n)
 
-OpenMerch ships with **English** (default), **Spanish**, and **French** translations for the editor. Load them into the database:
+OpenMerch ships with **English** (default), **Spanish**, and **French** translations for **both the editor and the admin panel**. Load them into the database:
 
 ```bash
 cd packages/api
@@ -97,8 +97,9 @@ This reads JSON files from `seeds/translations/*.json` and inserts them as langu
 
 **What gets seeded:**
 - Languages: Spanish (es), French (fr)
-- ~337 translation keys per language covering the entire editor UI
+- ~490 translation keys per language covering the entire editor UI **and** admin panel UI (all pages, modals, toasts, validation messages, API error messages)
 - English is the source language (no translation needed — it's hardcoded)
+- API error messages (`Product not found`, `Asset not found`, etc.) are also seeded so the frontend can translate them via `t(error.message)`
 
 **Adding a new language to the seed:**
 
@@ -118,7 +119,7 @@ This reads JSON files from `seeds/translations/*.json` and inserts them as langu
 2. Run `pnpm db:seed`
 3. Activate the language from the admin panel → Languages
 
-The full list of keys to translate is available in the admin UI at **Languages → Translations → Download JSON**, or in `apps/admin/src/pages/Languages.tsx` (`EDITOR_TEXTS_BY_SECTION` constant).
+The full list of keys to translate is available in the admin UI at **Languages → Translations → Download JSON** (separate downloads for the Editor and the Admin Panel), or in `apps/admin/src/pages/Languages.tsx` (`EDITOR_TEXTS_BY_SECTION` and `ADMIN_TEXTS_BY_SECTION` constants).
 
 ### 5. Start the API Server
 

@@ -8,6 +8,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { ArrowLeft, Save, Plus, Trash2, Upload } from 'lucide-react';
 import { getProduct, createProduct, updateProduct } from '../services/api.js';
+import { useT } from '../i18n/useTranslation.js';
 
 interface Stage {
   id: string;
@@ -47,6 +48,7 @@ const PRINTING_TECHNIQUES = [
   'DTG (Direct to Garment)',
   'Heat Transfer',
   'Vinyl',
+  'DTF (Direct to Film)',
 ];
 
 const CATEGORIES = [
@@ -70,6 +72,7 @@ const PRINTING_SIZES = [
 ];
 
 export function ProductEdit() {
+  const t = useT();
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = !id || id === 'new';
@@ -122,7 +125,7 @@ export function ProductEdit() {
           })));
         }
       }).catch(() => {
-        notifications.show({ title: 'Error', message: 'Product not found', color: 'red' });
+        notifications.show({ title: t('Error'), message: t('Product not found'), color: 'red' });
         navigate('/products');
       }).finally(() => setLoadingProduct(false));
     }
@@ -130,7 +133,20 @@ export function ProductEdit() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      notifications.show({ title: 'Error', message: 'Product name is required', color: 'red' });
+      notifications.show({ title: t('Error'), message: t('Product name is required'), color: 'red' });
+      return;
+    }
+    if (price < 0) {
+      notifications.show({ title: t('Error'), message: t('Price must be greater than or equal to 0'), color: 'red' });
+      return;
+    }
+    if (stages.length === 0) {
+      notifications.show({ title: t('Error'), message: t('At least one stage is required'), color: 'red' });
+      return;
+    }
+    const missingImage = stages.find((s) => !s.baseImageUrl);
+    if (missingImage) {
+      notifications.show({ title: t('Error'), message: `${t('Stage image is required')}: ${missingImage.name}`, color: 'red' });
       return;
     }
     setSaving(true);
@@ -152,14 +168,14 @@ export function ProductEdit() {
       };
       if (isNew) {
         await createProduct(data as Parameters<typeof createProduct>[0]);
-        notifications.show({ title: 'Product created', message: `"${name}" has been created`, color: 'green' });
+        notifications.show({ title: t('Product created'), message: `"${name}" ${t('has been created')}`, color: 'green' });
       } else {
         await updateProduct(id!, data);
-        notifications.show({ title: 'Product saved', message: `"${name}" has been updated`, color: 'green' });
+        notifications.show({ title: t('Product saved'), message: `"${name}" ${t('has been updated')}`, color: 'green' });
       }
       navigate('/products');
     } catch (e) {
-      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+      notifications.show({ title: t('Error'), message: t((e as Error).message), color: 'red' });
     } finally {
       setSaving(false);
     }
@@ -204,7 +220,7 @@ export function ProductEdit() {
   };
 
   if (loadingProduct) {
-    return <Text c="dimmed" p="xl">Loading product...</Text>;
+    return <Text c="dimmed" p="xl">{t('Loading product...')}</Text>;
   }
 
   return (
@@ -213,15 +229,15 @@ export function ProductEdit() {
         <ActionIcon variant="subtle" color="gray" onClick={() => navigate('/products')}>
           <ArrowLeft size={20} />
         </ActionIcon>
-        <Title order={2}>{isNew ? 'Add New Product Base' : `Edit: ${name || 'Product'}`}</Title>
+        <Title order={2}>{isNew ? t('Add New Product Base') : `${t('Edit')}: ${name || t('Product')}`}</Title>
       </Group>
 
       <Tabs defaultValue="details">
         <Tabs.List mb="md">
-          <Tabs.Tab value="details">Details</Tabs.Tab>
-          <Tabs.Tab value="design">Design</Tabs.Tab>
-          <Tabs.Tab value="attributes">Attributes</Tabs.Tab>
-          <Tabs.Tab value="variations">Variations</Tabs.Tab>
+          <Tabs.Tab value="details">{t('Details')}</Tabs.Tab>
+          <Tabs.Tab value="design">{t('Design')}</Tabs.Tab>
+          <Tabs.Tab value="attributes">{t('Attributes')}</Tabs.Tab>
+          <Tabs.Tab value="variations">{t('Variations')}</Tabs.Tab>
         </Tabs.List>
 
         {/* TAB 1: Details */}
@@ -229,8 +245,8 @@ export function ProductEdit() {
           <Paper p="lg" radius="md" withBorder>
             <Stack gap="md">
               <TextInput
-                label="Name"
-                description="The name of the product base displays on the list"
+                label={t('Name')}
+                description={t('The name of the product base displays on the list')}
                 placeholder="Basic T-Shirt"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -238,8 +254,8 @@ export function ProductEdit() {
               />
 
               <NumberInput
-                label="Price"
-                description="Base price for products. Total cost depends on base price, attributes, and printing method"
+                label={t('Price')}
+                description={t('Base price for products. Total cost depends on base price, attributes, and printing method')}
                 placeholder="0.00"
                 value={price}
                 onChange={(v) => setPrice(Number(v) || 0)}
@@ -249,27 +265,27 @@ export function ProductEdit() {
               />
 
               <TextInput
-                label="CMS Product"
-                description="Automatically assigned when creating a WooCommerce/Shopify product"
-                placeholder="Auto-assigned"
+                label={t('CMS Product')}
+                description={t('Automatically assigned when creating a WooCommerce/Shopify product')}
+                placeholder={t('Auto-assigned')}
                 disabled
                 value=""
               />
 
               <Textarea
-                label="Description"
-                description="Short description of this product"
-                placeholder="Enter product description..."
+                label={t('Description')}
+                description={t('Short description of this product')}
+                placeholder={t('Enter product description...')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 minRows={3}
               />
 
               <MultiSelect
-                label="Categories"
-                description="Select one or more categories. Helpful for sorting items"
-                placeholder="Select categories"
-                data={CATEGORIES}
+                label={t('Categories')}
+                description={t('Select one or more categories. Helpful for sorting items')}
+                placeholder={t('Select categories')}
+                data={CATEGORIES.map((c) => ({ value: c, label: t(c) }))}
                 value={categories}
                 onChange={setCategories}
                 searchable
@@ -277,10 +293,10 @@ export function ProductEdit() {
               />
 
               <MultiSelect
-                label="Printing Techniques"
-                description="Printing methods that can apply to this product base"
-                placeholder="Select printing methods"
-                data={PRINTING_TECHNIQUES}
+                label={t('Printing Techniques')}
+                description={t('Printing methods that can apply to this product base')}
+                placeholder={t('Select printing methods')}
+                data={PRINTING_TECHNIQUES.map((p) => ({ value: p, label: t(p) }))}
                 value={printingTechniques}
                 onChange={setPrintingTechniques}
                 searchable
@@ -288,8 +304,8 @@ export function ProductEdit() {
               />
 
               <Switch
-                label="Active"
-                description="Enable/Disable product base on the switching products"
+                label={t('Active')}
+                description={t('Enable/Disable product base on the switching products')}
                 checked={active}
                 onChange={(e) => setActive(e.currentTarget.checked)}
                 size="md"
@@ -302,9 +318,9 @@ export function ProductEdit() {
         <Tabs.Panel value="design">
           <Stack gap="md">
             <Group justify="space-between">
-              <Text fw={600} size="sm">Product Stages</Text>
+              <Text fw={600} size="sm">{t('Product Stages')}</Text>
               <Button variant="light" size="xs" leftSection={<Plus size={14} />} onClick={addStage}>
-                Add Stage
+                {t('Add Stage')}
               </Button>
             </Group>
 
@@ -323,7 +339,7 @@ export function ProductEdit() {
                   </Group>
                   <Group gap="xs">
                     {stages.length > 1 && (
-                      <ActionIcon variant="subtle" color="red" onClick={() => removeStage(idx)} title="Remove stage">
+                      <ActionIcon variant="subtle" color="red" onClick={() => removeStage(idx)} title={t('Remove stage')}>
                         <Trash2 size={16} />
                       </ActionIcon>
                     )}
@@ -334,8 +350,8 @@ export function ProductEdit() {
                   {/* Mask + What is this */}
                   <Group justify="space-between">
                     <Switch
-                      label="Use as a Mask Layer"
-                      description="Enable product color change with mask image"
+                      label={t('Use as a Mask Layer')}
+                      description={t('Enable product color change with mask image')}
                       checked={stage.useMaskLayer}
                       onChange={(e) => updateStage(idx, { useMaskLayer: e.currentTarget.checked })}
                       size="sm"
@@ -346,7 +362,7 @@ export function ProductEdit() {
                       color="gray"
                       onClick={() => setShowMaskInfo(true)}
                     >
-                      What is this?
+                      {t('What is this?')}
                     </Button>
                   </Group>
 
@@ -354,9 +370,9 @@ export function ProductEdit() {
 
                   {/* Product Image Preview */}
                   <div>
-                    <Text size="sm" fw={500} mb={8}>Product Preview & Design Area</Text>
+                    <Text size="sm" fw={500} mb={8}>{t('Product Preview & Design Area')}</Text>
                     <Text size="xs" c="dimmed" mb={12}>
-                      Drag to set the design area. The dashed rectangle shows where customers can place their design.
+                      {t('Drag to set the design area. The dashed rectangle shows where customers can place their design.')}
                     </Text>
 
                     {/* Mockup preview */}
@@ -396,7 +412,7 @@ export function ProductEdit() {
                             }}
                           >
                             <Upload size={24} color="#aaa" />
-                            <Text size="xs" c="dimmed">Click to upload image</Text>
+                            <Text size="xs" c="dimmed">{t('Click to upload image')}</Text>
                             <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>PNG, JPG, SVG</Text>
                           </Stack>
                         )}
@@ -424,33 +440,33 @@ export function ProductEdit() {
                             printAreaYMM: Math.round((stage.baseImageHeightMM - stage.printAreaHeightMM) / 2),
                           })}
                         >
-                          Update Position (Center)
+                          {t('Update Position (Center)')}
                         </Button>
                       </Group>
                     </Paper>
                   </div>
 
                   {/* Edit Zone — Size */}
-                  <Text size="sm" fw={500}>Edit Zone — Size for Printing</Text>
+                  <Text size="sm" fw={500}>{t('Edit Zone — Size for Printing')}</Text>
 
                   <Select
-                    label="Printing Size"
-                    description="Select preset or customize"
-                    data={PRINTING_SIZES}
+                    label={t('Printing Size')}
+                    description={t('Select preset or customize')}
+                    data={PRINTING_SIZES.map((s) => ({ value: s, label: s === 'Custom' ? t('Custom') : s }))}
                     defaultValue="Custom"
                     size="sm"
                   />
 
                   <Group grow>
                     <NumberInput
-                      label="Width (mm)"
+                      label={t('Width (mm)')}
                       value={stage.printAreaWidthMM}
                       onChange={(v) => updateStage(idx, { printAreaWidthMM: Number(v) || 0 })}
                       size="sm"
                       min={0}
                     />
                     <NumberInput
-                      label="Height (mm)"
+                      label={t('Height (mm)')}
                       value={stage.printAreaHeightMM}
                       onChange={(v) => updateStage(idx, { printAreaHeightMM: Number(v) || 0 })}
                       size="sm"
@@ -460,14 +476,14 @@ export function ProductEdit() {
 
                   <Group grow>
                     <NumberInput
-                      label="Offset X (mm)"
+                      label={t('Offset X (mm)')}
                       value={stage.printAreaXMM}
                       onChange={(v) => updateStage(idx, { printAreaXMM: Number(v) || 0 })}
                       size="sm"
                       min={0}
                     />
                     <NumberInput
-                      label="Offset Y (mm)"
+                      label={t('Offset Y (mm)')}
                       value={stage.printAreaYMM}
                       onChange={(v) => updateStage(idx, { printAreaYMM: Number(v) || 0 })}
                       size="sm"
@@ -479,16 +495,16 @@ export function ProductEdit() {
 
                   {/* Toggles */}
                   <Switch
-                    label="Export Include Base"
-                    description="Export for printing includes product base image"
+                    label={t('Export Include Base')}
+                    description={t('Export for printing includes product base image')}
                     checked={stage.exportIncludeBase}
                     onChange={(e) => updateStage(idx, { exportIncludeBase: e.currentTarget.checked })}
                     size="sm"
                   />
 
                   <Switch
-                    label="Crop Marks & Bleed"
-                    description="Show guideline for crop marks & bleed on the editor"
+                    label={t('Crop Marks & Bleed')}
+                    description={t('Show guideline for crop marks & bleed on the editor')}
                     checked={stage.cropMarks}
                     onChange={(e) => updateStage(idx, { cropMarks: e.currentTarget.checked })}
                     size="sm"
@@ -513,15 +529,15 @@ export function ProductEdit() {
                           };
                           input.click();
                         }}>
-                          Change Image
+                          {t('Change Image')}
                         </Button>
                         <Button variant="subtle" size="xs" color="red" onClick={() => updateStage(idx, { baseImageUrl: '' })}>
-                          Remove Image
+                          {t('Remove Image')}
                         </Button>
                       </>
                     ) : (
                       <FileInput
-                        placeholder="Select product image (JPG, PNG, SVG)"
+                        placeholder={t('Select product image (JPG, PNG, SVG)')}
                         accept="image/png,image/jpeg,image/svg+xml"
                         leftSection={<Upload size={14} />}
                         size="sm"
@@ -538,7 +554,7 @@ export function ProductEdit() {
                       printAreaXMM: 150, printAreaYMM: 105,
                       exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
                     })}>
-                      Reset All
+                      {t('Reset All')}
                     </Button>
                   </Group>
                 </Stack>
@@ -547,25 +563,15 @@ export function ProductEdit() {
           </Stack>
 
           {/* Mask info modal */}
-          <Modal opened={showMaskInfo} onClose={() => setShowMaskInfo(false)} title="What is a Mask Layer?" centered>
+          <Modal opened={showMaskInfo} onClose={() => setShowMaskInfo(false)} title={t('What is a Mask Layer?')} centered>
             <Stack gap="sm">
-              <Text size="sm">
-                A mask layer is a special product image that enables <strong>product color change</strong> in the editor.
-              </Text>
-              <Text size="sm">
-                When enabled, the product image is used as a mask — the white areas of the image will be filled with the selected product color, while keeping shadows, folds, and details visible.
-              </Text>
-              <Text size="sm" fw={500}>How to use:</Text>
-              <Text size="sm">
-                1. Upload a product image with a <strong>white or light colored</strong> product on a transparent or dark background.
-              </Text>
-              <Text size="sm">
-                2. Enable "Use as a Mask Layer" toggle.
-              </Text>
-              <Text size="sm">
-                3. In the editor, the product color selector will change the product color in real-time.
-              </Text>
-              <Button onClick={() => setShowMaskInfo(false)} mt="sm">Got it</Button>
+              <Text size="sm">{t('A mask layer is a special product image that enables product color change in the editor.')}</Text>
+              <Text size="sm">{t('When enabled, the product image is used as a mask — the white areas of the image will be filled with the selected product color, while keeping shadows, folds, and details visible.')}</Text>
+              <Text size="sm" fw={500}>{t('How to use:')}</Text>
+              <Text size="sm">{t('1. Upload a product image with a white or light colored product on a transparent or dark background.')}</Text>
+              <Text size="sm">{t('2. Enable "Use as a Mask Layer" toggle.')}</Text>
+              <Text size="sm">{t('3. In the editor, the product color selector will change the product color in real-time.')}</Text>
+              <Button onClick={() => setShowMaskInfo(false)} mt="sm">{t('Got it')}</Button>
             </Stack>
           </Modal>
         </Tabs.Panel>
@@ -575,19 +581,19 @@ export function ProductEdit() {
           <Stack gap="md">
             <Group justify="space-between">
               <div>
-                <Text fw={600} size="sm">Product Attributes</Text>
-                <Text size="xs" c="dimmed">Config attributes of products to use for add to cart</Text>
+                <Text fw={600} size="sm">{t('Product Attributes')}</Text>
+                <Text size="xs" c="dimmed">{t('Config attributes of products to use for add to cart')}</Text>
               </div>
               <Button variant="light" size="xs" leftSection={<Plus size={14} />} onClick={addAttribute}>
-                Add New Attribute
+                {t('Add New Attribute')}
               </Button>
             </Group>
 
             {attributes.length === 0 ? (
               <Paper p="xl" radius="md" withBorder>
                 <Stack align="center" gap="xs">
-                  <Text c="dimmed" size="sm">No attributes yet</Text>
-                  <Text c="dimmed" size="xs">Add attributes like Product Colors, Sizes, or custom options</Text>
+                  <Text c="dimmed" size="sm">{t('No attributes yet')}</Text>
+                  <Text c="dimmed" size="xs">{t('Add attributes like Product Colors, Sizes, or custom options')}</Text>
                 </Stack>
               </Paper>
             ) : (
@@ -595,7 +601,7 @@ export function ProductEdit() {
                 <Paper key={attr.id} p="lg" radius="md" withBorder>
                   <Group justify="space-between" mb="md">
                     <Badge size="md" variant="light">
-                      {attr.name || `Attribute ${idx + 1}`}
+                      {attr.name || `${t('Attribute')} ${idx + 1}`}
                     </Badge>
                     <ActionIcon variant="subtle" color="red" onClick={() => removeAttribute(idx)}>
                       <Trash2 size={14} />
@@ -606,20 +612,20 @@ export function ProductEdit() {
                     {/* Name + Type */}
                     <Group grow>
                       <TextInput
-                        label="Name"
-                        placeholder="e.g. Color, Size, Material"
+                        label={t('Name')}
+                        placeholder={t('e.g. Color, Size, Material')}
                         value={attr.name}
                         onChange={(e) => updateAttribute(idx, { name: e.target.value })}
                         size="sm"
                       />
                       <Select
-                        label="Attribute Type"
+                        label={t('Attribute Type')}
                         data={[
-                          { value: 'color', label: 'Product Colors' },
-                          { value: 'dropdown', label: 'Dropdown' },
-                          { value: 'input', label: 'Input Text' },
-                          { value: 'options', label: 'Options' },
-                          { value: 'quantity', label: 'Quantity' },
+                          { value: 'color', label: t('Product Colors') },
+                          { value: 'dropdown', label: t('Dropdown') },
+                          { value: 'input', label: t('Input Text') },
+                          { value: 'options', label: t('Options') },
+                          { value: 'quantity', label: t('Quantity') },
                         ]}
                         value={attr.type}
                         onChange={(v) => updateAttribute(idx, { type: (v as Attribute['type']) ?? 'dropdown' })}
@@ -630,15 +636,15 @@ export function ProductEdit() {
                     {/* Checkboxes */}
                     <Group>
                       <Checkbox
-                        label="Field Required"
-                        description="Set this attribute as required field before adding to cart"
+                        label={t('Field Required')}
+                        description={t('Set this attribute as required field before adding to cart')}
                         checked={attr.required}
                         onChange={(e) => updateAttribute(idx, { required: e.currentTarget.checked })}
                         size="sm"
                       />
                       <Checkbox
-                        label="Used for Variations"
-                        description="Use to create product variations"
+                        label={t('Used for Variations')}
+                        description={t('Use to create product variations')}
                         checked={attr.usedForVariations}
                         onChange={(e) => updateAttribute(idx, { usedForVariations: e.currentTarget.checked })}
                         size="sm"
@@ -651,7 +657,7 @@ export function ProductEdit() {
                     {attr.type !== 'input' && attr.type !== 'quantity' && (
                       <>
                         <Group justify="space-between">
-                          <Text size="sm" fw={500}>Values</Text>
+                          <Text size="sm" fw={500}>{t('Values')}</Text>
                           <Button
                             variant="subtle"
                             size="xs"
@@ -664,19 +670,19 @@ export function ProductEdit() {
                               updateAttribute(idx, { values: [...attr.values, newVal] });
                             }}
                           >
-                            Add Value
+                            {t('Add Value')}
                           </Button>
                         </Group>
 
                         {attr.values.length === 0 ? (
-                          <Text size="xs" c="dimmed" ta="center">No values yet — click "Add Value"</Text>
+                          <Text size="xs" c="dimmed" ta="center">{t('No values yet — click "Add Value"')}</Text>
                         ) : (
                           <Table withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
-                                {attr.type === 'color' && <Table.Th w={60}>Color</Table.Th>}
-                                <Table.Th>Label</Table.Th>
-                                <Table.Th w={100}>Extra Price</Table.Th>
+                                {attr.type === 'color' && <Table.Th w={60}>{t('Color')}</Table.Th>}
+                                <Table.Th>{t('Label')}</Table.Th>
+                                <Table.Th w={100}>{t('Extra Price')}</Table.Th>
                                 <Table.Th w={40}></Table.Th>
                               </Table.Tr>
                             </Table.Thead>
@@ -706,7 +712,7 @@ export function ProductEdit() {
                                         newVals[vIdx] = { ...val, label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, '-') };
                                         updateAttribute(idx, { values: newVals });
                                       }}
-                                      placeholder={attr.type === 'color' ? 'e.g. Navy Blue' : 'e.g. Small'}
+                                      placeholder={attr.type === 'color' ? t('e.g. Navy Blue') : t('e.g. Small')}
                                       size="xs"
                                       variant="unstyled"
                                     />
@@ -749,15 +755,15 @@ export function ProductEdit() {
 
                     {attr.type === 'input' && (
                       <Text size="xs" c="dimmed">
-                        This attribute shows a text input field. Users can enter custom text when adding to cart.
+                        {t('This attribute shows a text input field. Users can enter custom text when adding to cart.')}
                       </Text>
                     )}
 
                     {attr.type === 'quantity' && (
                       <Group grow>
-                        <NumberInput label="Min Quantity" placeholder="1" min={1} size="sm" />
-                        <NumberInput label="Max Quantity" placeholder="100" min={1} size="sm" />
-                        <NumberInput label="Price per unit ($)" prefix="$" decimalScale={2} min={0} size="sm" />
+                        <NumberInput label={t('Min Quantity')} placeholder="1" min={1} size="sm" />
+                        <NumberInput label={t('Max Quantity')} placeholder="100" min={1} size="sm" />
+                        <NumberInput label={t('Price per unit ($)')} prefix="$" decimalScale={2} min={0} size="sm" />
                       </Group>
                     )}
                   </Stack>
@@ -766,7 +772,7 @@ export function ProductEdit() {
             )}
 
             <Text size="xs" c="dimmed">
-              You can add an extra price for each attribute value. The product total will depend on base price + attributes + printing method.
+              {t('You can add an extra price for each attribute value. The product total will depend on base price + attributes + printing method.')}
             </Text>
           </Stack>
         </Tabs.Panel>
@@ -780,13 +786,13 @@ export function ProductEdit() {
       {/* Save button — fixed at bottom */}
       <Paper p="md" radius="md" withBorder mt="lg" style={{ position: 'sticky', bottom: 16 }}>
         <Group justify="flex-end">
-          <Button variant="default" onClick={() => navigate('/products')}>Cancel</Button>
+          <Button variant="default" onClick={() => navigate('/products')}>{t('Cancel')}</Button>
           <Button
             onClick={handleSave}
             leftSection={<Save size={16} />}
             loading={saving}
           >
-            {isNew ? 'Create Product' : 'Save Product'}
+            {isNew ? t('Create Product') : t('Save Product')}
           </Button>
         </Group>
       </Paper>
@@ -809,6 +815,7 @@ interface Variation {
 }
 
 function VariationsTab({ attributes }: { attributes: Attribute[] }) {
+  const t = useT();
   const [variations, setVariations] = useState<Variation[]>([]);
 
   const variationAttrs = attributes.filter((a) => a.usedForVariations && a.values.length > 0);
@@ -863,17 +870,17 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
     <Stack gap="md">
       <Group justify="space-between">
         <div>
-          <Text fw={600} size="sm">Product Variations</Text>
+          <Text fw={600} size="sm">{t('Product Variations')}</Text>
           <Text size="xs" c="dimmed">
             {canGenerate
-              ? `Based on your attributes, create all available variations`
-              : 'Mark attributes as "Used for Variations" to generate combinations'}
+              ? t('Based on your attributes, create all available variations')
+              : t('Mark attributes as "Used for Variations" to generate combinations')}
           </Text>
         </div>
         <Group gap="xs">
           {variations.length > 0 && (
             <Button variant="light" size="xs" onClick={bulkEdit}>
-              Bulk Edit Variations
+              {t('Bulk Edit Variations')}
             </Button>
           )}
           <Button
@@ -882,7 +889,7 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
             onClick={generateVariations}
             disabled={!canGenerate}
           >
-            {variations.length > 0 ? 'Regenerate' : 'Add New Variation'}
+            {variations.length > 0 ? t('Regenerate') : t('Add New Variation')}
           </Button>
         </Group>
       </Group>
@@ -890,9 +897,9 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
       {!canGenerate && variations.length === 0 && (
         <Paper p="xl" radius="md" withBorder>
           <Stack align="center" gap="xs">
-            <Text c="dimmed" size="sm">No variations yet</Text>
+            <Text c="dimmed" size="sm">{t('No variations yet')}</Text>
             <Text c="dimmed" size="xs">
-              Go to the Attributes tab, add attributes with values, and check "Used for Variations"
+              {t('Go to the Attributes tab, add attributes with values, and check "Used for Variations"')}
             </Text>
           </Stack>
         </Paper>
@@ -900,7 +907,7 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
 
       {variations.length > 0 && (
         <>
-          <Text size="xs" c="dimmed">{variations.length} variation(s) generated. Click "Expand" to edit details.</Text>
+          <Text size="xs" c="dimmed">{variations.length} {t('variation(s) generated. Click "Expand" to edit details.')}</Text>
 
           <Table withTableBorder>
             <Table.Thead>
@@ -910,7 +917,7 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
                   <Table.Th key={a.id}>{a.name}</Table.Th>
                 ))}
                 <Table.Th>SKU</Table.Th>
-                <Table.Th>Price</Table.Th>
+                <Table.Th>{t('Price')}</Table.Th>
                 <Table.Th w={120}></Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -935,7 +942,7 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
                     <Table.Td>
                       <Group gap={4} justify="flex-end">
                         <Button variant="subtle" size="xs" onClick={() => toggleExpand(idx)}>
-                          {v.expanded ? 'Collapse' : 'Expand'}
+                          {v.expanded ? t('Collapse') : t('Expand')}
                         </Button>
                         <ActionIcon variant="subtle" color="red" size="sm" onClick={() => removeVariation(idx)}>
                           <Trash2 size={14} />
@@ -952,7 +959,7 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
                           <Stack gap="sm">
                             <Group grow>
                               <NumberInput
-                                label="Regular Price ($)"
+                                label={t('Regular Price ($)')}
                                 value={v.regularPrice}
                                 onChange={(val) => updateVariation(idx, { regularPrice: Number(val) || 0 })}
                                 prefix="$"
@@ -961,14 +968,14 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
                                 size="xs"
                               />
                               <NumberInput
-                                label="Min Quantity"
+                                label={t('Min Quantity')}
                                 value={v.minQuantity}
                                 onChange={(val) => updateVariation(idx, { minQuantity: Number(val) || 1 })}
                                 min={1}
                                 size="xs"
                               />
                               <NumberInput
-                                label="Max Quantity"
+                                label={t('Max Quantity')}
                                 value={v.maxQuantity}
                                 onChange={(val) => updateVariation(idx, { maxQuantity: Number(val) || 100 })}
                                 min={1}
@@ -977,8 +984,8 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
                             </Group>
 
                             <TextInput
-                              label="Description"
-                              placeholder="Optional description for this variation"
+                              label={t('Description')}
+                              placeholder={t('Optional description for this variation')}
                               value={v.description}
                               onChange={(e) => updateVariation(idx, { description: e.target.value })}
                               size="xs"
@@ -986,13 +993,13 @@ function VariationsTab({ attributes }: { attributes: Attribute[] }) {
 
                             <Group>
                               <Switch
-                                label="Configure Printing Techniques"
+                                label={t('Configure Printing Techniques')}
                                 checked={v.printingTechniques}
                                 onChange={(e) => updateVariation(idx, { printingTechniques: e.currentTarget.checked })}
                                 size="xs"
                               />
                               <Switch
-                                label="Custom Design Configuration"
+                                label={t('Custom Design Configuration')}
                                 checked={v.customDesign}
                                 onChange={(e) => updateVariation(idx, { customDesign: e.currentTarget.checked })}
                                 size="xs"
