@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 const TEXT_EFFECTS = [
   { type: 'none' as const, label: 'Normal', image: '/assets/text-effects/normal.svg' },
@@ -43,6 +44,7 @@ const ALL_FONTS = [
 ];
 
 const loadedFonts = new Set<string>();
+const loadedCustomFonts = new Set<string>();
 
 function loadGoogleFont(fontName: string) {
   if (loadedFonts.has(fontName)) return;
@@ -53,13 +55,50 @@ function loadGoogleFont(fontName: string) {
   document.head.appendChild(link);
 }
 
+function loadCustomFont(name: string, url: string) {
+  if (loadedCustomFonts.has(name)) return;
+  loadedCustomFonts.add(name);
+  const face = new FontFace(name, `url(${url})`);
+  face.load().then((loaded) => { document.fonts.add(loaded); }).catch(() => {});
+}
+
+interface AdminFont {
+  id: string;
+  name: string;
+  fileUrl: string | null;
+  isGoogle: boolean;
+}
+
+const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+
 export function TextTab() {
+  const t = useT();
   const { addTextLayer, updateLayer, selectLayer } = useEditorStore();
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
   const [searchQuery, setSearchQuery] = useState('');
+  const [adminFonts, setAdminFonts] = useState<AdminFont[]>([]);
 
   useEffect(() => {
     FEATURED_FONTS.forEach(loadGoogleFont);
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/fonts`)
+      .then((r) => r.json())
+      .then((data: { id: string; name: string; fileUrl: string | null; isGoogle: boolean; active: boolean }[]) => {
+        const active = data.filter((f) => f.active);
+        setAdminFonts(active.map((f) => ({ id: f.id, name: f.name, fileUrl: f.fileUrl, isGoogle: f.isGoogle })));
+        // Preload font faces
+        active.forEach((f) => {
+          if (f.isGoogle) {
+            loadGoogleFont(f.name);
+          } else if (f.fileUrl) {
+            const url = f.fileUrl.startsWith('/') ? `${API_BASE}${f.fileUrl}` : f.fileUrl;
+            loadCustomFont(f.name, url);
+          }
+        });
+      })
+      .catch(() => setAdminFonts([]));
   }, []);
 
   // If a text layer is selected, apply effect to it; otherwise create new
@@ -113,25 +152,25 @@ export function TextTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>Add Text</div>
+      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Add Text')}</div>
 
       {/* Text effect tiles — applies to selected text or creates new */}
       {selectedLayer?.type === 'text' && (
-        <div style={{ fontSize: 10, color: '#4A90D9', fontWeight: 500 }}>Text selected — click to change effect/font</div>
+        <div style={{ fontSize: 10, color: '#4A90D9', fontWeight: 500 }}>{t('Text selected — click to change effect/font')}</div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
         {TEXT_EFFECTS.map((effect) => (
           <button
             key={effect.type}
             onClick={() => applyOrAddEffect(effect.type)}
-            title={effect.label}
+            title={t(effect.label)}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               padding: 6, borderWidth: 1, borderStyle: 'solid', borderColor: '#e0e0e0',
               borderRadius: 6, background: '#fff', cursor: 'pointer',
             }}
           >
-            <img src={effect.image} alt={effect.label} style={{ width: '100%', height: 50, objectFit: 'contain' }} />
+            <img src={effect.image} alt={t(effect.label)} style={{ width: '100%', height: 50, objectFit: 'contain' }} />
           </button>
         ))}
       </div>
@@ -147,7 +186,7 @@ export function TextTab() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search fonts..."
+            placeholder={t('Search fonts...')}
             style={{ flex: 1, borderWidth: 0, outline: 'none', fontSize: 12 }}
           />
         </div>
@@ -172,10 +211,34 @@ export function TextTab() {
         </div>
       )}
 
+      {/* Merchant fonts library */}
+      {adminFonts.length > 0 && filteredFonts.length === 0 && (
+        <>
+          <div style={{ fontSize: 10, color: '#bbb', fontWeight: 600 }}>{t('COLLECTION')} ({adminFonts.length})</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
+            {adminFonts.map((font) => (
+              <button
+                key={font.id}
+                onClick={() => applyOrAddFont(font.name)}
+                title={font.name}
+                style={{
+                  padding: '7px 5px', borderWidth: 1, borderStyle: 'solid', borderColor: '#4A90D9',
+                  borderRadius: 6, background: '#EBF2FA', cursor: 'pointer', textAlign: 'center',
+                  fontFamily: font.name, fontSize: 12, color: '#333',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}
+              >
+                {font.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Default fonts grid */}
       {filteredFonts.length === 0 && (
         <>
-          <div style={{ fontSize: 10, color: '#bbb' }}>Popular for t-shirt design</div>
+          <div style={{ fontSize: 10, color: '#bbb' }}>{t('Popular for t-shirt design')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
             {FEATURED_FONTS.map((font) => (
               <button

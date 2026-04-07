@@ -1,5 +1,6 @@
 import { ShoppingBag, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 export const PRODUCT_COLORS = [
   { name: 'White', value: '#FFFFFF' },
@@ -17,6 +18,7 @@ export const PRODUCT_COLORS = [
 ];
 
 export function ProductTab() {
+  const t = useT();
   const { product, productColor, setProductColor, sizes, setSizeQuantity } = useEditorStore();
 
   if (!product) return null;
@@ -42,21 +44,21 @@ export function ProductTab() {
           color: '#666',
         }}
         onClick={() => {}}
-        title="Coming soon — requires product catalog"
+        title={t('Coming soon — requires product catalog')}
       >
         <ShoppingBag size={14} />
-        Change Product
+        {t('Change Product')}
       </button>
 
       {/* Product color */}
       <div>
-        <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Product color</div>
+        <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{t('Product Color')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
           {PRODUCT_COLORS.map((c) => (
             <button
               key={c.value}
               onClick={() => setProductColor(c.value)}
-              title={c.name}
+              title={t(c.name)}
               style={{
                 width: 30,
                 height: 30,
@@ -75,7 +77,7 @@ export function ProductTab() {
 
       {/* Quantity / Sizes */}
       <div>
-        <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Quantity by size</div>
+        <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{t('Quantity by size')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {Object.entries(sizes).map(([size, qty]) => (
             <div key={size} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
@@ -109,7 +111,7 @@ export function ProductTab() {
           ))}
         </div>
         <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
-          Total: {Object.values(sizes).reduce((a, b) => a + b, 0)} units
+          {t('Total')}: {Object.values(sizes).reduce((a, b) => a + b, 0)} {t('units')}
         </div>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('openmerch:add-to-cart'))}
@@ -131,7 +133,7 @@ export function ProductTab() {
           }}
         >
           <ShoppingCart size={14} />
-          Add to Cart
+          {t('Add to Cart')}
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { Stage, Layer, Image, Rect } from 'react-konva';
 import type { Product, ProductZone } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
+import { useI18nStore } from '../i18n/useTranslation.js';
 import { useImage } from '../hooks/useImage.js';
 import { useColoredProduct } from '../hooks/useColoredProduct.js';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js';
@@ -24,11 +25,19 @@ interface ProductEditorProps {
 
 export function ProductEditor({ product }: ProductEditorProps) {
   const { setProduct, activeZoneId, addImageLayer } = useEditorStore();
+  const loadLanguages = useI18nStore((s) => s.loadLanguages);
   useKeyboardShortcuts();
 
   useEffect(() => {
     setProduct(product);
   }, [product, setProduct]);
+
+  useEffect(() => {
+    const apiBase = (typeof window !== 'undefined' && window.location.port === '3000')
+      ? 'http://localhost:3001'
+      : '';
+    loadLanguages(apiBase);
+  }, [loadLanguages]);
 
   const activeProductZone = product.zones.find((z) => z.id === activeZoneId);
 

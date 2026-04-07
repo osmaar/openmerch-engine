@@ -1,8 +1,10 @@
 import { useRef } from 'react';
 import { Upload, ImagePlus, X } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 export function ImageTab() {
+  const t = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { addImageLayer, addToGallery, removeFromGallery, gallery } = useEditorStore();
 
@@ -44,7 +46,7 @@ export function ImageTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>Add Image</div>
+      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Add Image')}</div>
 
       {/* Upload button */}
       <button
@@ -67,7 +69,7 @@ export function ImageTab() {
         }}
       >
         <ImagePlus size={16} />
-        Upload Image
+        {t('Upload Image')}
       </button>
 
       {/* Drop zone */}
@@ -92,15 +94,15 @@ export function ImageTab() {
         onClick={() => fileInputRef.current?.click()}
       >
         <Upload size={20} />
-        <span>Drag & drop here</span>
-        <span style={{ fontSize: 10, color: '#ccc' }}>PNG, JPG, SVG, WebP</span>
+        <span>{t('Drag & drop here')}</span>
+        <span style={{ fontSize: 10, color: '#ccc' }}>{t('PNG, JPG, SVG, WebP')}</span>
       </div>
 
       {/* Gallery */}
       {gallery.length > 0 && (
         <>
           <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
-            Uploaded images
+            {t('Uploaded images')}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
@@ -131,7 +133,7 @@ export function ImageTab() {
                 />
                 <button
                   onClick={(e) => { e.stopPropagation(); removeFromGallery(item.id); }}
-                  title="Remove from gallery"
+                  title={t('Remove from gallery')}
                   style={{
                     position: 'absolute',
                     top: 2,
@@ -156,7 +158,7 @@ export function ImageTab() {
           </div>
 
           <div style={{ fontSize: 10, color: '#ccc', textAlign: 'center' }}>
-            Images saved during this session only
+            {t('Images saved during this session only')}
           </div>
         </>
       )}

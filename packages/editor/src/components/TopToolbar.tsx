@@ -6,6 +6,7 @@ import { ImageToolbar } from './contextual/ImageToolbar.js';
 import { TextToolbar } from './contextual/TextToolbar.js';
 import { ShapeToolbar } from './contextual/ShapeToolbar.js';
 import type { ImageLayer, TextLayer, ShapeLayer } from '@openmerch/core';
+import { useT } from '../i18n/useTranslation.js';
 
 export function TopToolbar() {
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
@@ -13,6 +14,7 @@ export function TopToolbar() {
   const [showQrInput, setShowQrInput] = useState(false);
   const [qrText, setQrText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useT();
 
   const handleGenerateQR = async () => {
     if (!qrText.trim()) return;
@@ -69,7 +71,7 @@ export function TopToolbar() {
           {/* Default message + QR button */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#aaa', fontSize: 12, flex: 1 }}>
             <Info size={14} />
-            <span>You can design your product — upload an image or add text to get started</span>
+            <span>{t('You can design your product — upload an image or add text to get started')}</span>
           </div>
 
           {/* QR Code generator */}
@@ -82,7 +84,7 @@ export function TopToolbar() {
                   value={qrText}
                   onChange={(e) => setQrText(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Your QR code text"
+                  placeholder={t('Your QR code text')}
                   autoFocus
                   style={{
                     padding: '5px 8px',
@@ -107,7 +109,7 @@ export function TopToolbar() {
                     fontWeight: 500,
                   }}
                 >
-                  Generate
+                  {t('Generate')}
                 </button>
                 <button
                   onClick={() => { setShowQrInput(false); setQrText(''); }}
@@ -123,13 +125,13 @@ export function TopToolbar() {
                     fontSize: 11,
                   }}
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
               </div>
             )}
             <button
               onClick={() => setShowQrInput(!showQrInput)}
-              title="Create QR Code"
+              title={t('Create QR Code')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -146,7 +148,7 @@ export function TopToolbar() {
               }}
             >
               <QrCode size={14} />
-              QR Code
+              {t('QR Code')}
             </button>
           </div>
         </>

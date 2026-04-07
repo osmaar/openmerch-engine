@@ -1,8 +1,10 @@
 import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import { useEditorStore } from '../store/editorStore.js';
+import { useT } from '../i18n/useTranslation.js';
 
 export function UndoRedoControls() {
   const { undo, redo, historyIndex, history, showPrintZone } = useEditorStore();
+  const t = useT();
 
   const canUndo = historyIndex >= 0;
   const canRedo = historyIndex + 2 < history.length;
@@ -40,7 +42,7 @@ export function UndoRedoControls() {
         style={btnStyle(canUndo)}
         onClick={() => canUndo && undo()}
         disabled={!canUndo}
-        title="Undo (Ctrl+Z)"
+        title={t('Undo (Ctrl+Z)')}
       >
         <Undo2 size={16} />
       </button>
@@ -48,7 +50,7 @@ export function UndoRedoControls() {
         style={btnStyle(canRedo)}
         onClick={() => canRedo && redo()}
         disabled={!canRedo}
-        title="Redo (Ctrl+Shift+Z)"
+        title={t('Redo (Ctrl+Shift+Z)')}
       >
         <Redo2 size={16} />
       </button>
@@ -61,7 +63,7 @@ export function UndoRedoControls() {
           color: showPrintZone ? '#4A90D9' : '#aaa',
         }}
         onClick={togglePrintZone}
-        title={showPrintZone ? 'Hide print zone guides' : 'Show print zone guides'}
+        title={showPrintZone ? t('Hide print zone guides') : t('Show print zone guides')}
       >
         {showPrintZone ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>

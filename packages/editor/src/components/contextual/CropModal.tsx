@@ -5,6 +5,7 @@ import {
   Maximize,
   Square,
 } from 'lucide-react';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface CropModalProps {
   imageSrc: string;
@@ -40,6 +41,7 @@ function getCornerHit(pos: { x: number; y: number }, crop: CropRect): DragMode |
 }
 
 export function CropModal({ imageSrc, onCrop, onCancel }: CropModalProps) {
+  const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [displayScale, setDisplayScale] = useState(1);
@@ -384,19 +386,19 @@ export function CropModal({ imageSrc, onCrop, onCancel }: CropModalProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <span style={{ fontWeight: 600, fontSize: 16, color: '#333' }}>Crop Image</span>
+          <span style={{ fontWeight: 600, fontSize: 16, color: '#333' }}>{t('Crop Image')}</span>
 
           <div style={{ display: 'flex', gap: 4 }}>
-            <button style={iconBtn} onClick={handleCenter} title="Center">
+            <button style={iconBtn} onClick={handleCenter} title={t('Center')}>
               <Maximize size={16} />
             </button>
-            <button style={iconBtn} onClick={handleCenterH} title="Center Horizontal">
+            <button style={iconBtn} onClick={handleCenterH} title={t('Center Horizontal')}>
               <AlignCenterHorizontal size={16} />
             </button>
-            <button style={iconBtn} onClick={handleCenterV} title="Center Vertical">
+            <button style={iconBtn} onClick={handleCenterV} title={t('Center Vertical')}>
               <AlignCenterVertical size={16} />
             </button>
-            <button style={iconBtn} onClick={handleSquare} title="Square">
+            <button style={iconBtn} onClick={handleSquare} title={t('Square')}>
               <Square size={16} />
             </button>
           </div>
@@ -429,8 +431,8 @@ export function CropModal({ imageSrc, onCrop, onCancel }: CropModalProps) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, width: '100%' }}>
-          <button style={btnStyle} onClick={onCancel}>Cancel</button>
-          <button style={primaryBtn} onClick={handleSave}>Apply Crop</button>
+          <button style={btnStyle} onClick={onCancel}>{t('Cancel')}</button>
+          <button style={primaryBtn} onClick={handleSave}>{t('Apply Crop')}</button>
         </div>
       </div>
     </div>

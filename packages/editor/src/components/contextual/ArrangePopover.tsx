@@ -6,6 +6,7 @@ import {
   ChevronsDown,
 } from 'lucide-react';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface ArrangePopoverProps {
   layerId: string;
@@ -14,6 +15,7 @@ interface ArrangePopoverProps {
 
 export function ArrangePopover({ layerId, onClose }: ArrangePopoverProps) {
   const { moveLayerUp, moveLayerDown, design, activeZoneId } = useEditorStore();
+  const t = useT();
 
   const zone = design?.zones[activeZoneId];
   const layers = zone?.layers ?? [];
@@ -73,7 +75,7 @@ export function ArrangePopover({ layerId, onClose }: ArrangePopoverProps) {
   return (
     <div style={popoverStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Arrange</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Arrange')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -83,16 +85,16 @@ export function ArrangePopover({ layerId, onClose }: ArrangePopoverProps) {
       </div>
 
       <button style={btnStyle(isTop)} onClick={() => !isTop && moveToTop()} disabled={isTop}>
-        <ChevronsUp size={16} /> Bring to Front
+        <ChevronsUp size={16} /> {t('Bring to Front')}
       </button>
       <button style={btnStyle(isTop)} onClick={() => !isTop && moveLayerUp(layerId)} disabled={isTop}>
-        <ArrowUp size={16} /> Bring Forward
+        <ArrowUp size={16} /> {t('Bring Forward')}
       </button>
       <button style={btnStyle(isBottom)} onClick={() => !isBottom && moveLayerDown(layerId)} disabled={isBottom}>
-        <ArrowDown size={16} /> Send Backward
+        <ArrowDown size={16} /> {t('Send Backward')}
       </button>
       <button style={btnStyle(isBottom)} onClick={() => !isBottom && moveToBottom()} disabled={isBottom}>
-        <ChevronsDown size={16} /> Send to Back
+        <ChevronsDown size={16} /> {t('Send to Back')}
       </button>
     </div>
   );

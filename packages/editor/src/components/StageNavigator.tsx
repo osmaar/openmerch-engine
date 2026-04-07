@@ -1,6 +1,7 @@
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { Product } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
+import { useT } from '../i18n/useTranslation.js';
 
 interface StageNavigatorProps {
   product: Product;
@@ -8,6 +9,7 @@ interface StageNavigatorProps {
 
 export function StageNavigator({ product }: StageNavigatorProps) {
   const { activeZoneId, setActiveZone, productColor } = useEditorStore();
+  const t = useT();
 
   const zones = product.zones;
   const activeIndex = zones.findIndex((z) => z.id === activeZoneId);
@@ -76,7 +78,7 @@ export function StageNavigator({ product }: StageNavigatorProps) {
         style={{ ...navBtn, opacity: activeIndex > 0 ? 1 : 0.3 }}
         onClick={goPrev}
         disabled={activeIndex <= 0}
-        title={activeIndex > 0 ? `${zones[activeIndex - 1]!.name} (${activeIndex}/${total})` : ''}
+        title={activeIndex > 0 ? `${t(zones[activeIndex - 1]!.name)} (${activeIndex}/${total})` : ''}
       >
         <ChevronUp size={16} />
       </button>
@@ -89,7 +91,7 @@ export function StageNavigator({ product }: StageNavigatorProps) {
             key={zone.id}
             style={thumbStyle(isActive)}
             onClick={() => setActiveZone(zone.id)}
-            title={`${zone.name} (${idx + 1}/${total})`}
+            title={`${t(zone.name)} (${idx + 1}/${total})`}
           >
             <div style={{
               width: 44,
@@ -115,7 +117,7 @@ export function StageNavigator({ product }: StageNavigatorProps) {
               color: isActive ? '#4A90D9' : '#888',
               fontWeight: isActive ? 600 : 400,
             }}>
-              {zone.name} ({idx + 1}/{total})
+              {t(zone.name)} ({idx + 1}/{total})
             </span>
           </div>
         );
@@ -126,7 +128,7 @@ export function StageNavigator({ product }: StageNavigatorProps) {
         style={{ ...navBtn, opacity: activeIndex < total - 1 ? 1 : 0.3 }}
         onClick={goNext}
         disabled={activeIndex >= total - 1}
-        title={activeIndex < total - 1 ? `${zones[activeIndex + 1]!.name} (${activeIndex + 2}/${total})` : ''}
+        title={activeIndex < total - 1 ? `${t(zones[activeIndex + 1]!.name)} (${activeIndex + 2}/${total})` : ''}
       >
         <ChevronDown size={16} />
       </button>

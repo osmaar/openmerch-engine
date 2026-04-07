@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Loader } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 interface UnsplashPhoto {
   id: string;
@@ -24,6 +25,7 @@ const CATEGORIES = [
 ];
 
 export function BackgroundsTab() {
+  const t = useT();
   const { addImageLayer } = useEditorStore();
   const UNSPLASH_KEY = useEditorStore((s) => s.unsplashKey);
   const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
@@ -80,11 +82,11 @@ export function BackgroundsTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>Backgrounds</div>
+      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Backgrounds')}</div>
 
       {!UNSPLASH_KEY && (
         <div style={{ padding: 12, background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
-          Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.
+          {t('Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.')}
         </div>
       )}
 
@@ -104,7 +106,7 @@ export function BackgroundsTab() {
               fontWeight: activeCategory === cat.label ? 600 : 400,
             }}
           >
-            {cat.label}
+            {t(cat.label)}
           </button>
         ))}
       </div>
@@ -135,7 +137,7 @@ export function BackgroundsTab() {
 
       {photos.length > 0 && (
         <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center' }}>
-          Photos by <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style={{ color: '#999' }}>Unsplash</a>
+          {t('Photos by')} <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style={{ color: '#999' }}>Unsplash</a>
         </div>
       )}
     </div>

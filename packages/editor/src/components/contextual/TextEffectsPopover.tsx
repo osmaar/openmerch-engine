@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { TextLayer, TextEffect } from '@openmerch/core';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface TextEffectsPopoverProps {
   layer: TextLayer;
@@ -16,6 +17,7 @@ const EFFECT_TYPES: { type: TextEffect['type']; label: string; image: string }[]
 
 export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) {
   const { updateLayer } = useEditorStore();
+  const t = useT();
   const currentEffect = layer.textEffect ?? { type: 'none' as const, radius: 150, spacing: 0, curve: 0, height: 0, offset: 0 };
   const [effect, setEffect] = useState<TextEffect>(currentEffect);
   const [text, setText] = useState(layer.text);
@@ -69,7 +71,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
   return (
     <div style={popoverStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Text Effects</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Text Effects')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -102,7 +104,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
           <button
             key={et.type}
             onClick={() => updateEffect({ type: et.type })}
-            title={et.label}
+            title={t(et.label)}
             style={{
               padding: 4,
               borderWidth: 2,
@@ -113,7 +115,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
               cursor: 'pointer',
             }}
           >
-            <img src={et.image} alt={et.label} style={{ width: '100%', height: 40, objectFit: 'contain' }} />
+            <img src={et.image} alt={t(et.label)} style={{ width: '100%', height: 40, objectFit: 'contain' }} />
           </button>
         ))}
       </div>
@@ -122,7 +124,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
       {showControls && (
         <>
           <div style={rowStyle}>
-            <span style={labelStyle}>Radius</span>
+            <span style={labelStyle}>{t('Radius')}</span>
             <input
               type="range"
               min={50}
@@ -135,7 +137,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
           </div>
 
           <div style={rowStyle}>
-            <span style={labelStyle}>Spacing</span>
+            <span style={labelStyle}>{t('Spacing')}</span>
             <input
               type="range"
               min={-20}
@@ -148,7 +150,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
           </div>
 
           <div style={rowStyle}>
-            <span style={labelStyle}>Curve</span>
+            <span style={labelStyle}>{t('Curve')}</span>
             <input
               type="range"
               min={-100}
@@ -161,7 +163,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
           </div>
 
           <div style={rowStyle}>
-            <span style={labelStyle}>Height</span>
+            <span style={labelStyle}>{t('Height')}</span>
             <input
               type="range"
               min={-50}
@@ -174,7 +176,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
           </div>
 
           <div style={rowStyle}>
-            <span style={labelStyle}>Offset</span>
+            <span style={labelStyle}>{t('Offset')}</span>
             <input
               type="range"
               min={-50}
@@ -201,7 +203,7 @@ export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) 
           fontWeight: 500,
         }}
       >
-        Update Text
+        {t('Update Text')}
       </button>
     </div>
   );

@@ -15,6 +15,7 @@ import { ToolbarButton, ToolbarDivider, ToolbarSlider, PopoverAnchor } from './s
 import { ArrangePopover } from './ArrangePopover.js';
 import { PositionPopover } from './PositionPopover.js';
 import { TransformPopover } from './TransformPopover.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface ShapeToolbarProps {
   layer: ShapeLayer;
@@ -31,6 +32,7 @@ export function ShapeToolbar({ layer }: ShapeToolbarProps) {
   const { updateLayer, removeLayer, duplicateLayer, resetLayer } = useEditorStore();
   const designZone = useEditorStore((s) => s.design?.zones[s.activeZoneId]);
   const [activePopover, setActivePopover] = useState<string | null>(null);
+  const t = useT();
 
   const toggle = (id: string) => setActivePopover(activePopover === id ? null : id);
 
@@ -45,24 +47,24 @@ export function ShapeToolbar({ layer }: ShapeToolbarProps) {
           onClose={() => setActivePopover(null)}
         />
       }>
-        <ToolbarButton icon={Paintbrush} tooltip="Fill color" onClick={() => toggle('fill')} active={activePopover === 'fill'} />
+        <ToolbarButton icon={Paintbrush} tooltip={t('Fill color')} onClick={() => toggle('fill')} active={activePopover === 'fill'} />
       </PopoverAnchor>
 
       {/* Stroke color */}
       <PopoverAnchor isOpen={activePopover === 'stroke'} popover={
         <ColorPicker
-          label="Stroke color"
+          label={t('Stroke color')}
           value={layer.stroke}
           onChange={(c) => updateLayer(layer.id, { stroke: c })}
           onClose={() => setActivePopover(null)}
         />
       }>
-        <ToolbarButton icon={Paintbrush} tooltip="Stroke color" onClick={() => toggle('stroke')} active={activePopover === 'stroke'} />
+        <ToolbarButton icon={Paintbrush} tooltip={t('Stroke color')} onClick={() => toggle('stroke')} active={activePopover === 'stroke'} />
       </PopoverAnchor>
 
       {/* Stroke width */}
       <ToolbarSlider
-        label="Stroke"
+        label={t('Stroke')}
         value={layer.strokeWidth}
         min={0}
         max={10}
@@ -73,7 +75,7 @@ export function ShapeToolbar({ layer }: ShapeToolbarProps) {
 
       {/* Opacity */}
       <ToolbarSlider
-        label="Opacity"
+        label={t('Opacity')}
         value={Math.round(layer.opacity * 100)}
         min={10}
         max={100}
@@ -84,31 +86,31 @@ export function ShapeToolbar({ layer }: ShapeToolbarProps) {
 
       {/* Arrange */}
       <PopoverAnchor isOpen={activePopover === 'arrange'} popover={<ArrangePopover layerId={layer.id} onClose={() => setActivePopover(null)} />}>
-        <ToolbarButton icon={Layers} tooltip="Arrange" onClick={() => toggle('arrange')} active={activePopover === 'arrange'} />
+        <ToolbarButton icon={Layers} tooltip={t('Arrange')} onClick={() => toggle('arrange')} active={activePopover === 'arrange'} />
       </PopoverAnchor>
 
       {/* Position */}
       <PopoverAnchor isOpen={activePopover === 'position'} popover={
         designZone ? <PositionPopover layer={layer} zoneWidthMM={designZone.canvasWidthMM} zoneHeightMM={designZone.canvasHeightMM} onClose={() => setActivePopover(null)} /> : <></>
       }>
-        <ToolbarButton icon={Move} tooltip="Position" onClick={() => toggle('position')} active={activePopover === 'position'} />
+        <ToolbarButton icon={Move} tooltip={t('Position')} onClick={() => toggle('position')} active={activePopover === 'position'} />
       </PopoverAnchor>
 
       {/* Transform */}
       <PopoverAnchor isOpen={activePopover === 'transform'} popover={<TransformPopover layer={layer} onClose={() => setActivePopover(null)} />}>
-        <ToolbarButton icon={BoxSelect} tooltip="Transform" onClick={() => toggle('transform')} active={activePopover === 'transform'} />
+        <ToolbarButton icon={BoxSelect} tooltip={t('Transform')} onClick={() => toggle('transform')} active={activePopover === 'transform'} />
       </PopoverAnchor>
 
       <ToolbarDivider />
 
       {/* Duplicate */}
-      <ToolbarButton icon={Copy} tooltip="Duplicate" onClick={() => duplicateLayer(layer.id)} />
+      <ToolbarButton icon={Copy} tooltip={t('Duplicate')} onClick={() => duplicateLayer(layer.id)} />
 
       {/* Reset */}
-      <ToolbarButton icon={RotateCcw} tooltip="Reset" onClick={() => resetLayer(layer.id)} />
+      <ToolbarButton icon={RotateCcw} tooltip={t('Reset')} onClick={() => resetLayer(layer.id)} />
 
       {/* Delete */}
-      <ToolbarButton icon={Trash2} tooltip="Delete" onClick={() => removeLayer(layer.id)} />
+      <ToolbarButton icon={Trash2} tooltip={t('Delete')} onClick={() => removeLayer(layer.id)} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sparkles, Loader, AlertCircle } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 const MODELS = [
   { id: 'flux', label: 'Flux (Default)' },
@@ -43,6 +44,7 @@ const styleModifiers: Record<string, string> = {
 };
 
 export function AiImageTab() {
+  const t = useT();
   const { addImageLayer, addToGallery, replaceImage } = useEditorStore();
   const pollinationsKey = useEditorStore((s) => s.pollinationsKey);
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
@@ -107,7 +109,7 @@ export function AiImageTab() {
         addImageLayer(dataUrl, img.width, img.height);
       }
     } catch {
-      setError('Image generation failed. Try a different prompt or model.');
+      setError(t('Image generation failed. Try a different prompt or model.'));
     }
 
     setLoading(false);
@@ -117,24 +119,24 @@ export function AiImageTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Sparkles size={16} color="#4A90D9" />
-        <span style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>AI Image</span>
+        <span style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('AI Image')}</span>
       </div>
 
       {isImageSelected && (
         <div style={{ padding: 8, background: '#EBF2FA', borderRadius: 6, fontSize: 11, color: '#4A90D9', fontWeight: 500 }}>
-          Image selected — generation will replace it
+          {t('Image selected — generation will replace it')}
         </div>
       )}
 
       {!pollinationsKey && (
         <div style={{ padding: 10, background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
-          Pollinations key not configured. Add VITE_POLLINATIONS_KEY to .env
+          {t('Pollinations key not configured. Add VITE_POLLINATIONS_KEY to .env')}
         </div>
       )}
 
       {/* Model */}
       <div>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Model</div>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{t('Model')}</div>
         <select
           value={model}
           onChange={(e) => setModel(e.target.value)}
@@ -144,19 +146,19 @@ export function AiImageTab() {
           }}
         >
           {MODELS.map((m) => (
-            <option key={m.id} value={m.id}>{m.label}</option>
+            <option key={m.id} value={m.id}>{t(m.label)}</option>
           ))}
         </select>
       </div>
 
       {/* Prompt */}
       <div>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Describe your image</div>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{t('Describe your image')}</div>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(); } }}
-          placeholder="A roaring lion with a crown..."
+          placeholder={t('A roaring lion with a crown...')}
           rows={3}
           style={{
             width: '100%', padding: '8px', borderWidth: 1, borderStyle: 'solid',
@@ -168,7 +170,7 @@ export function AiImageTab() {
 
       {/* Style */}
       <div>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Style</div>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{t('Style')}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {STYLES.map((s) => (
             <button
@@ -184,7 +186,7 @@ export function AiImageTab() {
                 fontWeight: style === s.id ? 600 : 400,
               }}
             >
-              {s.label}
+              {t(s.label)}
             </button>
           ))}
         </div>
@@ -205,12 +207,12 @@ export function AiImageTab() {
         {loading ? (
           <>
             <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
-            Generating...
+            {t('Generating...')}
           </>
         ) : (
           <>
             <Sparkles size={14} />
-            Generate Image
+            {t('Generate Image')}
           </>
         )}
       </button>
@@ -226,19 +228,19 @@ export function AiImageTab() {
       {/* Suggestions */}
       {!loading && (
         <div>
-          <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Try these prompts</div>
+          <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{t('Try these prompts')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {PROMPT_SUGGESTIONS.map((s, i) => (
               <button
                 key={i}
-                onClick={() => setPrompt(s)}
+                onClick={() => setPrompt(t(s))}
                 style={{
                   padding: '6px 8px', borderWidth: 1, borderStyle: 'solid', borderColor: '#e0e0e0',
                   borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 10,
                   color: '#555', textAlign: 'left',
                 }}
               >
-                {s}
+                {t(s)}
               </button>
             ))}
           </div>
@@ -247,9 +249,9 @@ export function AiImageTab() {
 
       {/* Info */}
       <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', lineHeight: 1.4 }}>
-        Powered by Pollinations.ai · Generation may take 10-30s
+        {t('Powered by Pollinations.ai · Generation may take 10-30s')}
         <br />
-        Get your key at enter.pollinations.ai
+        {t('Get your key at enter.pollinations.ai')}
       </div>
     </div>
   );

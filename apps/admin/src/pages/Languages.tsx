@@ -47,17 +47,167 @@ const AVAILABLE_LANGUAGES = [
   { value: 'sw', label: 'Swahili', flag: '\u{1F1F0}\u{1F1EA}' },
 ];
 
-const EDITOR_TEXTS = [
-  'Add to Cart', 'Upload Image', 'Add Text', 'Download', 'Save Design',
-  'Product Color', 'Print Zone', 'Quantity', 'Back to Shop', 'My Designs',
-  'Choose Product', 'Remove Background', 'Add Clipart', 'Add Shape',
-  'Font Size', 'Font Family', 'Bold', 'Italic', 'Underline', 'Text Color',
-  'Align Left', 'Align Center', 'Align Right', 'Opacity', 'Delete',
-  'Duplicate', 'Undo', 'Redo', 'Zoom In', 'Zoom Out', 'Reset View',
-  'Front', 'Back', 'Layers', 'Photos', 'Backgrounds', 'AI Image',
-  'Generate', 'Search', 'Categories', 'Price', 'Free', 'Premium',
-  'Your cart is empty', 'Clear All', 'Select All', 'No results found',
-];
+// Grouped by section for the JSON download (sections are visual only — flat keys in DB)
+const EDITOR_TEXTS_BY_SECTION = {
+  'NavBar & Menu': [
+    'Print', 'Help', 'Languages', 'Back to Shop', 'My Cart',
+    'Add to Cart', 'Adding...', 'Saving...', 'Saved', 'Ctrl+S to save',
+    'No additional languages enabled. Activate languages in the admin panel.',
+  ],
+  'Cart': [
+    'Your cart is empty', 'Design a product and click "Add to Cart"',
+    'Size', 'Remove from cart',
+    'Select at least one size and quantity in the Product tab.',
+    'Add at least one element to your design first.',
+    'Added to cart!', 'Failed to add to cart. Please try again.',
+  ],
+  'Print / Download': [
+    'Print / Download', 'Format', 'Unit', 'Include base?',
+    'Include back?', 'Include front?',
+    'Download', 'Exporting...',
+  ],
+  'Help / Hotkeys': [
+    'Hotkeys', 'Delete selected element', 'Copy selected element',
+    'Cut selected element', 'Paste element', 'Duplicate selected element',
+    'Select last element', 'Clear all elements', 'Undo', 'Redo',
+    'Save design', 'Download design (PNG)', 'Print (mockup PNG)',
+    'Zoom in', 'Zoom out', 'Reset zoom',
+    'Move element 1px', 'Move element 10px', 'Edit text inline',
+    'Zoom in/out', 'Pan (when zoomed)',
+  ],
+  'Top Toolbar / QR': [
+    'You can design your product — upload an image or add text to get started',
+    'Your QR code text', 'Generate', 'Cancel', 'Create QR Code', 'QR Code',
+    'Upload Image', 'Add Text', 'Duplicate', 'Reset', 'Delete',
+    'Reset position and scale',
+  ],
+  'Zoom & View': [
+    'Reset view', 'Reset view — center canvas',
+    'Hide print zone guides', 'Show print zone guides',
+    'Undo (Ctrl+Z)', 'Redo (Ctrl+Shift+Z)',
+  ],
+  'Text Toolbar': [
+    'Edit text', 'Edit Text', 'Text effects', 'Text Effects',
+    'Bold', 'Italic', 'Underline', 'Align', 'Case',
+    'Arrange layer', 'Object position', 'Transform',
+    'Enter your text...', 'Spacing', 'Line H.', 'Update Text',
+    'Radius', 'Curve', 'Height', 'Offset',
+    'Left', 'Center', 'Right',
+    'UPPERCASE', 'lowercase', 'Title Case',
+    'Normal', 'Curved', 'Oblique',
+  ],
+  'Image Toolbar': [
+    'Replace image', 'Crop image', 'Remove background', 'Remove Background',
+    'Filters', 'Fill color', 'Opacity',
+    'Basic removal — AI-powered removal coming soon with backend integration',
+    'Mode', 'Light Background', 'Dark Background', 'Deep',
+    'Apply', 'Crop Image', 'Center Horizontal', 'Center Vertical',
+    'Square', 'Apply Crop',
+    'Brightness', 'Contrast', 'Saturation',
+  ],
+  'Filters': [
+    'Original', 'Grayscale', 'Sepia', 'Vivid', 'Punch', 'Pop',
+    'Warm', 'Golden', 'Amber', 'Cool', 'Arctic', 'Frost',
+    'Hi Contrast', 'Lo Contrast', 'Dramatic', 'Faded', 'Vintage', 'Retro',
+    'Muted', 'Soft', 'Pastel', 'Dark', 'Moody', 'Noir', 'Cyberpunk',
+    'Emerald', 'Sunset', 'BW Soft', 'BW Hard', 'BW Warm',
+    'Invert', 'Solarize', 'X-Ray', 'Kodak', 'Fuji', 'Polaroid',
+  ],
+  'Shape Toolbar': [
+    'Stroke color', 'Stroke', 'Arrange', 'Position',
+  ],
+  'Transform Popover': [
+    'Rotate', 'Skew X', 'Skew Y', 'Flip X', 'Flip Y', 'Reset All Transforms',
+  ],
+  'Position / Arrange': [
+    'Lock Position', 'Unlock Position',
+    'Top Left', 'Top Center', 'Top Right',
+    'Center Left', 'Center Right',
+    'Bottom Left', 'Bottom Center', 'Bottom Right',
+    'Bring to Front', 'Bring Forward', 'Send Backward', 'Send to Back',
+  ],
+  'Fill Color': [
+    'Fill Color', 'HEX', 'Intensity', 'Transparent (Clear Tint)',
+  ],
+  'Sidebar Tabs': [
+    'Product', 'Image', 'Photos', 'AI Image', 'Text', 'Cliparts', 'Shapes',
+    'Backgrnd', 'Backgrounds', 'Layers',
+  ],
+  'Product Tab': [
+    'Change Product', 'Coming soon — requires product catalog',
+    'Product Color', 'Quantity by size',
+  ],
+  'Product Colors': [
+    'White', 'Black', 'Navy', 'Red', 'Royal Blue', 'Forest Green',
+    'Gray', 'Yellow', 'Orange', 'Pink', 'Purple', 'Brown',
+  ],
+  'Image Tab': [
+    'Add Image', 'Drag & drop here', 'PNG, JPG, SVG, WebP',
+    'Uploaded images', 'Images saved during this session only',
+  ],
+  'Text Tab': [
+    'Text selected — click to change effect/font',
+    'Search fonts...', 'Popular for t-shirt design',
+  ],
+  'Shapes Tab': [
+    'Rectangle', 'Rounded', 'Circle', 'Triangle', 'Star', 'Diamond',
+    'Pentagon', 'Hexagon', 'Cross', 'Click to add shape to canvas',
+  ],
+  'Layers Tab': [
+    'No layers yet', 'Add an image or text to start',
+    'Hide', 'Show', 'Lock', 'Unlock', 'Locked',
+    'Drag to reorder · Double-click to rename', 'Double-click to rename',
+    'Arrow', 'Line',
+  ],
+  'Cliparts Tab': [
+    'Search icons...', 'Search', 'Basic', 'Material', 'Phosphor',
+    'Tabler', 'Gaming', 'Emoji', 'Color', 'Fluent', 'Noto', 'Stream',
+    'No icons found', '200,000+ icons · Powered by Iconify',
+  ],
+  'Photos Tab': [
+    'Search photos...', 'Photos by Unsplash',
+    'Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.',
+    'trending', 'aesthetic', 'minimal', 'retro', 'graffiti', 'neon',
+    'floral', 'geometric', 'animals', 'landscape', 'food', 'music',
+  ],
+  'Backgrounds Tab': [
+    'Gradients', 'Textures', 'Patterns', 'Abstract', 'Grunge',
+    'Marble', 'Wood', 'Fabric', 'Space', 'Watercolor',
+  ],
+  'AI Image Tab': [
+    'Image selected — generation will replace it',
+    'Pollinations key not configured. Add VITE_POLLINATIONS_KEY to .env',
+    'Model', 'Flux (Default)', 'GPT Image', 'Flux Realism', 'Flux Anime', 'Flux 3D',
+    'Describe your image', 'A roaring lion with a crown...',
+    'Style', 'Auto', 'Photo', 'Art', 'Anime', 'Logo', 'Icon', 'Sticker', 'Tattoo',
+    'Generate Image', 'Generating...',
+    'Image generation failed. Try a different prompt or model.',
+    'Try these prompts',
+    'Powered by Pollinations.ai · Generation may take 10-30s',
+    'Get your key at enter.pollinations.ai',
+  ],
+  'Misc': [
+    'No zone found', 'Save', 'Free', 'Premium', 'Categories', 'Price',
+    'Front', 'Back', 'Quantity', 'No results found', 'Clear All', 'Select All',
+    'Choose Product', 'My Designs', 'Save Design', 'Print Zone',
+    'Add Clipart', 'Add Shape', 'Font Size', 'Font Family', 'Text Color',
+    'Align Left', 'Align Center', 'Align Right',
+    'COLLECTION', 'Total', 'units', 'Photos by', 'Remove from gallery', 'Include',
+  ],
+  'AI Prompt Suggestions': [
+    'A roaring lion with crown, bold graphic style',
+    'Retro sunset with palm trees, vaporwave aesthetic',
+    'Skull with roses, tattoo style, black and white',
+    'Abstract geometric wolf head, modern minimal',
+    'Vintage motorcycle, distressed texture, americana',
+    'Japanese dragon, traditional ink style',
+    'Astronaut floating in space with flowers',
+    'Graffiti style text art, urban street art',
+  ],
+};
+
+// Flat list used everywhere else (for state, validation, downloads)
+const EDITOR_TEXTS = Object.values(EDITOR_TEXTS_BY_SECTION).flat();
 
 const ADMIN_TEXTS = [
   'Dashboard', 'Products', 'Designs', 'Templates', 'Cliparts', 'Shapes',
@@ -107,14 +257,40 @@ function validateJson(raw: string): { valid: boolean; data?: Record<string, stri
 }
 
 function buildDownloadJson(translations: TranslationEntry[], section: string): string {
-  const obj: Record<string, string> = {
-    '_instructions': `OpenMerch Engine — ${section} Translations`,
-    '_format': 'Each key is the original English text, the value is your translation.',
-    '_rules': 'Do NOT change the keys (left side). Only translate the values (right side). Do NOT add HTML, scripts, or SQL. Keys starting with _ are ignored on import. Unknown keys will be skipped.',
-    '_example': '"Add to Cart": "Agregar al Carrito"',
-  };
-  translations.forEach((t) => { obj[t.originalText] = t.translatedText; });
-  return JSON.stringify(obj, null, 2);
+  const map = new Map(translations.map((t) => [t.originalText, t.translatedText]));
+  const lines: string[] = [];
+  lines.push('{');
+  lines.push(`  "_instructions": "OpenMerch Engine — ${section} Translations",`);
+  lines.push('  "_format": "Each key is the original English text, the value is your translation.",');
+  lines.push('  "_rules": "Do NOT change the keys (left side). Only translate the values (right side). Do NOT add HTML, scripts, or SQL. Keys starting with _ are ignored on import. Unknown keys will be skipped.",');
+  lines.push('  "_example": "\\"Add to Cart\\": \\"Agregar al Carrito\\"",');
+
+  if (section.startsWith('Editor')) {
+    // Group by section for readability
+    const sectionEntries = Object.entries(EDITOR_TEXTS_BY_SECTION);
+    sectionEntries.forEach(([sectionName, keys], idx) => {
+      lines.push(`  "_section_${idx}": "═══ ${sectionName} ═══",`);
+      keys.forEach((key) => {
+        const value = map.get(key) ?? '';
+        const escKey = JSON.stringify(key);
+        const escVal = JSON.stringify(value);
+        lines.push(`  ${escKey}: ${escVal},`);
+      });
+    });
+  } else {
+    // Flat for admin
+    translations.forEach((t) => {
+      lines.push(`  ${JSON.stringify(t.originalText)}: ${JSON.stringify(t.translatedText)},`);
+    });
+  }
+
+  // Remove trailing comma from last entry
+  const last = lines[lines.length - 1];
+  if (last && last.endsWith(',')) {
+    lines[lines.length - 1] = last.slice(0, -1);
+  }
+  lines.push('}');
+  return lines.join('\n');
 }
 
 export function Languages() {

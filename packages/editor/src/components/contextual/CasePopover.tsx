@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import type { TextLayer } from '@openmerch/core';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface CasePopoverProps {
   layer: TextLayer;
@@ -14,6 +15,7 @@ interface CasePopoverProps {
 
 export function CasePopover({ layer, onClose }: CasePopoverProps) {
   const { updateLayer } = useEditorStore();
+  const t = useT();
 
   const btnStyle: React.CSSProperties = {
     display: 'flex',
@@ -70,7 +72,7 @@ export function CasePopover({ layer, onClose }: CasePopoverProps) {
   return (
     <div style={popoverStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Case</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Case')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -80,13 +82,13 @@ export function CasePopover({ layer, onClose }: CasePopoverProps) {
       </div>
 
       <button style={btnStyle} onClick={toUpperCase}>
-        <CaseUpper size={16} /> UPPERCASE
+        <CaseUpper size={16} /> {t('UPPERCASE')}
       </button>
       <button style={btnStyle} onClick={toLowerCase}>
-        <CaseLower size={16} /> lowercase
+        <CaseLower size={16} /> {t('lowercase')}
       </button>
       <button style={btnStyle} onClick={toTitleCase}>
-        <CaseSensitive size={16} /> Title Case
+        <CaseSensitive size={16} /> {t('Title Case')}
       </button>
     </div>
   );

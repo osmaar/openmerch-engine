@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface FillPopoverProps {
   currentColor: string;
@@ -17,6 +18,7 @@ const QUICK_COLORS = [
 ];
 
 export function FillPopover({ currentColor, currentOpacity, onApply, onClear, onClose }: FillPopoverProps) {
+  const t = useT();
   const [color, setColor] = useState(currentColor || '#000000');
   const [opacity, setOpacity] = useState(Math.round(currentOpacity * 100));
   const [hexInput, setHexInput] = useState(currentColor || '#000000');
@@ -83,7 +85,7 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
     <div style={popoverStyle}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Fill Color</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Fill Color')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -113,7 +115,7 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
 
         {/* Hex input */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-          <span style={{ fontSize: 10, color: '#999' }}>HEX</span>
+          <span style={{ fontSize: 10, color: '#999' }}>{t('HEX')}</span>
           <input
             type="text"
             value={hexInput}
@@ -142,7 +144,7 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
 
       {/* Tint opacity */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>Intensity</span>
+        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>{t('Intensity')}</span>
         <input
           type="range"
           min={0}
@@ -169,7 +171,7 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
           color: '#666',
         }}
       >
-        Transparent (Clear Tint)
+        {t('Transparent (Clear Tint)')}
       </button>
     </div>
   );

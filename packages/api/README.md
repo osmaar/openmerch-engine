@@ -84,7 +84,43 @@ pnpm db:generate
 pnpm db:migrate
 ```
 
-### 4. Start the API Server
+### 4. Seed Default Translations (i18n)
+
+OpenMerch ships with **English** (default), **Spanish**, and **French** translations for the editor. Load them into the database:
+
+```bash
+cd packages/api
+pnpm db:seed
+```
+
+This reads JSON files from `seeds/translations/*.json` and inserts them as languages + translations. The script is **idempotent** — running it multiple times won't overwrite existing translations.
+
+**What gets seeded:**
+- Languages: Spanish (es), French (fr)
+- ~337 translation keys per language covering the entire editor UI
+- English is the source language (no translation needed — it's hardcoded)
+
+**Adding a new language to the seed:**
+
+1. Create a new file `seeds/translations/de.json` (use the German example):
+   ```json
+   {
+     "_meta": {
+       "code": "de",
+       "name": "German",
+       "flag": "🇩🇪"
+     },
+     "Add to Cart": "In den Warenkorb",
+     "Print": "Drucken",
+     "Help": "Hilfe"
+   }
+   ```
+2. Run `pnpm db:seed`
+3. Activate the language from the admin panel → Languages
+
+The full list of keys to translate is available in the admin UI at **Languages → Translations → Download JSON**, or in `apps/admin/src/pages/Languages.tsx` (`EDITOR_TEXTS_BY_SECTION` constant).
+
+### 5. Start the API Server
 
 ```bash
 # From the project root
@@ -93,7 +129,7 @@ pnpm dev --filter @openmerch/api
 
 The API will be available at `http://localhost:3001`.
 
-### 5. Verify
+### 6. Verify
 
 ```bash
 curl http://localhost:3001/api/v1/health
