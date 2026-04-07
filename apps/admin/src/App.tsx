@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout.js';
+import { useI18nStore } from './i18n/useTranslation.js';
 import { Dashboard } from './pages/Dashboard.js';
 import { Products } from './pages/Products.js';
 import { ProductEdit } from './pages/ProductEdit.js';
@@ -14,6 +16,12 @@ import { Orders } from './pages/Orders.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 
 export function App() {
+  const loadLanguages = useI18nStore((s) => s.loadLanguages);
+
+  useEffect(() => {
+    loadLanguages();
+  }, [loadLanguages]);
+
   return (
     <BrowserRouter>
       <Routes>

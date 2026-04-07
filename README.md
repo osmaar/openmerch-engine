@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + i18n) in progress — Editor consumes merchant resources, full i18n runtime with Spanish + French shipped. Next: admin panel i18n + CMS integration.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + i18n) in progress — Editor + Admin Panel are fully internationalized (English / Spanish / French shipped via seeds). Next: real Dashboard, BullMQ production jobs, CMS integration.
 
 ---
 
@@ -26,6 +26,7 @@ OpenMerch Engine lets any ecommerce store offer visual product customization dir
 - **20+ keyboard shortcuts** — undo/redo, duplicate, move, zoom, download
 - **Full toolbar** — filters, fill, crop, remove background, arrange, position, transform
 - **Admin panel** — merchant dashboard to manage products, templates, cliparts, fonts, printing types, orders, languages, and settings
+- **Full i18n** — both Editor and Admin Panel ship with English, Spanish and French. Merchants can add more languages via the admin or import JSON files
 - **Self-hosted** — your data, your server, Docker Compose in one command
 
 ---

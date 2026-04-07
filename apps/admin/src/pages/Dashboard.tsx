@@ -4,6 +4,7 @@ import {
 } from '@mantine/core';
 import { ShirtIcon, PenTool, Image, Activity, ExternalLink, Plus, ShoppingCart, Hexagon, Type } from 'lucide-react';
 import { listProducts, listDesigns, listTemplates, listCliparts, listShapes, listFonts, listOrders, checkHealth } from '../services/api.js';
+import { useT } from '../i18n/useTranslation.js';
 
 interface Stats {
   products: number;
@@ -18,6 +19,7 @@ interface Stats {
 }
 
 export function Dashboard() {
+  const t = useT();
   const [stats, setStats] = useState<Stats>({ products: 0, designs: 0, templates: 0, cliparts: 0, shapes: 0, fonts: 0, orders: 0, apiStatus: 'checking...', version: '' });
   const [loading, setLoading] = useState(true);
 
@@ -40,26 +42,26 @@ export function Dashboard() {
   if (loading) {
     return (
       <div>
-        <Title order={2} mb="lg">Dashboard</Title>
-        <Text c="dimmed" size="sm">Loading...</Text>
+        <Title order={2} mb="lg">{t('Dashboard')}</Title>
+        <Text c="dimmed" size="sm">{t('Loading...')}</Text>
       </div>
     );
   }
 
   const cards = [
-    { label: 'Products', value: stats.products, icon: ShirtIcon, color: 'blue' },
-    { label: 'Designs', value: stats.designs, icon: PenTool, color: 'green' },
-    { label: 'Templates', value: stats.templates, icon: Image, color: 'orange' },
-    { label: 'Cliparts', value: stats.cliparts, icon: Image, color: 'violet' },
-    { label: 'Shapes', value: stats.shapes, icon: Hexagon, color: 'cyan' },
-    { label: 'Fonts', value: stats.fonts, icon: Type, color: 'pink' },
-    { label: 'Orders', value: stats.orders, icon: ShoppingCart, color: 'teal' },
-    { label: 'API Status', value: stats.apiStatus, icon: Activity, color: stats.apiStatus === 'ok' ? 'green' : 'red' },
+    { label: t('Products'), value: stats.products, icon: ShirtIcon, color: 'blue' },
+    { label: t('Designs'), value: stats.designs, icon: PenTool, color: 'green' },
+    { label: t('Templates'), value: stats.templates, icon: Image, color: 'orange' },
+    { label: t('Cliparts'), value: stats.cliparts, icon: Image, color: 'violet' },
+    { label: t('Shapes'), value: stats.shapes, icon: Hexagon, color: 'cyan' },
+    { label: t('Fonts'), value: stats.fonts, icon: Type, color: 'pink' },
+    { label: t('Orders'), value: stats.orders, icon: ShoppingCart, color: 'teal' },
+    { label: t('API Status'), value: stats.apiStatus, icon: Activity, color: stats.apiStatus === 'ok' ? 'green' : 'red' },
   ];
 
   return (
     <div>
-      <Title order={2} mb="lg">Dashboard</Title>
+      <Title order={2} mb="lg">{t('Dashboard')}</Title>
 
       {/* Stats */}
       <SimpleGrid cols={4} mb="xl">
@@ -82,33 +84,33 @@ export function Dashboard() {
       </SimpleGrid>
 
       {/* Quick Actions */}
-      <Text fw={600} size="sm" mb="sm">Quick Actions</Text>
+      <Text fw={600} size="sm" mb="sm">{t('Quick Actions')}</Text>
       <Group mb="xl">
         <Button component="a" href="/products" leftSection={<Plus size={16} />} color="dark">
-          New Product
+          {t('New Product')}
         </Button>
         <Button component="a" href="http://localhost:3000" target="_blank" leftSection={<ExternalLink size={14} />} variant="default">
-          Open Editor
+          {t('Open Editor')}
         </Button>
         <Button component="a" href="http://localhost:9001" target="_blank" leftSection={<ExternalLink size={14} />} variant="default">
-          MinIO Console
+          {t('MinIO Console')}
         </Button>
       </Group>
 
       {/* System Info */}
       <Paper p="md" radius="md" withBorder style={{ overflow: 'visible' }}>
-        <Text fw={600} size="sm" mb="md">System Info</Text>
+        <Text fw={600} size="sm" mb="md">{t('System Info')}</Text>
         <Stack gap="sm">
           <Group justify="space-between" wrap="nowrap">
             <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>API</Text>
             <Group gap="xs" wrap="nowrap">
               <Anchor size="xs" href="http://localhost:3001/api/v1/health" target="_blank">http://localhost:3001</Anchor>
-              <Badge size="xs" color="green" variant="light" styles={{ label: { overflow: 'visible' } }}>Online</Badge>
+              <Badge size="xs" color="green" variant="light" styles={{ label: { overflow: 'visible' } }}>{t('Online')}</Badge>
             </Group>
           </Group>
           <Divider />
           <Group justify="space-between" wrap="nowrap">
-            <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>Editor</Text>
+            <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>{t('Editor')}</Text>
             <Anchor size="xs" href="http://localhost:3000" target="_blank">http://localhost:3000</Anchor>
           </Group>
           <Divider />
@@ -118,12 +120,12 @@ export function Dashboard() {
           </Group>
           <Divider />
           <Group justify="space-between" wrap="nowrap">
-            <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>Database</Text>
+            <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>{t('Database')}</Text>
             <Text size="xs">PostgreSQL :5432</Text>
           </Group>
           <Divider />
           <Group justify="space-between" wrap="nowrap">
-            <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>Version</Text>
+            <Text size="xs" c="dimmed" style={{ minWidth: 70 }}>{t('Version')}</Text>
             <Badge size="xs" variant="light" styles={{ label: { overflow: 'visible' } }}>{stats.version}</Badge>
           </Group>
         </Stack>

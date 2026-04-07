@@ -8,8 +8,10 @@ import { Plus, Trash2, Search, Hexagon } from 'lucide-react';
 import { useConfirm } from '../hooks/useConfirm.js';
 import { listShapes, createShape, updateShape, deleteShape } from '../services/api.js';
 import type { Shape } from '../services/api.js';
+import { useT } from '../i18n/useTranslation.js';
 
 export function Shapes() {
+  const t = useT();
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [loading, setLoading] = useState(true);
   const confirm = useConfirm();
@@ -29,15 +31,34 @@ export function Shapes() {
 
   const filtered = shapes.filter((s) => !search.trim() || s.name.toLowerCase().includes(search.toLowerCase())).sort((a, b) => a.sortOrder - b.sortOrder);
 
+  const isValidSvg = (svg: string): boolean => {
+    const trimmed = svg.trim();
+    if (!trimmed) return false;
+    if (!trimmed.startsWith('<svg') && !trimmed.startsWith('<?xml')) return false;
+    if (!trimmed.includes('</svg>')) return false;
+    return true;
+  };
+
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      notifications.show({ title: t('Error'), message: t('Name is required'), color: 'red' });
+      return;
+    }
+    if (!newSvg.trim()) {
+      notifications.show({ title: t('Error'), message: t('SVG content is required'), color: 'red' });
+      return;
+    }
+    if (!isValidSvg(newSvg)) {
+      notifications.show({ title: t('Error'), message: t('Invalid SVG. Must start with <svg> and end with </svg>'), color: 'red' });
+      return;
+    }
     try {
       await createShape({ name: newName, svgContent: newSvg, sortOrder: newOrder, active: newActive });
-      notifications.show({ title: 'Shape created', message: `"${newName}" has been created successfully`, color: 'green' });
+      notifications.show({ title: t('Shape created'), message: `"${newName}" ${t('has been created successfully')}`, color: 'green' });
       setNewName(''); setNewSvg(''); setNewOrder(0); setNewActive(true); setShowCreate(false);
       load();
     } catch (e) {
-      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+      notifications.show({ title: t('Error'), message: t((e as Error).message), color: 'red' });
     }
   };
 
@@ -46,9 +67,9 @@ export function Shapes() {
   };
 
   const handleDeleteShape = (s: Shape) => {
-    confirm('Delete Shape', `Are you sure you want to delete "${s.name}"?`, () => {
+    confirm(t('Delete Shape'), `${t('Are you sure you want to delete')} "${s.name}"?`, () => {
       deleteShape(s.id).then(() => {
-        notifications.show({ title: 'Shape deleted', message: 'The shape has been deleted', color: 'red' });
+        notifications.show({ title: t('Shape deleted'), message: t('The shape has been deleted'), color: 'red' });
         load();
       });
     });
@@ -57,48 +78,48 @@ export function Shapes() {
   return (
     <div>
       <Group justify="space-between" mb="lg">
-        <Title order={2}>Shapes</Title>
-        <Button leftSection={<Plus size={16} />} onClick={() => setShowCreate(true)}>Add New Shape</Button>
+        <Title order={2}>{t('Shapes')}</Title>
+        <Button leftSection={<Plus size={16} />} onClick={() => setShowCreate(true)}>{t('Add New Shape')}</Button>
       </Group>
 
-      <Modal opened={showCreate} onClose={() => { setShowCreate(false); setNewName(''); setNewSvg(''); setNewOrder(0); setNewActive(true); }} title="Add New Shape" centered size="md">
+      <Modal opened={showCreate} onClose={() => { setShowCreate(false); setNewName(''); setNewSvg(''); setNewOrder(0); setNewActive(true); }} title={t('Add New Shape')} centered size="md">
         <Stack>
-          <TextInput label="Name" placeholder="Circle" value={newName} onChange={(e) => setNewName(e.target.value)} required />
-          <Textarea label="SVG Content" description="Paste your SVG content here for preview" placeholder="<svg>...</svg>" value={newSvg} onChange={(e) => setNewSvg(e.target.value)} minRows={4} />
+          <TextInput label={t('Name')} placeholder="Circle" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+          <Textarea label={t('SVG Content')} description={t('Paste your SVG content here for preview')} placeholder="<svg>...</svg>" value={newSvg} onChange={(e) => setNewSvg(e.target.value)} minRows={4} required />
           {newSvg && (
             <Paper p="lg" radius="md" withBorder style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div style={{ width: 100, height: 100 }} dangerouslySetInnerHTML={{ __html: (() => { let svg = newSvg; const wm = svg.match(/width="(\d+)"/); const hm = svg.match(/height="(\d+)"/); if (wm && hm && !svg.includes('viewBox')) svg = svg.replace(/<svg/, `<svg viewBox="0 0 ${wm[1]} ${hm[1]}"`); return svg.replace(/<svg([^>]*)>/, (_, a) => `<svg${a.replace(/width="[^"]*"/g, '').replace(/height="[^"]*"/g, '')} width="100" height="100" style="display:block">`); })() }} />
             </Paper>
           )}
-          <NumberInput label="Order" description="Controls the position of this shape in the editor's shape list. Lower numbers appear first." value={newOrder} onChange={(v) => setNewOrder(Number(v) || 0)} min={0} />
-          <Switch label="Active" checked={newActive} onChange={(e) => setNewActive(e.currentTarget.checked)} />
+          <NumberInput label={t('Order')} description={t('Controls the position of this shape in the editor list. Lower numbers appear first.')} value={newOrder} onChange={(v) => setNewOrder(Number(v) || 0)} min={0} />
+          <Switch label={t('Active')} checked={newActive} onChange={(e) => setNewActive(e.currentTarget.checked)} />
           <Group justify="flex-end" mt="sm">
-            <Button variant="default" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newName.trim()}>Save Shape</Button>
+            <Button variant="default" onClick={() => setShowCreate(false)}>{t('Cancel')}</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim()}>{t('Save Shape')}</Button>
           </Group>
         </Stack>
       </Modal>
 
       <Paper p="sm" radius="md" withBorder mb="sm">
         <Group justify="space-between">
-          <Text size="xs" c="dimmed">{filtered.length} shape(s)</Text>
-          <TextInput size="xs" placeholder="Search shapes..." leftSection={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)} w={220} />
+          <Text size="xs" c="dimmed">{filtered.length} {t('shape(s)')}</Text>
+          <TextInput size="xs" placeholder={t('Search shapes...')} leftSection={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)} w={220} />
         </Group>
       </Paper>
 
       <Paper radius="md" withBorder style={{ overflow: 'visible' }}>
         {loading ? (
-          <Text c="dimmed" ta="center" p="xl" size="sm">Loading...</Text>
+          <Text c="dimmed" ta="center" p="xl" size="sm">{t('Loading...')}</Text>
         ) : filtered.length === 0 ? (
-          <Stack align="center" p="xl" gap="xs"><Hexagon size={40} opacity={0.3} /><Text c="dimmed" size="sm">No shapes yet</Text></Stack>
+          <Stack align="center" p="xl" gap="xs"><Hexagon size={40} opacity={0.3} /><Text c="dimmed" size="sm">{t('No shapes yet')}</Text></Stack>
         ) : (
           <Table striped highlightOnHover>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th w={60}>Preview</Table.Th>
-                <Table.Th>Name</Table.Th>
-                <Table.Th w={80}>Order</Table.Th>
-                <Table.Th>Status</Table.Th>
+                <Table.Th w={60}>{t('Preview')}</Table.Th>
+                <Table.Th>{t('Name')}</Table.Th>
+                <Table.Th w={80}>{t('Order')}</Table.Th>
+                <Table.Th>{t('Status')}</Table.Th>
                 <Table.Th w={80}></Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -112,7 +133,7 @@ export function Shapes() {
                   <Table.Td><Text size="xs" c="dimmed">{s.sortOrder}</Text></Table.Td>
                   <Table.Td>
                     <Badge variant="light" color={s.active ? 'green' : 'gray'} size="sm" style={{ cursor: 'pointer' }} onClick={() => handleToggleActive(s)}>
-                      {s.active ? 'Active' : 'Inactive'}
+                      {s.active ? t('Active') : t('Inactive')}
                     </Badge>
                   </Table.Td>
                   <Table.Td>

@@ -8,15 +8,18 @@ import { Plus, Trash2, Search, Type, Upload } from 'lucide-react';
 import { useConfirm } from '../hooks/useConfirm.js';
 import { listFonts, createFont, updateFont, deleteFont, uploadAsset } from '../services/api.js';
 import type { Font } from '../services/api.js';
+import { useT } from '../i18n/useTranslation.js';
 
 export function Fonts() {
+  const t = useT();
   const [fonts, setFonts] = useState<Font[]>([]);
   const [loading, setLoading] = useState(true);
   const confirm = useConfirm();
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState('');
   const [newName, setNewName] = useState('');
-  const [newDesc, setNewDesc] = useState('The quick brown fox jumps over the lazy dog');
+  const DEFAULT_PREVIEW = t('The quick brown fox jumps over the lazy dog');
+  const [newDesc, setNewDesc] = useState(DEFAULT_PREVIEW);
   const [newActive, setNewActive] = useState(true);
   const [newFile, setNewFile] = useState<File | null>(null);
   const [previewFontUrl, setPreviewFontUrl] = useState<string | null>(null);
@@ -52,11 +55,11 @@ export function Fonts() {
         fileUrl = asset.url;
       }
       await createFont({ name: newName, description: newDesc, fileUrl, isGoogle: !newFile, active: newActive });
-      notifications.show({ title: 'Font added', message: `"${newName}" has been added successfully`, color: 'green' });
-      setNewName(''); setNewDesc('The quick brown fox jumps over the lazy dog'); setNewActive(true); setNewFile(null);
+      notifications.show({ title: t('Font added'), message: `"${newName}" ${t('has been added successfully')}`, color: 'green' });
+      setNewName(''); setNewDesc(DEFAULT_PREVIEW); setNewActive(true); setNewFile(null);
       setShowCreate(false); load();
     } catch (e) {
-      notifications.show({ title: 'Error', message: (e as Error).message, color: 'red' });
+      notifications.show({ title: t('Error'), message: t((e as Error).message), color: 'red' });
     }
   };
 
@@ -66,9 +69,9 @@ export function Fonts() {
   };
 
   const handleDeleteFont = (f: Font) => {
-    confirm('Delete Font', `Are you sure you want to delete "${f.name}"?`, async () => {
+    confirm(t('Delete Font'), `${t('Are you sure you want to delete')} "${f.name}"?`, async () => {
       await deleteFont(f.id);
-      notifications.show({ title: 'Font deleted', message: 'The font has been deleted', color: 'red' });
+      notifications.show({ title: t('Font deleted'), message: t('The font has been deleted'), color: 'red' });
       load();
     });
   };
@@ -76,20 +79,20 @@ export function Fonts() {
   return (
     <div>
       <Group justify="space-between" mb="lg">
-        <Title order={2}>Fonts</Title>
-        <Button leftSection={<Plus size={16} />} onClick={() => setShowCreate(true)}>Add New Font</Button>
+        <Title order={2}>{t('Fonts')}</Title>
+        <Button leftSection={<Plus size={16} />} onClick={() => setShowCreate(true)}>{t('Add New Font')}</Button>
       </Group>
 
-      <Modal opened={showCreate} onClose={() => { setShowCreate(false); setNewName(''); setNewDesc('The quick brown fox jumps over the lazy dog'); setNewActive(true); setNewFile(null); if (previewFontUrl) URL.revokeObjectURL(previewFontUrl); setPreviewFontUrl(null); }} title="Add New Font" centered>
+      <Modal opened={showCreate} onClose={() => { setShowCreate(false); setNewName(''); setNewDesc(DEFAULT_PREVIEW); setNewActive(true); setNewFile(null); if (previewFontUrl) URL.revokeObjectURL(previewFontUrl); setPreviewFontUrl(null); }} title={t('Add New Font')} centered>
         <Stack>
-          <TextInput label="Name" description="Name of the font for displaying" placeholder="My Custom Font" value={newName} onChange={(e) => setNewName(e.target.value)} required />
-          <TextInput label="Preview Text" description="For previewing purpose" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+          <TextInput label={t('Name')} description={t('Name of the font for displaying')} placeholder="My Custom Font" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+          <TextInput label={t('Preview Text')} description={t('For previewing purpose')} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
           {(newName || previewFontUrl) && (
             <Paper p="md" radius="md" withBorder>
               <Text size="lg" style={{ fontFamily: previewFontUrl ? '__preview_font__' : newName }}>{newDesc}</Text>
             </Paper>
           )}
-          <FileInput label="Upload Font" description="Select your font file (.ttf, .otf, .woff, .woff2)" placeholder="Select font file" accept=".ttf,.otf,.woff,.woff2" leftSection={<Upload size={14} />} value={newFile} onChange={(file) => {
+          <FileInput label={t('Upload Font')} description={t('Select your font file (.ttf, .otf, .woff, .woff2)')} placeholder={t('Select font file')} accept=".ttf,.otf,.woff,.woff2" leftSection={<Upload size={14} />} value={newFile} onChange={(file) => {
             setNewFile(file);
             if (previewFontUrl) URL.revokeObjectURL(previewFontUrl);
             if (file) {
@@ -101,36 +104,36 @@ export function Fonts() {
               setPreviewFontUrl(null);
             }
           }} />
-          <Switch label="Active" description="Enable/Disable font on front-end" checked={newActive} onChange={(e) => setNewActive(e.currentTarget.checked)} />
+          <Switch label={t('Active')} description={t('Enable/Disable font on front-end')} checked={newActive} onChange={(e) => setNewActive(e.currentTarget.checked)} />
           <Group justify="flex-end" mt="sm">
-            <Button variant="default" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newName.trim()}>Save Font</Button>
+            <Button variant="default" onClick={() => setShowCreate(false)}>{t('Cancel')}</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim()}>{t('Save Font')}</Button>
           </Group>
         </Stack>
       </Modal>
 
       <Paper p="sm" radius="md" withBorder mb="sm">
         <Group justify="space-between">
-          <Text size="xs" c="dimmed">{filtered.length} font(s)</Text>
-          <TextInput size="xs" placeholder="Search fonts..." leftSection={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)} w={220} />
+          <Text size="xs" c="dimmed">{filtered.length} {t('font(s)')}</Text>
+          <TextInput size="xs" placeholder={t('Search fonts...')} leftSection={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)} w={220} />
         </Group>
       </Paper>
 
       <Paper radius="md" withBorder style={{ overflow: 'visible' }}>
         {loading ? (
-          <Text c="dimmed" ta="center" p="xl" size="sm">Loading...</Text>
+          <Text c="dimmed" ta="center" p="xl" size="sm">{t('Loading...')}</Text>
         ) : filtered.length === 0 ? (
-          <Stack align="center" p="xl" gap="xs"><Type size={40} opacity={0.3} /><Text c="dimmed" size="sm">No fonts yet</Text></Stack>
+          <Stack align="center" p="xl" gap="xs"><Type size={40} opacity={0.3} /><Text c="dimmed" size="sm">{t('No fonts yet')}</Text></Stack>
         ) : (
           <Table striped highlightOnHover>
-            <Table.Thead><Table.Tr><Table.Th>Preview</Table.Th><Table.Th>Name</Table.Th><Table.Th>Source</Table.Th><Table.Th>Status</Table.Th><Table.Th w={60}></Table.Th></Table.Tr></Table.Thead>
+            <Table.Thead><Table.Tr><Table.Th>{t('Preview')}</Table.Th><Table.Th>{t('Name')}</Table.Th><Table.Th>{t('Source')}</Table.Th><Table.Th>{t('Status')}</Table.Th><Table.Th w={60}></Table.Th></Table.Tr></Table.Thead>
             <Table.Tbody>
               {filtered.map((f) => (
                 <Table.Tr key={f.id}>
                   <Table.Td><Text size="sm" style={{ fontFamily: f.name }}>{f.description}</Text></Table.Td>
                   <Table.Td><Text size="sm" fw={500}>{f.name}</Text></Table.Td>
-                  <Table.Td><Badge size="xs" variant="light" color={f.isGoogle ? 'blue' : 'orange'}>{f.isGoogle ? 'Google' : 'Custom'}</Badge></Table.Td>
-                  <Table.Td><Badge variant="light" color={f.active ? 'green' : 'gray'} size="sm" style={{ cursor: 'pointer' }} onClick={() => handleToggleActive(f)}>{f.active ? 'Active' : 'Inactive'}</Badge></Table.Td>
+                  <Table.Td><Badge size="xs" variant="light" color={f.isGoogle ? 'blue' : 'orange'}>{f.isGoogle ? 'Google' : t('Custom')}</Badge></Table.Td>
+                  <Table.Td><Badge variant="light" color={f.active ? 'green' : 'gray'} size="sm" style={{ cursor: 'pointer' }} onClick={() => handleToggleActive(f)}>{f.active ? t('Active') : t('Inactive')}</Badge></Table.Td>
                   <Table.Td><ActionIcon variant="subtle" color="red" onClick={() => handleDeleteFont(f)}><Trash2 size={14} /></ActionIcon></Table.Td>
                 </Table.Tr>
               ))}
