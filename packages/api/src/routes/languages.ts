@@ -36,6 +36,20 @@ export async function languageRoutes(app: FastifyInstance) {
     return { success: true };
   });
 
+  // Public endpoint: returns active languages with their translations as a map
+  app.get('/api/v1/languages/active', async () => {
+    const allLanguages = await db.select().from(languages);
+    const active = allLanguages.filter((l) => l.active);
+    const result: Record<string, { code: string; name: string; flag: string; translations: Record<string, string> }> = {};
+    for (const lang of active) {
+      const trans = await db.select().from(translations).where(eq(translations.languageCode, lang.code));
+      const map: Record<string, string> = {};
+      for (const t of trans) map[t.originalText] = t.translatedText;
+      result[lang.code] = { code: lang.code, name: lang.name, flag: lang.flag, translations: map };
+    }
+    return result;
+  });
+
   // Translations
   app.get<{ Params: { code: string } }>('/api/v1/languages/:code/translations', async (req) => {
     return db.select().from(translations).where(eq(translations.languageCode, req.params.code));

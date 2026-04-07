@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface RemoveBgPopoverProps {
   imageSrc: string;
@@ -10,6 +11,7 @@ interface RemoveBgPopoverProps {
 type BgMode = 'light' | 'dark';
 
 export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverProps) {
+  const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [threshold, setThreshold] = useState(100);
@@ -128,7 +130,7 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
           borderBottomStyle: 'solid',
           borderBottomColor: '#eee',
         }}>
-          <span style={{ fontWeight: 600, fontSize: 15, color: '#333' }}>Remove Background</span>
+          <span style={{ fontWeight: 600, fontSize: 15, color: '#333' }}>{t('Remove Background')}</span>
           <button onClick={onClose} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 4, display: 'flex' }}>
             <X size={18} />
           </button>
@@ -160,12 +162,12 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
           {/* Info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#FFF8E1', borderRadius: 6, fontSize: 11, color: '#F57F17' }}>
             <AlertTriangle size={14} />
-            Basic removal — AI-powered removal coming soon with backend integration
+            {t('Basic removal — AI-powered removal coming soon with backend integration')}
           </div>
 
           {/* Mode */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>Mode</span>
+            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>{t('Mode')}</span>
             <div style={{ display: 'flex', gap: 6 }}>
               {(['light', 'dark'] as const).map((m) => (
                 <button
@@ -184,7 +186,7 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
                     fontWeight: mode === m ? 600 : 400,
                   }}
                 >
-                  {m === 'light' ? 'Light Background' : 'Dark Background'}
+                  {m === 'light' ? t('Light Background') : t('Dark Background')}
                 </button>
               ))}
             </div>
@@ -192,7 +194,7 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
 
           {/* Threshold */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>Deep</span>
+            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>{t('Deep')}</span>
             <input
               type="range"
               min={0}
@@ -220,7 +222,7 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
                 fontSize: 13,
               }}
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               onClick={handleApply}
@@ -235,7 +237,7 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
                 fontWeight: 500,
               }}
             >
-              Apply
+              {t('Apply')}
             </button>
           </div>
         </div>

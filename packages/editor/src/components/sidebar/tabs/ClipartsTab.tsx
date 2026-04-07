@@ -1,11 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Search, Loader } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 interface IconifyIcon {
   prefix: string;
   name: string;
 }
+
+interface AdminClipart {
+  id: string;
+  name: string;
+  fileUrl: string | null;
+}
+
+const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
 
 const ICON_SETS = [
   { prefix: 'lucide', label: 'Basic', defaultQuery: 'star' },
@@ -21,11 +30,32 @@ const ICON_SETS = [
 ];
 
 export function ClipartsTab() {
+  const t = useT();
   const { addImageLayer } = useEditorStore();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<IconifyIcon[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeSet, setActiveSet] = useState(ICON_SETS[0]!);
+  const [adminCliparts, setAdminCliparts] = useState<AdminClipart[]>([]);
+  const [showLibrary, setShowLibrary] = useState(true);
+
+  // Load merchant cliparts from admin/API
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/cliparts`)
+      .then((r) => r.json())
+      .then((data: { id: string; name: string; fileUrl: string | null; active: boolean }[]) => {
+        setAdminCliparts(data.filter((c) => c.active && c.fileUrl).map((c) => ({ id: c.id, name: c.name, fileUrl: c.fileUrl })));
+      })
+      .catch(() => setAdminCliparts([]));
+  }, []);
+
+  const addAdminClipart = (url: string) => {
+    const fullUrl = url.startsWith('/') ? `${API_BASE}${url}` : url;
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => addImageLayer(fullUrl, img.width || 200, img.height || 200);
+    img.src = fullUrl;
+  };
 
   const searchIconify = useCallback(async (q: string, prefix: string) => {
     setLoading(true);
@@ -79,7 +109,39 @@ export function ClipartsTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>Cliparts</div>
+      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Cliparts')}</div>
+
+      {/* Merchant collection */}
+      {adminCliparts.length > 0 && (
+        <div style={{ borderBottom: '1px solid #eee', paddingBottom: 10 }}>
+          <button
+            onClick={() => setShowLibrary(!showLibrary)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', padding: '4px 0', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: '#666' }}
+          >
+            <span>{t('COLLECTION')} ({adminCliparts.length})</span>
+            <span>{showLibrary ? '▼' : '▶'}</span>
+          </button>
+          {showLibrary && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 6 }}>
+              {adminCliparts.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => addAdminClipart(c.fileUrl!)}
+                  title={c.name}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, borderWidth: 1, borderStyle: 'solid', borderColor: '#e0e0e0', borderRadius: 6, background: '#fff', cursor: 'pointer', aspectRatio: '1', overflow: 'hidden' }}
+                >
+                  <img
+                    src={c.fileUrl!.startsWith('/') ? `${API_BASE}${c.fileUrl}` : c.fileUrl!}
+                    alt={c.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search */}
       <div style={{ display: 'flex', gap: 4 }}>
@@ -93,7 +155,7 @@ export function ClipartsTab() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search icons..."
+            placeholder={t('Search icons...')}
             style={{ flex: 1, borderWidth: 0, outline: 'none', fontSize: 12 }}
           />
         </div>
@@ -101,7 +163,7 @@ export function ClipartsTab() {
           padding: '5px 10px', borderWidth: 0, borderRadius: 6,
           background: '#4A90D9', color: '#fff', cursor: 'pointer', fontSize: 11,
         }}>
-          Search
+          {t('Search')}
         </button>
       </div>
 
@@ -121,7 +183,7 @@ export function ClipartsTab() {
               fontWeight: activeSet.prefix === s.prefix ? 600 : 400,
             }}
           >
-            {s.label}
+            {t(s.label)}
           </button>
         ))}
       </div>

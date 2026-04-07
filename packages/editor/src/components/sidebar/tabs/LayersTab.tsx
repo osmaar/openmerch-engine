@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { DesignLayer } from '@openmerch/core';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 function getLayerIcon(layer: DesignLayer) {
   switch (layer.type) {
@@ -21,15 +22,23 @@ function getLayerIcon(layer: DesignLayer) {
   }
 }
 
-function getLayerLabel(layer: DesignLayer): string {
+const SHAPE_LABELS: Record<string, string> = {
+  'rect': 'Rectangle', 'rounded-rect': 'Rounded', 'circle': 'Circle',
+  'triangle': 'Triangle', 'star': 'Star', 'diamond': 'Diamond',
+  'pentagon': 'Pentagon', 'hexagon': 'Hexagon', 'cross': 'Cross',
+  'arrow': 'Arrow', 'line': 'Line',
+};
+
+function getLayerLabel(layer: DesignLayer, t: (k: string) => string): string {
   switch (layer.type) {
-    case 'image': return 'Image';
-    case 'text': return layer.text.substring(0, 18) || 'Text';
-    case 'shape': return layer.shapeType;
+    case 'image': return t('Image');
+    case 'text': return layer.text.substring(0, 18) || t('Text');
+    case 'shape': return t(SHAPE_LABELS[layer.shapeType] ?? layer.shapeType);
   }
 }
 
 export function LayersTab() {
+  const t = useT();
   const design = useEditorStore((s) => s.design);
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
@@ -83,7 +92,7 @@ export function LayersTab() {
 
   const startRename = (layer: DesignLayer) => {
     setEditingId(layer.id);
-    setEditName(getLayerLabel(layer));
+    setEditName(getLayerLabel(layer, t));
   };
 
   const finishRename = (layerId: string) => {
@@ -100,13 +109,13 @@ export function LayersTab() {
   if (layers.length === 0) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>Layers</div>
+        <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Layers')}</div>
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: 120, color: '#aaa', fontSize: 12, gap: 8,
         }}>
-          <span>No layers yet</span>
-          <span style={{ fontSize: 11, color: '#ccc' }}>Add an image or text to start</span>
+          <span>{t('No layers yet')}</span>
+          <span style={{ fontSize: 11, color: '#ccc' }}>{t('Add an image or text to start')}</span>
         </div>
       </div>
     );
@@ -115,7 +124,7 @@ export function LayersTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>
-        Layers ({layers.length})
+        {t('Layers')} ({layers.length})
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -193,7 +202,7 @@ export function LayersTab() {
               ) : (
                 <span
                   onDoubleClick={(e) => { e.stopPropagation(); startRename(layer); }}
-                  title="Double-click to rename"
+                  title={t('Double-click to rename')}
                   style={{
                     flex: 1,
                     fontSize: 11,
@@ -205,14 +214,14 @@ export function LayersTab() {
                     cursor: 'text',
                   }}
                 >
-                  {getLayerLabel(layer)}
+                  {getLayerLabel(layer, t)}
                 </span>
               )}
 
               {/* Visibility — disabled when locked */}
               <button
                 style={iconBtnStyle(false, isLocked)}
-                title={isLocked ? 'Locked' : layer.visible ? 'Hide' : 'Show'}
+                title={isLocked ? t('Locked') : layer.visible ? t('Hide') : t('Show')}
                 onClick={(e) => { e.stopPropagation(); if (!isLocked) updateLayer(layer.id, { visible: !layer.visible }); }}
                 disabled={isLocked}
               >
@@ -222,7 +231,7 @@ export function LayersTab() {
               {/* Lock — always enabled */}
               <button
                 style={iconBtnStyle(layer.locked, false)}
-                title={layer.locked ? 'Unlock' : 'Lock'}
+                title={layer.locked ? t('Unlock') : t('Lock')}
                 onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }}
               >
                 {layer.locked ? <Lock size={11} /> : <Unlock size={11} />}
@@ -231,7 +240,7 @@ export function LayersTab() {
               {/* Delete — disabled when locked */}
               <button
                 style={{ ...iconBtnStyle(false, isLocked), color: isLocked ? '#e0e0e0' : '#e53935' }}
-                title={isLocked ? 'Locked' : 'Delete'}
+                title={isLocked ? t('Locked') : t('Delete')}
                 onClick={(e) => { e.stopPropagation(); if (!isLocked) removeLayer(layer.id); }}
                 disabled={isLocked}
               >
@@ -243,7 +252,7 @@ export function LayersTab() {
       </div>
 
       <div style={{ fontSize: 10, color: '#ccc', textAlign: 'center', marginTop: 4 }}>
-        Drag to reorder · Double-click to rename
+        {t('Drag to reorder · Double-click to rename')}
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { DesignLayer, ImageLayer } from '@openmerch/core';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface PositionPopoverProps {
   layer: DesignLayer;
@@ -38,6 +39,7 @@ function getFreshLayerSize(layerId: string): { w: number; h: number } {
 
 export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: PositionPopoverProps) {
   const updateLayer = useEditorStore((s) => s.updateLayer);
+  const t = useT();
 
   const positionTo = (xAlign: 'left' | 'center' | 'right', yAlign: 'top' | 'center' | 'bottom') => {
     const size = getFreshLayerSize(layer.id);
@@ -119,7 +121,7 @@ export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: P
   return (
     <div style={popoverStyle} onClick={(e) => e.stopPropagation()}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Position</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Position')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -130,37 +132,37 @@ export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: P
 
       <button style={lockBtn} onClick={handleLock}>
         {layer.locked ? <Lock size={14} /> : <Unlock size={14} />}
-        {layer.locked ? 'Unlock Position' : 'Lock Position'}
+        {layer.locked ? t('Unlock Position') : t('Lock Position')}
       </button>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-        <button style={iconBtn} onClick={() => positionTo('left', 'top')} title="Top Left">
+        <button style={iconBtn} onClick={() => positionTo('left', 'top')} title={t('Top Left')}>
           <AlignStartVertical size={16} />
         </button>
-        <button style={iconBtn} onClick={() => positionTo('center', 'top')} title="Top Center">
+        <button style={iconBtn} onClick={() => positionTo('center', 'top')} title={t('Top Center')}>
           <AlignCenterHorizontal size={16} />
         </button>
-        <button style={iconBtn} onClick={() => positionTo('right', 'top')} title="Top Right">
+        <button style={iconBtn} onClick={() => positionTo('right', 'top')} title={t('Top Right')}>
           <AlignEndVertical size={16} />
         </button>
 
-        <button style={iconBtn} onClick={() => positionTo('left', 'center')} title="Center Left">
+        <button style={iconBtn} onClick={() => positionTo('left', 'center')} title={t('Center Left')}>
           <AlignStartHorizontal size={16} />
         </button>
-        <button style={iconBtn} onClick={() => positionTo('center', 'center')} title="Center">
+        <button style={iconBtn} onClick={() => positionTo('center', 'center')} title={t('Center')}>
           <Maximize size={16} />
         </button>
-        <button style={iconBtn} onClick={() => positionTo('right', 'center')} title="Center Right">
+        <button style={iconBtn} onClick={() => positionTo('right', 'center')} title={t('Center Right')}>
           <AlignEndHorizontal size={16} />
         </button>
 
-        <button style={iconBtn} onClick={() => positionTo('left', 'bottom')} title="Bottom Left">
+        <button style={iconBtn} onClick={() => positionTo('left', 'bottom')} title={t('Bottom Left')}>
           <AlignStartVertical size={16} style={{ transform: 'rotate(180deg)' }} />
         </button>
-        <button style={iconBtn} onClick={() => positionTo('center', 'bottom')} title="Bottom Center">
+        <button style={iconBtn} onClick={() => positionTo('center', 'bottom')} title={t('Bottom Center')}>
           <AlignCenterHorizontal size={16} style={{ transform: 'rotate(180deg)' }} />
         </button>
-        <button style={iconBtn} onClick={() => positionTo('right', 'bottom')} title="Bottom Right">
+        <button style={iconBtn} onClick={() => positionTo('right', 'bottom')} title={t('Bottom Right')}>
           <AlignEndVertical size={16} style={{ transform: 'rotate(180deg)' }} />
         </button>
       </div>

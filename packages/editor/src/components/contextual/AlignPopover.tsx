@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import type { TextLayer } from '@openmerch/core';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface AlignPopoverProps {
   layer: TextLayer;
@@ -14,6 +15,7 @@ interface AlignPopoverProps {
 
 export function AlignPopover({ layer, onClose }: AlignPopoverProps) {
   const { updateLayer } = useEditorStore();
+  const t = useT();
 
   const btnStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex',
@@ -55,7 +57,7 @@ export function AlignPopover({ layer, onClose }: AlignPopoverProps) {
   return (
     <div style={popoverStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Align</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Align')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -65,13 +67,13 @@ export function AlignPopover({ layer, onClose }: AlignPopoverProps) {
       </div>
 
       <button style={btnStyle(layer.align === 'left')} onClick={() => updateLayer(layer.id, { align: 'left' })}>
-        <AlignLeft size={16} /> Left
+        <AlignLeft size={16} /> {t('Left')}
       </button>
       <button style={btnStyle(layer.align === 'center')} onClick={() => updateLayer(layer.id, { align: 'center' })}>
-        <AlignCenter size={16} /> Center
+        <AlignCenter size={16} /> {t('Center')}
       </button>
       <button style={btnStyle(layer.align === 'right')} onClick={() => updateLayer(layer.id, { align: 'right' })}>
-        <AlignRight size={16} /> Right
+        <AlignRight size={16} /> {t('Right')}
       </button>
     </div>
   );

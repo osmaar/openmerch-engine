@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Search, Loader } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
+import { useT } from '../../../i18n/useTranslation.js';
 
 interface UnsplashPhoto {
   id: string;
@@ -14,6 +15,7 @@ const DEFAULT_QUERY = 'popular';
 const SUGGESTIONS = ['trending', 'aesthetic', 'minimal', 'retro', 'graffiti', 'neon', 'floral', 'geometric', 'animals', 'landscape', 'food', 'music'];
 
 export function PhotosTab() {
+  const t = useT();
   const { addImageLayer } = useEditorStore();
   const UNSPLASH_KEY = useEditorStore((s) => s.unsplashKey);
   const [query, setQuery] = useState('');
@@ -69,7 +71,7 @@ export function PhotosTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>Photos</div>
+      <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Photos')}</div>
 
       {/* Search */}
       <div style={{ display: 'flex', gap: 4 }}>
@@ -83,7 +85,7 @@ export function PhotosTab() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search photos..."
+            placeholder={t('Search photos...')}
             style={{ flex: 1, borderWidth: 0, outline: 'none', fontSize: 12 }}
           />
         </div>
@@ -91,7 +93,7 @@ export function PhotosTab() {
           padding: '5px 10px', borderWidth: 0, borderRadius: 6,
           background: '#4A90D9', color: '#fff', cursor: 'pointer', fontSize: 11,
         }}>
-          Search
+          {t('Search')}
         </button>
       </div>
 
@@ -106,7 +108,7 @@ export function PhotosTab() {
               borderRadius: 12, background: '#fff', cursor: 'pointer', fontSize: 10, color: '#666',
             }}
           >
-            {s}
+            {t(s)}
           </button>
         ))}
       </div>
@@ -119,7 +121,7 @@ export function PhotosTab() {
 
       {!UNSPLASH_KEY && (
         <div style={{ padding: 12, background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
-          Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.
+          {t('Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.')}
         </div>
       )}
 
@@ -143,7 +145,7 @@ export function PhotosTab() {
 
       {photos.length > 0 && (
         <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center' }}>
-          Photos by <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style={{ color: '#999' }}>Unsplash</a>
+          {t('Photos by')} <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style={{ color: '#999' }}>Unsplash</a>
         </div>
       )}
     </div>

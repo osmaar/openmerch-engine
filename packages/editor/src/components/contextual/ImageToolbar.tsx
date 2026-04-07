@@ -21,6 +21,7 @@ import { FillPopover } from './FillPopover.js';
 import { ArrangePopover } from './ArrangePopover.js';
 import { PositionPopover } from './PositionPopover.js';
 import { TransformPopover } from './TransformPopover.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface ImageToolbarProps {
   layer: ImageLayer;
@@ -33,6 +34,7 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
   const [showCrop, setShowCrop] = useState(false);
   const [showRemoveBg, setShowRemoveBg] = useState(false);
   const [activePopover, setActivePopover] = useState<PopoverName>(null);
+  const t = useT();
   const {
     updateLayer,
     replaceImage,
@@ -65,10 +67,10 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-      <ToolbarButton icon={ImagePlus} tooltip="Replace image" onClick={handleReplace} />
-      <ToolbarButton icon={Crop} tooltip="Crop image" onClick={() => { setShowCrop(true); setActivePopover(null); }} />
+      <ToolbarButton icon={ImagePlus} tooltip={t('Replace image')} onClick={handleReplace} />
+      <ToolbarButton icon={Crop} tooltip={t('Crop image')} onClick={() => { setShowCrop(true); setActivePopover(null); }} />
 
-      <ToolbarButton icon={Eraser} tooltip="Remove background" onClick={() => setShowRemoveBg(true)} />
+      <ToolbarButton icon={Eraser} tooltip={t('Remove background')} onClick={() => setShowRemoveBg(true)} />
 
       {showRemoveBg && (
         <RemoveBgPopover imageSrc={layer.src} onClose={() => setShowRemoveBg(false)} onApply={(processedSrc) => {
@@ -81,19 +83,19 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
       <PopoverAnchor isOpen={activePopover === 'filters'} popover={
         <FiltersPopover imageSrc={layer.src} originalSrc={layer.originalSrc} activeFilterIndex={layer.activeFilter ?? 0} onClose={() => setActivePopover(null)} onApply={(processedSrc, filterIndex) => { applyFilter(layer.id, processedSrc, filterIndex); setActivePopover(null); }} />
       }>
-        <ToolbarButton icon={SlidersHorizontal} tooltip="Filters" onClick={() => toggle('filters')} active={activePopover === 'filters'} />
+        <ToolbarButton icon={SlidersHorizontal} tooltip={t('Filters')} onClick={() => toggle('filters')} active={activePopover === 'filters'} />
       </PopoverAnchor>
 
       <PopoverAnchor isOpen={activePopover === 'fill'} popover={
         <FillPopover currentColor={layer.tint ?? '#000000'} currentOpacity={layer.tintOpacity ?? 0} onClose={() => setActivePopover(null)} onApply={(color, opacity) => updateLayer(layer.id, { tint: color, tintOpacity: opacity })} onClear={() => updateLayer(layer.id, { tint: undefined, tintOpacity: 0 })} />
       }>
-        <ToolbarButton icon={Paintbrush} tooltip="Fill color" onClick={() => toggle('fill')} active={activePopover === 'fill'} />
+        <ToolbarButton icon={Paintbrush} tooltip={t('Fill color')} onClick={() => toggle('fill')} active={activePopover === 'fill'} />
       </PopoverAnchor>
 
       <ToolbarDivider />
 
       <ToolbarSlider
-        label="Opacity"
+        label={t('Opacity')}
         value={Math.round(layer.opacity * 100)}
         min={10}
         max={100}
@@ -103,23 +105,23 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
       <ToolbarDivider />
 
       <PopoverAnchor isOpen={activePopover === 'arrange'} popover={<ArrangePopover layerId={layer.id} onClose={() => setActivePopover(null)} />}>
-        <ToolbarButton icon={Layers} tooltip="Arrange layer" onClick={() => toggle('arrange')} active={activePopover === 'arrange'} />
+        <ToolbarButton icon={Layers} tooltip={t('Arrange layer')} onClick={() => toggle('arrange')} active={activePopover === 'arrange'} />
       </PopoverAnchor>
 
       <PopoverAnchor isOpen={activePopover === 'position'} popover={
         designZone ? <PositionPopover layer={layer} zoneWidthMM={designZone.canvasWidthMM} zoneHeightMM={designZone.canvasHeightMM} onClose={() => setActivePopover(null)} /> : <></>
       }>
-        <ToolbarButton icon={Move} tooltip="Object position" onClick={() => toggle('position')} active={activePopover === 'position'} />
+        <ToolbarButton icon={Move} tooltip={t('Object position')} onClick={() => toggle('position')} active={activePopover === 'position'} />
       </PopoverAnchor>
 
       <PopoverAnchor isOpen={activePopover === 'transform'} popover={<TransformPopover layer={layer} onClose={() => setActivePopover(null)} />}>
-        <ToolbarButton icon={BoxSelect} tooltip="Transform" onClick={() => toggle('transform')} active={activePopover === 'transform'} />
+        <ToolbarButton icon={BoxSelect} tooltip={t('Transform')} onClick={() => toggle('transform')} active={activePopover === 'transform'} />
       </PopoverAnchor>
 
       <ToolbarDivider />
 
-      <ToolbarButton icon={Copy} tooltip="Duplicate" onClick={() => duplicateLayer(layer.id)} />
-      <ToolbarButton icon={Trash2} tooltip="Delete" onClick={() => removeLayer(layer.id)} danger />
+      <ToolbarButton icon={Copy} tooltip={t('Duplicate')} onClick={() => duplicateLayer(layer.id)} />
+      <ToolbarButton icon={Trash2} tooltip={t('Delete')} onClick={() => removeLayer(layer.id)} danger />
 
       <input
         ref={fileInputRef}

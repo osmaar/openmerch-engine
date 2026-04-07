@@ -15,9 +15,11 @@ import { exportDesign } from '../utils/exportDesign.js';
 import { useEditorStore } from '../store/editorStore.js';
 import type { CartItem } from '../store/editorStore.js';
 import { PRODUCT_COLORS } from './sidebar/tabs/ProductTab.js';
+import { useI18nStore, useT } from '../i18n/useTranslation.js';
 
 export function NavBar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const t = useT();
 
   const toggle = (id: string) => {
     setActiveMenu(activeMenu === id ? null : id);
@@ -48,16 +50,16 @@ export function NavBar() {
       <SaveIndicator />
 
       {/* Left items */}
-      <NavItem label="Print" icon={Printer} isActive={activeMenu === 'print'} onClick={() => toggle('print')} />
-      <NavItem label="Help" icon={HelpCircle} isActive={activeMenu === 'help'} onClick={() => toggle('help')} />
+      <NavItem label={t('Print')} icon={Printer} isActive={activeMenu === 'print'} onClick={() => toggle('print')} />
+      <NavItem label={t('Help')} icon={HelpCircle} isActive={activeMenu === 'help'} onClick={() => toggle('help')} />
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
       {/* Right items */}
-      <NavItem label="" icon={Globe} isActive={activeMenu === 'lang'} onClick={() => toggle('lang')} />
+      <NavItem label={t('Languages')} icon={Globe} isActive={activeMenu === 'lang'} onClick={() => toggle('lang')} hideLabel />
       <CartPrice />
-      <CartBadge isActive={activeMenu === 'cart'} onClick={() => toggle('cart')} />
+      <CartBadge isActive={activeMenu === 'cart'} onClick={() => toggle('cart')} title={t('My Cart')} />
       <AddToCartButton onAdded={() => setActiveMenu('cart')} />
       <button
         style={{
@@ -77,10 +79,10 @@ export function NavBar() {
           gap: 4,
         }}
         onClick={() => { window.history.back(); }}
-        title="Back to Shop"
+        title={t('Back to Shop')}
       >
         <ArrowLeft size={12} />
-        Back to Shop
+        {t('Back to Shop')}
       </button>
 
       {/* Dropdowns */}
@@ -98,14 +100,15 @@ function CartPrice() {
   return <div style={{ padding: '0 8px', fontSize: 12, color: '#aaa' }}>${(total / 100).toFixed(2)}</div>;
 }
 
-function CartBadge({ isActive, onClick }: { isActive: boolean; onClick: () => void }) {
+function CartBadge({ isActive, onClick, title }: { isActive: boolean; onClick: () => void; title?: string }) {
   const totalUnits = useEditorStore((s) => s.cartItems.reduce((sum, i) => sum + i.totalUnits, 0));
-  return <NavItem label="" icon={ShoppingCart} isActive={isActive} onClick={onClick} badge={totalUnits} />;
+  return <NavItem label={title ?? ''} icon={ShoppingCart} isActive={isActive} onClick={onClick} badge={totalUnits} hideLabel />;
 }
 
 function AddToCartButton({ onAdded }: { onAdded: () => void }) {
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const t = useT();
 
   const showToast = (message: string, type: 'error' | 'success') => {
     setToast({ message, type });
@@ -119,13 +122,13 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
 
     const totalUnits = Object.values(store.sizes).reduce((a, b) => a + b, 0);
     if (totalUnits === 0) {
-      showToast('Select at least one size and quantity in the Product tab.', 'error');
+      showToast(t('Select at least one size and quantity in the Product tab.'), 'error');
       return;
     }
 
     const hasLayers = Object.values(store.design.zones).some((z) => z.layers.length > 0);
     if (!hasLayers) {
-      showToast('Add at least one element to your design first.', 'error');
+      showToast(t('Add at least one element to your design first.'), 'error');
       return;
     }
 
@@ -166,11 +169,11 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
       store.addToCart(cartItem);
       useEditorStore.setState({ sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } });
 
-      showToast('Added to cart!', 'success');
+      showToast(t('Added to cart!'), 'success');
       onAdded();
     } catch (e) {
       console.error('Failed to add to cart:', e);
-      showToast('Failed to add to cart. Please try again.', 'error');
+      showToast(t('Failed to add to cart. Please try again.'), 'error');
     } finally {
       setAdding(false);
     }
@@ -203,7 +206,7 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
         disabled={adding}
       >
         {adding ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <ShoppingCart size={12} />}
-        {adding ? 'Adding...' : 'Add to Cart'}
+        {adding ? t('Adding...') : t('Add to Cart')}
       </button>
       {toast && (
         <div style={{
@@ -234,30 +237,33 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
 function SaveIndicator() {
   const isSaving = useEditorStore((s) => s.isSaving);
   const lastSavedAt = useEditorStore((s) => s.lastSavedAt);
+  const t = useT();
 
   if (isSaving) {
-    return <span style={{ fontSize: 10, color: '#aaa', marginRight: 8 }}>Saving...</span>;
+    return <span style={{ fontSize: 10, color: '#aaa', marginRight: 8 }}>{t('Saving...')}</span>;
   }
 
   if (lastSavedAt) {
     const time = new Date(lastSavedAt);
     const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return <span style={{ fontSize: 10, color: '#6a6' , marginRight: 8 }}>Saved {timeStr}</span>;
+    return <span style={{ fontSize: 10, color: '#6a6' , marginRight: 8 }}>{t('Saved')} {timeStr}</span>;
   }
 
-  return <span style={{ fontSize: 10, color: '#888', marginRight: 8 }}>Ctrl+S to save</span>;
+  return <span style={{ fontSize: 10, color: '#888', marginRight: 8 }}>{t('Ctrl+S to save')}</span>;
 }
 
-function NavItem({ label, icon: Icon, isActive, onClick, badge }: {
+function NavItem({ label, icon: Icon, isActive, onClick, badge, hideLabel }: {
   label: string;
   icon: typeof Printer;
   isActive: boolean;
   onClick: () => void;
   badge?: number;
+  hideLabel?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      title={label}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -273,7 +279,7 @@ function NavItem({ label, icon: Icon, isActive, onClick, badge }: {
       }}
     >
       <Icon size={15} />
-      {label && <span>{label}</span>}
+      {label && !hideLabel && <span>{label}</span>}
       {badge !== undefined && badge > 0 && (
         <span style={{
           position: 'absolute',
@@ -359,6 +365,7 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
   const [includeBack, setIncludeBack] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const t = useT();
 
   // Get state from store
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
@@ -387,10 +394,10 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
 
   return (
     <Dropdown align="left" onClose={onClose}>
-      <DropdownHeader title="Print / Download" onClose={onClose} />
+      <DropdownHeader title={t('Print / Download')} onClose={onClose} />
 
       <div style={rowStyle}>
-        <span>Format</span>
+        <span>{t('Format')}</span>
         <div style={{ display: 'flex', gap: 4 }}>
           {(['png', 'svg'] as const).map((f) => (
             <button
@@ -419,14 +426,14 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
       {format === 'png' && (
         <>
           <div style={rowStyle}>
-            <span>Size</span>
+            <span>{t('Print Zone')}</span>
             <span style={{ fontSize: 12, color: '#333', fontWeight: 500 }}>
               {formatSize(widthMM)} x {formatSize(heightMM)} {unitLabel}
             </span>
           </div>
 
           <div style={rowStyle}>
-            <span>Unit</span>
+            <span>{t('Unit')}</span>
             <div style={{ display: 'flex', gap: 4 }}>
               {(['cm', 'inch', 'px'] as const).map((u) => (
                 <button
@@ -453,12 +460,12 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
       )}
 
       <div style={rowStyle}>
-        <span>Include base?</span>
+        <span>{t('Include base?')}</span>
         <ToggleSwitch value={includeBase} onChange={setIncludeBase} />
       </div>
 
       <div style={rowStyle}>
-        <span>Include {activeZoneId === 'front' ? 'back' : 'front'}?</span>
+        <span>{activeZoneId === 'front' ? t('Include back?') : t('Include front?')}</span>
         <ToggleSwitch value={includeBack} onChange={setIncludeBack} />
       </div>
 
@@ -501,12 +508,12 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
           {exporting ? (
             <>
               <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
-              Exporting...
+              {t('Exporting...')}
             </>
           ) : (
             <>
               <Download size={14} />
-              Download
+              {t('Download')}
             </>
           )}
         </button>
@@ -517,32 +524,33 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
 
 // Help dropdown
 function HelpDropdown({ onClose }: { onClose: () => void }) {
+  const t = useT();
   const shortcuts = [
-    { keys: 'Delete', desc: 'Delete selected element' },
-    { keys: 'Ctrl + C', desc: 'Copy selected element' },
-    { keys: 'Ctrl + X', desc: 'Cut selected element' },
-    { keys: 'Ctrl + V', desc: 'Paste element' },
-    { keys: 'Ctrl + D', desc: 'Duplicate selected element' },
-    { keys: 'Ctrl + A', desc: 'Select last element' },
-    { keys: 'Ctrl + E', desc: 'Clear all elements' },
-    { keys: 'Ctrl + Z', desc: 'Undo' },
-    { keys: 'Ctrl+Shift+Z', desc: 'Redo' },
-    { keys: 'Ctrl + S', desc: 'Save design' },
-    { keys: 'Ctrl+Shift+S', desc: 'Download design (PNG)' },
-    { keys: 'Ctrl + P', desc: 'Print (mockup PNG)' },
-    { keys: 'Ctrl + +', desc: 'Zoom in' },
-    { keys: 'Ctrl + -', desc: 'Zoom out' },
-    { keys: 'Ctrl + 0', desc: 'Reset zoom' },
-    { keys: '← ↑ → ↓', desc: 'Move element 1px' },
-    { keys: 'Shift + arrows', desc: 'Move element 10px' },
-    { keys: 'Double click', desc: 'Edit text inline' },
-    { keys: 'Scroll', desc: 'Zoom in/out' },
-    { keys: 'Drag canvas', desc: 'Pan (when zoomed)' },
+    { keys: 'Delete', desc: t('Delete selected element') },
+    { keys: 'Ctrl + C', desc: t('Copy selected element') },
+    { keys: 'Ctrl + X', desc: t('Cut selected element') },
+    { keys: 'Ctrl + V', desc: t('Paste element') },
+    { keys: 'Ctrl + D', desc: t('Duplicate selected element') },
+    { keys: 'Ctrl + A', desc: t('Select last element') },
+    { keys: 'Ctrl + E', desc: t('Clear all elements') },
+    { keys: 'Ctrl + Z', desc: t('Undo') },
+    { keys: 'Ctrl+Shift+Z', desc: t('Redo') },
+    { keys: 'Ctrl + S', desc: t('Save design') },
+    { keys: 'Ctrl+Shift+S', desc: t('Download design (PNG)') },
+    { keys: 'Ctrl + P', desc: t('Print (mockup PNG)') },
+    { keys: 'Ctrl + +', desc: t('Zoom in') },
+    { keys: 'Ctrl + -', desc: t('Zoom out') },
+    { keys: 'Ctrl + 0', desc: t('Reset zoom') },
+    { keys: '← ↑ → ↓', desc: t('Move element 1px') },
+    { keys: 'Shift + arrows', desc: t('Move element 10px') },
+    { keys: 'Double click', desc: t('Edit text inline') },
+    { keys: 'Scroll', desc: t('Zoom in/out') },
+    { keys: 'Drag canvas', desc: t('Pan (when zoomed)') },
   ];
 
   return (
     <Dropdown align="left" onClose={onClose}>
-      <DropdownHeader title="Hotkeys" onClose={onClose} />
+      <DropdownHeader title={t('Hotkeys')} onClose={onClose} />
       <div style={{ padding: '8px 14px' }}>
         {shortcuts.map((s, i) => (
           <div key={i} style={{
@@ -572,22 +580,25 @@ function HelpDropdown({ onClose }: { onClose: () => void }) {
 
 // Language dropdown
 function LanguageDropdown({ onClose }: { onClose: () => void }) {
-  const [lang, setLang] = useState('en');
+  const currentLang = useI18nStore((s) => s.currentLang);
+  const availableLangs = useI18nStore((s) => s.availableLangs);
+  const setLang = useI18nStore((s) => s.setLang);
+  const t = useT();
+
+  // Always include English as default
   const langs = [
-    { id: 'en', name: 'English', flag: '🇺🇸' },
-    { id: 'es', name: 'Español', flag: '🇪🇸' },
-    { id: 'pt', name: 'Português', flag: '🇧🇷' },
-    { id: 'fr', name: 'Français', flag: '🇫🇷' },
+    { id: 'en', name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
+    ...Object.values(availableLangs).filter((l) => l.code !== 'en').map((l) => ({ id: l.code, name: l.name, flag: l.flag })),
   ];
 
   return (
     <Dropdown align="right" onClose={onClose}>
-      <DropdownHeader title="Languages" onClose={onClose} />
+      <DropdownHeader title={t('Languages')} onClose={onClose} />
       <div style={{ padding: '4px 0' }}>
         {langs.map((l) => (
           <button
             key={l.id}
-            onClick={() => setLang(l.id)}
+            onClick={() => { setLang(l.id); onClose(); }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -595,7 +606,7 @@ function LanguageDropdown({ onClose }: { onClose: () => void }) {
               width: '100%',
               padding: '8px 14px',
               borderWidth: 0,
-              background: lang === l.id ? '#EBF2FA' : 'transparent',
+              background: currentLang === l.id ? '#EBF2FA' : 'transparent',
               cursor: 'pointer',
               fontSize: 13,
               color: '#333',
@@ -604,9 +615,14 @@ function LanguageDropdown({ onClose }: { onClose: () => void }) {
           >
             <span style={{ fontSize: 18 }}>{l.flag}</span>
             <span style={{ flex: 1 }}>{l.name}</span>
-            {lang === l.id && <Check size={14} color="#4A90D9" />}
+            {currentLang === l.id && <Check size={14} color="#4A90D9" />}
           </button>
         ))}
+        {langs.length === 1 && (
+          <div style={{ padding: '8px 14px', fontSize: 11, color: '#aaa' }}>
+            No additional languages enabled. Activate languages in the admin panel.
+          </div>
+        )}
       </div>
     </Dropdown>
   );
@@ -617,6 +633,7 @@ function CartDropdown({ onClose }: { onClose: () => void }) {
   const cartItems = useEditorStore((s) => s.cartItems);
   const removeFromCart = useEditorStore((s) => s.removeFromCart);
   const [, forceUpdate] = useState(0);
+  const t = useT();
 
   const handleRemove = async (designId: string) => {
     try {
@@ -643,12 +660,12 @@ function CartDropdown({ onClose }: { onClose: () => void }) {
 
   return (
     <Dropdown align="right" onClose={onClose}>
-      <DropdownHeader title={`My Cart (${cartItems.length})`} onClose={onClose} />
+      <DropdownHeader title={`${t('My Cart')} (${cartItems.length})`} onClose={onClose} />
       {cartItems.length === 0 ? (
         <div style={{ padding: '30px 14px', textAlign: 'center', color: '#aaa', fontSize: 13 }}>
           <ShoppingCart size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
-          <div>Your cart is empty</div>
-          <div style={{ fontSize: 11, marginTop: 4 }}>Design a product and click "Add to Cart"</div>
+          <div>{t('Your cart is empty')}</div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>{t('Design a product and click "Add to Cart"')}</div>
         </div>
       ) : (
         <div style={{ maxHeight: 350, overflow: 'auto' }}>
@@ -668,7 +685,7 @@ function CartDropdown({ onClose }: { onClose: () => void }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.productName}</div>
                   <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
-                    Size: <span style={{ fontWeight: 600, color: '#555' }}>{size}</span>
+                    {t('Size')}: <span style={{ fontWeight: 600, color: '#555' }}>{size}</span>
                     <span title={item.productColorName} style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: item.productColor, border: '1px solid #ccc', marginLeft: 6, verticalAlign: -1, boxShadow: item.productColor === '#FFFFFF' ? 'inset 0 0 0 1px #ddd' : 'none' }} />
                   </div>
                 </div>
@@ -703,9 +720,9 @@ function CartDropdown({ onClose }: { onClose: () => void }) {
         </div>
       )}
       <div style={{ padding: '6px 14px 10px', display: 'flex', gap: 8 }}>
-        <button onClick={() => { window.history.back(); }} style={{ flex: 1, padding: '8px 0', borderWidth: 1, borderStyle: 'solid', borderColor: '#ddd', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 12, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <button onClick={() => { window.history.back(); }} title={t('Back to Shop')} style={{ flex: 1, padding: '8px 0', borderWidth: 1, borderStyle: 'solid', borderColor: '#ddd', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 12, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <ArrowLeft size={12} />
-          Back to Shop
+          {t('Back to Shop')}
         </button>
       </div>
     </Dropdown>

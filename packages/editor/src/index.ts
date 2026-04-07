@@ -3,4 +3,5 @@ export { SidebarPanel } from './components/sidebar/SidebarPanel.js';
 export { Toolbar } from './components/Toolbar.js';
 export { useEditorStore } from './store/editorStore.js';
 export type { CartItem } from './store/editorStore.js';
+export { useI18nStore, useT } from './i18n/useTranslation.js';
 export * as api from './services/api.js';

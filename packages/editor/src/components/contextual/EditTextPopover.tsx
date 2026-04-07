@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { TextLayer } from '@openmerch/core';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface EditTextPopoverProps {
   layer: TextLayer;
@@ -10,6 +11,7 @@ interface EditTextPopoverProps {
 
 export function EditTextPopover({ layer, onClose }: EditTextPopoverProps) {
   const { updateLayer } = useEditorStore();
+  const t = useT();
   const [text, setText] = useState(layer.text);
   const [fontSize, setFontSize] = useState(layer.fontSize);
   const [letterSpacing, setLetterSpacing] = useState(layer.letterSpacing ?? 0);
@@ -43,7 +45,7 @@ export function EditTextPopover({ layer, onClose }: EditTextPopoverProps) {
   return (
     <div style={popoverStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Edit Text</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Edit Text')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -55,7 +57,7 @@ export function EditTextPopover({ layer, onClose }: EditTextPopoverProps) {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Enter your text..."
+        placeholder={t('Enter your text...')}
         style={{
           width: '100%',
           padding: '8px 10px',
@@ -71,9 +73,9 @@ export function EditTextPopover({ layer, onClose }: EditTextPopoverProps) {
         }}
       />
 
-      <SliderRow label="Size" value={fontSize} min={8} max={120} step={1} onChange={setFontSize} />
-      <SliderRow label="Spacing" value={letterSpacing} min={-10} max={50} step={0.5} onChange={setLetterSpacing} />
-      <SliderRow label="Line H." value={lineHeight} min={0.5} max={3} step={0.1} onChange={setLineHeight} />
+      <SliderRow label={t('Size')} value={fontSize} min={8} max={120} step={1} onChange={setFontSize} />
+      <SliderRow label={t('Spacing')} value={letterSpacing} min={-10} max={50} step={0.5} onChange={setLetterSpacing} />
+      <SliderRow label={t('Line H.')} value={lineHeight} min={0.5} max={3} step={0.1} onChange={setLineHeight} />
 
       <button
         onClick={handleUpdate}
@@ -88,7 +90,7 @@ export function EditTextPopover({ layer, onClose }: EditTextPopoverProps) {
           fontWeight: 500,
         }}
       >
-        Update Text
+        {t('Update Text')}
       </button>
     </div>
   );

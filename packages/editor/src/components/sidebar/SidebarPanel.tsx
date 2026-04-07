@@ -19,6 +19,7 @@ import { ShapesTab } from './tabs/ShapesTab.js';
 import { PhotosTab } from './tabs/PhotosTab.js';
 import { BackgroundsTab } from './tabs/BackgroundsTab.js';
 import { AiImageTab } from './tabs/AiImageTab.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 type TabId = 'product' | 'image' | 'text' | 'layers' | 'shapes' | 'cliparts' | 'photos' | 'backgrounds' | 'ai';
 
@@ -42,6 +43,7 @@ const TABS: TabDef[] = [
 
 export function SidebarPanel() {
   const [activeTab, setActiveTab] = useState<TabId>('product');
+  const t = useT();
 
   return (
     <div style={{
@@ -72,7 +74,7 @@ export function SidebarPanel() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              title={tab.label}
+              title={t(tab.label)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -93,7 +95,7 @@ export function SidebarPanel() {
               }}
             >
               <Icon size={16} />
-              {tab.label}
+              {t(tab.label)}
             </button>
           );
         })}

@@ -1,5 +1,6 @@
 import { Minus, Plus, Locate } from 'lucide-react';
 import type Konva from 'konva';
+import { useT } from '../i18n/useTranslation.js';
 
 interface ZoomControlsProps {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -8,6 +9,7 @@ interface ZoomControlsProps {
 }
 
 export function ZoomControls({ stageRef, zoom, setZoom }: ZoomControlsProps) {
+  const t = useT();
   const applyZoom = (newScale: number) => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -81,7 +83,7 @@ export function ZoomControls({ stageRef, zoom, setZoom }: ZoomControlsProps) {
       {isZoomed && (
         <button
           onClick={handleReset}
-          title="Reset view — center canvas"
+          title={t('Reset view — center canvas')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -100,7 +102,7 @@ export function ZoomControls({ stageRef, zoom, setZoom }: ZoomControlsProps) {
           }}
         >
           <Locate size={14} />
-          Reset view
+          {t('Reset view')}
         </button>
       )}
 
@@ -119,7 +121,7 @@ export function ZoomControls({ stageRef, zoom, setZoom }: ZoomControlsProps) {
           padding: '4px 8px',
         }}
       >
-      <button style={btnStyle} onClick={handleZoomOut} title="Zoom out">
+      <button style={btnStyle} onClick={handleZoomOut} title={t('Zoom out')}>
         <Minus size={14} />
       </button>
 
@@ -133,7 +135,7 @@ export function ZoomControls({ stageRef, zoom, setZoom }: ZoomControlsProps) {
         title={`${Math.round(zoom * 100)}%`}
       />
 
-      <button style={btnStyle} onClick={handleZoomIn} title="Zoom in">
+      <button style={btnStyle} onClick={handleZoomIn} title={t('Zoom in')}>
         <Plus size={14} />
       </button>
 

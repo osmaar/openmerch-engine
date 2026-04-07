@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface FiltersPopoverProps {
   imageSrc: string;
@@ -84,6 +85,7 @@ function buildFilterString(f: FilterPreset): string {
 }
 
 export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClose }: FiltersPopoverProps) {
+  const t = useT();
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [activePreset, setActivePreset] = useState(activeFilterIndex);
@@ -202,7 +204,7 @@ export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClos
     <div style={popoverStyle}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Filters</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Filters')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -230,18 +232,18 @@ export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClos
               width: '100%',
               textAlign: 'center',
             }}>
-              {preset.name}
+              {t(preset.name)}
             </span>
           </div>
         ))}
       </div>
 
       {/* Adjustments */}
-      <SliderRow label="Brightness" value={brightness} min={0} max={200} onChange={setBrightness} />
-      <SliderRow label="Contrast" value={contrast} min={0} max={200} onChange={setContrast} />
-      <SliderRow label="Saturation" value={saturate} min={0} max={200} onChange={setSaturate} />
+      <SliderRow label={t('Brightness')} value={brightness} min={0} max={200} onChange={setBrightness} />
+      <SliderRow label={t('Contrast')} value={contrast} min={0} max={200} onChange={setContrast} />
+      <SliderRow label={t('Saturation')} value={saturate} min={0} max={200} onChange={setSaturate} />
 
-      <button style={applyBtn} onClick={handleApply}>Apply</button>
+      <button style={applyBtn} onClick={handleApply}>{t('Apply')}</button>
     </div>
   );
 }

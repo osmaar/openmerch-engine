@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + Editor Integration) in progress — Cart flow functional, editor saves designs on Add to Cart. Next: CMS integration + production jobs.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + i18n) in progress — Editor consumes merchant resources, full i18n runtime with Spanish + French shipped. Next: admin panel i18n + CMS integration.
 
 ---
 
@@ -154,6 +154,10 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] ProductEdit connected to API (load existing data, save changes)
   - [x] Configurable storage mode (Database/MinIO/Hybrid) in Settings
   - [x] Cart flow (Add to Cart saves design to DB, cart dropdown with qty controls, remove deletes from DB)
+  - [x] Editor consumes merchant resources from admin (cliparts, fonts, shapes via API)
+  - [x] i18n runtime system (337 keys, English + Spanish + French shipped via seeds)
+  - [x] Language selector in editor navbar with localStorage persistence
+  - [ ] Admin panel i18n (separate translation system for merchant dashboard)
   - [ ] Checkout flow (payment → production files generation)
   - [ ] BullMQ production job queue
   - [ ] Settings API (API keys management)
@@ -163,6 +167,62 @@ The editor embeds via iframe on the product page. When a customer finishes their
 - [ ] WooCommerce integration (Phase 4)
 - [ ] Shopify integration (Post-MVP)
 - [ ] 3D preview (Post-MVP)
+
+---
+
+## Languages
+
+OpenMerch Engine ships with **English** (default), **Spanish**, and **French** translations for the customer-facing editor. Translations are loaded from PostgreSQL and seeded automatically.
+
+### First-time setup
+
+After installing the project, run the seed command to load default translations:
+
+```bash
+pnpm --filter @openmerch/api db:seed
+```
+
+This loads all translations from `packages/api/seeds/translations/*.json` into the database. The script is **idempotent** — running it multiple times will not overwrite existing translations.
+
+### How translations work
+
+- Each language has a JSON seed file at `packages/api/seeds/translations/<code>.json`
+- The seed file contains a `_meta` block (code, name, flag) and key-value pairs
+- The editor loads active languages at runtime via `GET /api/v1/languages/active`
+- Customers can switch languages using the globe icon in the editor navbar
+- The selected language is persisted in `localStorage`
+
+### Adding a new language
+
+**Option A — Ship with the product (official languages):**
+
+1. Create `packages/api/seeds/translations/de.json` (or your language code) with this format:
+   ```json
+   {
+     "_meta": { "code": "de", "name": "German", "flag": "🇩🇪" },
+     "Add to Cart": "In den Warenkorb",
+     "Print": "Drucken",
+     ...
+   }
+   ```
+2. Run `pnpm --filter @openmerch/api db:seed`
+3. Activate the language from the admin panel → Languages
+4. Commit the JSON file to the repo
+
+**Option B — Custom language for a single store:**
+
+1. Go to **Admin → Languages → Add New Language**
+2. Click **"Translations"** for the new language
+3. **Download JSON** to get a template with all 337 keys empty
+4. Translate the values externally (or use Google Translate)
+5. **Import JSON** to load the translations
+6. Activate the language with the switch
+
+### Translating the editor
+
+The editor uses ~337 unique strings organized in 25 sections (NavBar, Cart, Toolbars, Tabs, Popovers, Filters, AI prompts, etc.). All strings are visible in the admin panel under **Languages → Translations → OpenMerch Editor tab**, with section headers for easy navigation.
+
+The admin panel itself is currently English-only (i18n for the admin is planned for a future release).
 
 ---
 

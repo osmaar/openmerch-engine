@@ -1,6 +1,7 @@
 import { X, RotateCcw } from 'lucide-react';
 import type { DesignLayer } from '@openmerch/core';
 import { useEditorStore } from '../../store/editorStore.js';
+import { useT } from '../../i18n/useTranslation.js';
 
 interface TransformPopoverProps {
   layer: DesignLayer;
@@ -9,6 +10,7 @@ interface TransformPopoverProps {
 
 export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
   const { updateLayer, resetLayer } = useEditorStore();
+  const t = useT();
 
   const isFlippedX = layer.scaleX < 0;
   const isFlippedY = layer.scaleY < 0;
@@ -86,7 +88,7 @@ export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
   return (
     <div style={popoverStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Transform</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>{t('Transform')}</span>
         <button
           onClick={onClose}
           style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 2, display: 'flex' }}
@@ -97,7 +99,7 @@ export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
 
       {/* Rotate */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>Rotate</span>
+        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>{t('Rotate')}</span>
         <input
           type="range"
           min={-180}
@@ -113,7 +115,7 @@ export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
 
       {/* Skew X */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>Skew X</span>
+        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>{t('Skew X')}</span>
         <input
           type="range"
           min={-50}
@@ -129,7 +131,7 @@ export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
 
       {/* Skew Y */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>Skew Y</span>
+        <span style={{ fontSize: 12, color: '#666', minWidth: 50 }}>{t('Skew Y')}</span>
         <input
           type="range"
           min={-50}
@@ -146,16 +148,16 @@ export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
       {/* Flip toggles */}
       <div style={{ display: 'flex', gap: 6 }}>
         <button style={toggleStyle(isFlippedX)} onClick={handleFlipX}>
-          Flip X {isFlippedX ? '✓' : ''}
+          {t('Flip X')} {isFlippedX ? '✓' : ''}
         </button>
         <button style={toggleStyle(isFlippedY)} onClick={handleFlipY}>
-          Flip Y {isFlippedY ? '✓' : ''}
+          {t('Flip Y')} {isFlippedY ? '✓' : ''}
         </button>
       </div>
 
       {/* Reset */}
       <button style={resetBtn} onClick={() => resetLayer(layer.id)}>
-        <RotateCcw size={14} /> Reset All Transforms
+        <RotateCcw size={14} /> {t('Reset All Transforms')}
       </button>
     </div>
   );
