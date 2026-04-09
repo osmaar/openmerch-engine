@@ -67,6 +67,16 @@ export async function assetRoutes(app: FastifyInstance) {
     const key = req.params['*'];
     if (!key) return reply.code(400).send({ error: 'Missing key', code: 'MISSING_KEY' });
 
+    // Set Content-Type based on file extension
+    const ext = key.split('.').pop()?.toLowerCase();
+    const mimeMap: Record<string, string> = {
+      png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+      svg: 'image/svg+xml', webp: 'image/webp', ico: 'image/x-icon',
+      ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2',
+      pdf: 'application/pdf', json: 'application/json',
+    };
+    if (ext && mimeMap[ext]) reply.header('Content-Type', mimeMap[ext]);
+
     try {
       const stream = await minioClient.getObject(config.minio.bucket, key);
       return reply.send(stream);

@@ -11,24 +11,22 @@ interface UnsplashPhoto {
   links: { download_location: string };
 }
 
+const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
 const DEFAULT_QUERY = 'popular';
 const SUGGESTIONS = ['trending', 'aesthetic', 'minimal', 'retro', 'graffiti', 'neon', 'floral', 'geometric', 'animals', 'landscape', 'food', 'music'];
 
 export function PhotosTab() {
   const t = useT();
   const { addImageLayer } = useEditorStore();
-  const UNSPLASH_KEY = useEditorStore((s) => s.unsplashKey);
   const [query, setQuery] = useState('');
   const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
   const [loading, setLoading] = useState(false);
 
   const search = useCallback(async (q: string) => {
-    if (!UNSPLASH_KEY) return;
     setLoading(true);
     try {
       const res = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q || DEFAULT_QUERY)}&per_page=20&orientation=squarish`,
-        { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+        `${API_BASE}/api/v1/proxy/unsplash/search?query=${encodeURIComponent(q || DEFAULT_QUERY)}&per_page=20`,
       );
       const data = await res.json();
       setPhotos(data.results ?? []);
@@ -36,12 +34,12 @@ export function PhotosTab() {
       setPhotos([]);
     }
     setLoading(false);
-  }, [UNSPLASH_KEY]);
+  }, []);
 
   // Load default photos on mount
   useEffect(() => {
-    if (UNSPLASH_KEY && photos.length === 0) search(DEFAULT_QUERY);
-  }, [UNSPLASH_KEY]);
+    if (photos.length === 0) search(DEFAULT_QUERY);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') search(query);
@@ -62,11 +60,8 @@ export function PhotosTab() {
     };
     img.src = photo.urls.regular;
 
-    if (UNSPLASH_KEY) {
-      fetch(photo.links.download_location, {
-        headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-      }).catch(() => {});
-    }
+    // Trigger Unsplash download tracking via proxy
+    fetch(`${API_BASE}/api/v1/proxy/unsplash/search?query=download&download_location=${encodeURIComponent(photo.links.download_location)}`).catch(() => {});
   };
 
   return (
@@ -119,11 +114,7 @@ export function PhotosTab() {
         </div>
       )}
 
-      {!UNSPLASH_KEY && (
-        <div style={{ padding: 12, background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
-          {t('Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.')}
-        </div>
-      )}
+      {/* Key warning removed — proxy handles key resolution (DB > .env) */}
 
       {!loading && photos.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>

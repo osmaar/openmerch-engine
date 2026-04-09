@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + i18n) nearly complete — BullMQ production file generation working (300 DPI print + 96 DPI mockup), custom fonts + Google Fonts in Docker worker, full i18n (EN/ES/FR). Next: real Dashboard, checkout flow, CMS integration.
+> **Status:** Phase 2 nearly complete — Settings API with AES-256 encryption, Unsplash/Pollinations proxy (keys never reach browser), BullMQ production jobs, full i18n (EN/ES/FR). Next: more product seeds, rembg AI background removal, CMS integration.
 
 ---
 
@@ -160,8 +160,8 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Language selector in editor navbar with localStorage persistence
   - [x] Admin panel i18n (separate translation system for merchant dashboard)
   - [x] BullMQ production job queue (Docker worker, 300 DPI print + 96 DPI mockup, custom fonts + Google Fonts)
+  - [x] Settings API (AES-256 encryption, proxy endpoints, dynamic branding/favicon/store name)
   - [ ] Checkout flow (payment → production files generation)
-  - [ ] Settings API (API keys management)
   - [ ] rembg AI-powered background removal (Python)
 - [ ] 2D preview with displacement maps (Phase 2)
 - [ ] Per-technique validation and embroidery files (Phase 3)

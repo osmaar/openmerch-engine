@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
   AppShell,
@@ -26,6 +27,9 @@ import {
 import { LinksGroup } from './LinksGroup.js';
 import { useT, useI18nStore } from '../i18n/useTranslation.js';
 
+// API runs on 3001. Admin on 3002 in dev — always point to API.
+const API_BASE = (typeof window !== 'undefined' && window.location.port !== '3001') ? 'http://localhost:3001' : '';
+
 export function Layout() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -33,6 +37,39 @@ export function Layout() {
   const currentLang = useI18nStore((s) => s.currentLang);
   const availableLangs = useI18nStore((s) => s.availableLangs);
   const setLang = useI18nStore((s) => s.setLang);
+  const [storeName, setStoreName] = useState(() => localStorage.getItem('openmerch-store-name') || 'OpenMerch');
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/settings/public`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        if (data.store_name) {
+          setStoreName(data.store_name);
+          localStorage.setItem('openmerch-store-name', data.store_name);
+          document.title = `${data.store_name} — Admin`;
+        }
+        if (data.favicon_url) {
+          let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.href = data.favicon_url;
+        }
+      })
+      .catch(() => { /* keep default */ });
+
+    const handleSettingsChanged = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { storeName?: string };
+      if (detail.storeName) {
+        setStoreName(detail.storeName);
+        localStorage.setItem('openmerch-store-name', detail.storeName);
+      }
+    };
+    window.addEventListener('openmerch:settings-changed', handleSettingsChanged);
+    return () => window.removeEventListener('openmerch:settings-changed', handleSettingsChanged);
+  }, []);
 
   const navData = [
     { icon: LayoutDashboard, label: t('Dashboard'), to: '/' },
@@ -110,7 +147,7 @@ export function Layout() {
           <Group justify="space-between">
             <div>
               <Text size="lg" fw={800} c="white" style={{ letterSpacing: 0.5 }}>
-                OpenMerch
+                {storeName}
               </Text>
             </div>
             <Group gap="xs">

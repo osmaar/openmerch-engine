@@ -11,6 +11,8 @@ interface UnsplashPhoto {
   links: { download_location: string };
 }
 
+const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+
 const CATEGORIES = [
   { label: 'Gradients', query: 'gradient background' },
   { label: 'Textures', query: 'texture background' },
@@ -27,18 +29,15 @@ const CATEGORIES = [
 export function BackgroundsTab() {
   const t = useT();
   const { addImageLayer } = useEditorStore();
-  const UNSPLASH_KEY = useEditorStore((s) => s.unsplashKey);
   const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('Gradients');
 
   const search = useCallback(async (q: string) => {
-    if (!UNSPLASH_KEY) return;
     setLoading(true);
     try {
       const res = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=20`,
-        { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+        `${API_BASE}/api/v1/proxy/unsplash/search?query=${encodeURIComponent(q)}&per_page=20`,
       );
       const data = await res.json();
       setPhotos(data.results ?? []);
@@ -46,12 +45,12 @@ export function BackgroundsTab() {
       setPhotos([]);
     }
     setLoading(false);
-  }, [UNSPLASH_KEY]);
+  }, []);
 
   // Load default category on mount
   useEffect(() => {
-    if (UNSPLASH_KEY && photos.length === 0) search(CATEGORIES[0]!.query);
-  }, [UNSPLASH_KEY]);
+    if (photos.length === 0) search(CATEGORIES[0]!.query);
+  }, []);
 
   const handleCategoryClick = (cat: typeof CATEGORIES[0]) => {
     setActiveCategory(cat.label);
@@ -73,22 +72,14 @@ export function BackgroundsTab() {
     };
     img.src = photo.urls.regular;
 
-    if (UNSPLASH_KEY) {
-      fetch(photo.links.download_location, {
-        headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-      }).catch(() => {});
-    }
+    fetch(`${API_BASE}/api/v1/proxy/unsplash/search?query=download&download_location=${encodeURIComponent(photo.links.download_location)}`).catch(() => {});
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Backgrounds')}</div>
 
-      {!UNSPLASH_KEY && (
-        <div style={{ padding: 12, background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
-          {t('Unsplash API key not configured. Add VITE_UNSPLASH_ACCESS_KEY to your .env file.')}
-        </div>
-      )}
+      {/* Key warning removed — proxy handles key resolution (DB > .env) */}
 
       {/* Categories */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>

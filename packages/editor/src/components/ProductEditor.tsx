@@ -27,6 +27,7 @@ export function ProductEditor({ product }: ProductEditorProps) {
   const { setProduct, activeZoneId, addImageLayer } = useEditorStore();
   const loadLanguages = useI18nStore((s) => s.loadLanguages);
   const t = useT();
+  const [showBranding, setShowBranding] = useState(true);
   useKeyboardShortcuts();
 
   useEffect(() => {
@@ -38,6 +39,22 @@ export function ProductEditor({ product }: ProductEditorProps) {
       ? 'http://localhost:3001'
       : '';
     loadLanguages(apiBase);
+    // Load public settings (branding, store name)
+    fetch(`${apiBase}/api/v1/settings/public`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        if (data.show_branding === 'false') setShowBranding(false);
+        if (data.store_name) {
+          document.title = `${data.store_name} — Editor`;
+          useEditorStore.setState({ storeName: data.store_name });
+        }
+        if (data.favicon_url) {
+          let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+          if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+          link.href = data.favicon_url;
+        }
+      })
+      .catch(() => { /* settings unavailable — keep defaults */ });
   }, [loadLanguages]);
 
   const activeProductZone = product.zones.find((z) => z.id === activeZoneId);
@@ -127,9 +144,11 @@ export function ProductEditor({ product }: ProductEditorProps) {
           gap: 2,
         }}>
           <span>{t('Preview is approximate. Colors and proportions may vary on the final product.')}</span>
-          <span style={{ fontSize: 10, color: '#bbb' }}>
-            © 2026 <a href="https://github.com/osmaar/openmerch-engine" target="_blank" rel="noopener noreferrer" style={{ color: '#bbb', textDecoration: 'none' }}>OpenMerch Engine</a> · Open Source · MIT
-          </span>
+          {showBranding && (
+            <span style={{ fontSize: 10, color: '#bbb' }}>
+              © {new Date().getFullYear()} <a href="https://github.com/osmaar/openmerch-engine" target="_blank" rel="noopener noreferrer" style={{ color: '#bbb', textDecoration: 'none' }}>OpenMerch Engine</a> · Open Source · MIT
+            </span>
+          )}
         </div>
       </div>
       </div>

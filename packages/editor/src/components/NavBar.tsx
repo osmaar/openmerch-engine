@@ -41,9 +41,9 @@ export function NavBar() {
       position: 'relative',
       zIndex: 200,
     }}>
-      {/* Logo */}
+      {/* Logo / Store name */}
       <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginRight: 12, letterSpacing: 0.5 }}>
-        OpenMerch
+        {useEditorStore((s) => s.storeName) || 'OpenMerch'}
       </div>
 
       {/* Save indicator */}
