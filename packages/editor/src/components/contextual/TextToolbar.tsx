@@ -127,7 +127,7 @@ export function TextToolbar({ layer }: TextToolbarProps) {
   useEffect(() => {
     FONT_OPTIONS.slice(0, 15).forEach(loadGoogleFont);
     loadGoogleFont(layer.fontFamily);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadGoogleFont(layer.fontFamily);
