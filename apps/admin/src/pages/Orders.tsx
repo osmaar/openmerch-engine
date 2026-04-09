@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react';
 import {
   Title, Group, Paper, Table, TextInput, Text, Badge, Modal, Stack, Select, ActionIcon, Divider, Button,
 } from '@mantine/core';
-import { Search, Download, Eye, ShoppingCart, Filter } from 'lucide-react';
-import { listOrders } from '../services/api.js';
-import type { Order } from '../services/api.js';
+import { notifications } from '@mantine/notifications';
+import { Search, Download, Eye, ShoppingCart, Filter, FileImage, RefreshCw } from 'lucide-react';
+import { listOrders, getDesign, generateProductionFiles } from '../services/api.js';
+import type { Order, Design, ProductionStatus } from '../services/api.js';
 import { useT } from '../i18n/useTranslation.js';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'yellow', processing: 'blue', completed: 'green', cancelled: 'red',
 };
+
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export function Orders() {
   const t = useT();
@@ -18,6 +21,8 @@ export function Orders() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
+  const [loadingDesign, setLoadingDesign] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -25,6 +30,68 @@ export function Orders() {
   };
 
   useEffect(load, []);
+
+  // When the modal opens with an order, fetch its linked design so we can show
+  // production status + download links per zone.
+  useEffect(() => {
+    if (!selectedOrder?.designId) {
+      setSelectedDesign(null);
+      return;
+    }
+    setLoadingDesign(true);
+    getDesign(selectedOrder.designId)
+      .then(setSelectedDesign)
+      .catch(() => setSelectedDesign(null))
+      .finally(() => setLoadingDesign(false));
+  }, [selectedOrder]);
+
+  const productionStatusColor = (s: ProductionStatus): string => {
+    switch (s) {
+      case 'completed': return 'green';
+      case 'processing': return 'blue';
+      case 'queued': return 'gray';
+      case 'failed': return 'red';
+      default: return 'gray';
+    }
+  };
+
+  const productionStatusLabel = (s: ProductionStatus): string => {
+    switch (s) {
+      case 'completed': return t('Files ready');
+      case 'processing': return t('Processing');
+      case 'queued': return t('Queued');
+      case 'failed': return t('Failed');
+      default: return t('Not generated');
+    }
+  };
+
+  const handleGenerate = async (designId: string) => {
+    try {
+      await generateProductionFiles(designId);
+      notifications.show({
+        title: t('Generation queued'),
+        message: t('production files will be generated shortly'),
+        color: 'blue',
+      });
+      // Refetch the design after a short delay to pick up the new status.
+      setTimeout(async () => {
+        if (selectedOrder?.designId) {
+          const fresh = await getDesign(selectedOrder.designId).catch(() => null);
+          if (fresh) setSelectedDesign(fresh);
+        }
+      }, 1500);
+    } catch (e) {
+      notifications.show({ title: t('Error'), message: t((e as Error).message), color: 'red' });
+    }
+  };
+
+  const handleDownloadJson = (design: Design) => {
+    const blob = new Blob([JSON.stringify(design.designData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${design.name}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const filtered = orders
     .filter((o) => {
@@ -56,13 +123,84 @@ export function Orders() {
             <Divider />
             <Group justify="space-between"><Text size="sm" fw={500}>{t('Date')}</Text><Text size="sm">{new Date(selectedOrder.createdAt).toLocaleString()}</Text></Group>
             <Divider />
-            <Text size="sm" fw={500}>{t('Design Files')}</Text>
+            <Group justify="space-between" align="center">
+              <Text size="sm" fw={500}>{t('Production Files')}</Text>
+              {selectedDesign && (
+                <Badge size="sm" color={productionStatusColor(selectedDesign.productionStatus)} variant="light">
+                  {productionStatusLabel(selectedDesign.productionStatus)}
+                </Badge>
+              )}
+            </Group>
             <Paper p="md" radius="md" withBorder>
-              <Group justify="center" gap="md">
-                <Button variant="light" leftSection={<Download size={14} />} size="xs">{t('Download')} PNG</Button>
-                <Button variant="light" leftSection={<Download size={14} />} size="xs">{t('Download')} SVG</Button>
-                <Button variant="light" leftSection={<Download size={14} />} size="xs">{t('Download')} JSON</Button>
-              </Group>
+              {loadingDesign ? (
+                <Text size="xs" c="dimmed" ta="center">{t('Loading...')}</Text>
+              ) : !selectedDesign ? (
+                <Text size="xs" c="dimmed" ta="center">{t('No design linked to this order')}</Text>
+              ) : (
+                <Stack gap="xs">
+                  {/* Per-zone download links — print file + mockup per zone */}
+                  {selectedDesign.productionFiles && Object.keys(selectedDesign.productionFiles).length > 0 && (
+                    <Stack gap="sm">
+                      {Object.entries(selectedDesign.productionFiles).map(([zoneId, urls]) => (
+                        <Stack key={zoneId} gap={4}>
+                          <Text size="xs" fw={600} tt="capitalize">{zoneId}</Text>
+                          <Group gap="xs">
+                            <Button
+                              component="a"
+                              href={`${API_BASE}${urls.print}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              variant="light"
+                              leftSection={<Download size={14} />}
+                              size="xs"
+                            >
+                              {t('Print file')}
+                            </Button>
+                            {urls.mockup && (
+                              <Button
+                                component="a"
+                                href={`${API_BASE}${urls.mockup}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                variant="light"
+                                leftSection={<Download size={14} />}
+                                size="xs"
+                              >
+                                {t('Mockup preview')}
+                              </Button>
+                            )}
+                          </Group>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  )}
+                  {selectedDesign.productionError && (
+                    <Text size="xs" c="red">{selectedDesign.productionError}</Text>
+                  )}
+                  <Group justify="space-between" mt="xs">
+                    <Button
+                      variant="light"
+                      color="grape"
+                      leftSection={
+                        selectedDesign.productionStatus === 'completed' ? <RefreshCw size={14} /> : <FileImage size={14} />
+                      }
+                      size="xs"
+                      onClick={() => handleGenerate(selectedDesign.id)}
+                      loading={selectedDesign.productionStatus === 'queued' || selectedDesign.productionStatus === 'processing'}
+                    >
+                      {selectedDesign.productionStatus === 'completed' ? t('Regenerate files') : t('Generate files')}
+                    </Button>
+                    <Button
+                      variant="light"
+                      leftSection={<Download size={14} />}
+                      size="xs"
+                      onClick={() => handleDownloadJson(selectedDesign)}
+                    >
+                      {t('Download')} JSON
+                    </Button>
+                  </Group>
+                </Stack>
+              )}
             </Paper>
             <Group justify="flex-end"><Button variant="default" onClick={() => setSelectedOrder(null)}>{t('Close')}</Button></Group>
           </Stack>

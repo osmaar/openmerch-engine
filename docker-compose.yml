@@ -32,6 +32,67 @@ services:
     volumes:
       - minio-data:/data
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # Application services (HTTP API + BullMQ worker).
+  #
+  # These are opt-in via the `app` profile so the default `docker compose up`
+  # only starts infrastructure (postgres, redis, minio) — that matches the
+  # project's dev stance: hot reload locally via `pnpm dev` / `pnpm worker`.
+  #
+  # Start with: `docker compose --profile app up`
+  # ─────────────────────────────────────────────────────────────────────────
+  api:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://openmerch:openmerch@postgres:5432/openmerch
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: openmerch
+      MINIO_SECRET_KEY: openmerch123
+      MINIO_BUCKET: openmerch
+      CORS_ORIGIN: "*"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # BullMQ worker — runs separately from the HTTP API so heavy rendering
+  # doesn't block HTTP requests. Use the `worker` profile to start it:
+  #
+  #   docker compose --profile worker up --build worker
+  #
+  # The worker shares the same Dockerfile as the API but overrides the CMD.
+  # On Linux (the container OS) node-canvas uses FcConfigAppFontAddFile so
+  # custom/Google fonts register correctly — unlike the Windows dev host.
+  # ─────────────────────────────────────────────────────────────────────────
+  worker:
+    profiles: ["worker"]
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    restart: unless-stopped
+    command: ["node", "dist/worker.js"]
+    environment:
+      DATABASE_URL: postgres://openmerch:openmerch@postgres:5432/openmerch
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: openmerch
+      MINIO_SECRET_KEY: openmerch123
+      MINIO_BUCKET: openmerch
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
 volumes:
   postgres-data:
   redis-data:

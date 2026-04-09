@@ -11,6 +11,7 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
+    "rebuild:editor": "pnpm --filter @openmerch/core build && pnpm --filter @openmerch/editor build && pnpm --filter @openmerch/demo build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

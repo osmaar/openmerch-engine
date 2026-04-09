@@ -30,8 +30,19 @@ const SHAPE_LABELS: Record<string, string> = {
 };
 
 function getLayerLabel(layer: DesignLayer, t: (k: string) => string): string {
+  if (layer.name) return layer.name;
   switch (layer.type) {
-    case 'image': return t('Image');
+    case 'image': {
+      // Derive a name from the src filename when possible.
+      try {
+        const url = new URL(layer.src, 'https://x');
+        const filename = url.pathname.split('/').pop() ?? '';
+        const decoded = decodeURIComponent(filename);
+        const noExt = decoded.replace(/\.[^.]+$/, '');
+        if (noExt && noExt.length > 1) return noExt.substring(0, 24);
+      } catch { /* ignore */ }
+      return t('Image');
+    }
     case 'text': return layer.text.substring(0, 18) || t('Text');
     case 'shape': return t(SHAPE_LABELS[layer.shapeType] ?? layer.shapeType);
   }
@@ -97,11 +108,7 @@ export function LayersTab() {
 
   const finishRename = (layerId: string) => {
     if (editName.trim()) {
-      const layer = layers.find((l) => l.id === layerId);
-      if (layer?.type === 'text') {
-        updateLayer(layerId, { text: editName.trim() });
-      }
-      // For images we could add a custom name field later
+      updateLayer(layerId, { name: editName.trim() });
     }
     setEditingId(null);
   };

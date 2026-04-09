@@ -1,15 +1,13 @@
-import { Group, Text } from 'react-konva';
-import type { TextEffect } from '@openmerch/core';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Per-character placement for curved/bridge/wave text effects.
+//
+// This is a direct port of packages/editor/src/components/CurvedText.tsx so
+// the production output matches what the customer saw in the editor exactly.
+// Any layout change to CurvedText.tsx must be mirrored here (it's the price
+// of zero-divergence rendering — same algorithm running in two places).
 
-interface CurvedTextProps {
-  text: string;
-  effect: TextEffect;
-  fontSize: number;
-  fontFamily: string;
-  fontStyle: string;
-  fill: string;
-  letterSpacing: number;
-}
+import { createCanvas } from 'canvas';
+import type { TextEffect } from '@openmerch/core';
 
 interface CharPosition {
   char: string;
@@ -18,16 +16,23 @@ interface CharPosition {
   rotation: number;
 }
 
-function measureCharWidths(text: string, fontSize: number, fontFamily: string, fontStyle: string): number[] {
-  const canvas = document.createElement('canvas');
+/**
+ * Measures each character's width using node-canvas's `measureText`. Mirrors
+ * the editor's `measureCharWidths` (which uses the browser canvas API).
+ */
+function measureCharWidths(
+  text: string,
+  fontSize: number,
+  fontFamily: string,
+  fontStyle: string,
+): number[] {
+  const canvas = createCanvas(1, 1);
   const ctx = canvas.getContext('2d');
-  if (!ctx) return text.split('').map(() => fontSize * 0.6);
   ctx.font = `${fontStyle} ${fontSize}px ${fontFamily}`;
   return text.split('').map((ch) => ctx.measureText(ch).width);
 }
 
-// CURVED: Text follows a circular arc (like the CURVED.svg reference)
-// Text sits on top of a circle, letters rotate to follow the tangent
+// CURVED: text follows a circular arc.
 function curvedPositions(
   text: string,
   charWidths: number[],
@@ -37,21 +42,21 @@ function curvedPositions(
   heightOffset: number,
   xOffset: number,
 ): CharPosition[] {
-  // Radius controls the circle size, curve modifies it
   const absR = Math.max(Math.abs(radius) + curve, 50);
   const up = radius >= 0;
 
-  const totalWidth = charWidths.reduce((sum, w, i) => sum + w + (i < charWidths.length - 1 ? extraSpacing : 0), 0);
+  const totalWidth = charWidths.reduce(
+    (sum, w, i) => sum + w + (i < charWidths.length - 1 ? extraSpacing : 0),
+    0,
+  );
   const totalAngle = totalWidth / absR;
 
-  // Start angle: center the text on the arc
   let angle = -Math.PI / 2 - totalAngle / 2;
-
   const positions: CharPosition[] = [];
 
   for (let i = 0; i < text.length; i++) {
     const charW = charWidths[i]!;
-    angle += (charW / 2) / absR;
+    angle += charW / 2 / absR;
 
     const cx = Math.cos(angle) * absR;
     const cy = Math.sin(angle) * absR;
@@ -75,21 +80,18 @@ function curvedPositions(
     angle += (charW / 2 + extraSpacing) / absR;
   }
 
-  // Center horizontally
+  // Center horizontally — same as the editor.
   if (positions.length > 0) {
     const minX = Math.min(...positions.map((p) => p.x));
     const maxX = Math.max(...positions.map((p) => p.x));
     const midX = (minX + maxX) / 2;
-    for (const pos of positions) {
-      pos.x -= midX;
-    }
+    for (const pos of positions) pos.x -= midX;
   }
 
   return positions;
 }
 
-// BRIDGE: Steep parabolic arch — center very high, edges at bottom (like BRIDGE.svg)
-// The reference shows a very pronounced arch where center letters are much higher
+// BRIDGE: parabolic arch.
 function bridgePositions(
   text: string,
   charWidths: number[],
@@ -99,8 +101,10 @@ function bridgePositions(
   heightOffset: number,
   xOffset: number,
 ): CharPosition[] {
-  const totalWidth = charWidths.reduce((sum, w, i) => sum + w + (i < charWidths.length - 1 ? extraSpacing : 0), 0);
-  // Arch height proportional to radius
+  const totalWidth = charWidths.reduce(
+    (sum, w, i) => sum + w + (i < charWidths.length - 1 ? extraSpacing : 0),
+    0,
+  );
   const archHeight = (Math.abs(radius) + curve) * 0.8;
   const up = radius >= 0;
 
@@ -110,16 +114,11 @@ function bridgePositions(
   for (let i = 0; i < text.length; i++) {
     const charW = charWidths[i]!;
     const centerX = currentX + charW / 2;
-
-    // Normalized position (-1 to 1) centered at 0
     const t = totalWidth > 0 ? (centerX / totalWidth) * 2 - 1 : 0;
-    // Parabola: 1 at center (t=0), 0 at edges (t=-1, t=1)
     const parabola = 1 - t * t;
     const y = up ? -archHeight * parabola : archHeight * parabola;
 
-    // Tangent for rotation: d/dt of -(1-t²) = 2t, scaled
     const slopeRaw = up ? 2 * t * archHeight : -2 * t * archHeight;
-    // Scale slope by totalWidth to get proper angle
     const slope = slopeRaw / (totalWidth / 2);
     const angleDeg = Math.atan(slope) * (180 / Math.PI);
 
@@ -136,8 +135,7 @@ function bridgePositions(
   return positions;
 }
 
-// OBLIQUE: Steep diagonal line (like Oblique.svg) — ascending from bottom-left to top-right
-// Each letter is placed along the diagonal and rotated to follow the angle
+// WAVE / OBLIQUE: diagonal line.
 function obliquePositions(
   text: string,
   charWidths: number[],
@@ -147,8 +145,10 @@ function obliquePositions(
   heightOffset: number,
   xOffset: number,
 ): CharPosition[] {
-  const totalWidth = charWidths.reduce((sum, w, i) => sum + w + (i < charWidths.length - 1 ? extraSpacing : 0), 0);
-  // Rise proportional to radius
+  const totalWidth = charWidths.reduce(
+    (sum, w, i) => sum + w + (i < charWidths.length - 1 ? extraSpacing : 0),
+    0,
+  );
   const rise = (Math.abs(radius) + curve) * 0.6;
   const up = radius >= 0;
 
@@ -160,8 +160,6 @@ function obliquePositions(
   for (let i = 0; i < text.length; i++) {
     const charW = charWidths[i]!;
     const centerX = currentX + charW / 2;
-
-    // Position along diagonal
     const t = totalWidth > 0 ? centerX / totalWidth : 0.5;
     const y = up ? rise * (1 - t) : rise * t;
 
@@ -178,16 +176,24 @@ function obliquePositions(
   return positions;
 }
 
-export function CurvedText({ text: rawText, effect, fontSize, fontFamily, fontStyle, fill, letterSpacing }: CurvedTextProps) {
-  // Strip newlines — effect text positions each char along a path.
-  const text = rawText.replace(/[\r\n]+/g, ' ');
+/**
+ * Computes the per-character positions for the given effect type. Returns
+ * `null` if the effect is `none` (caller should render plain text instead).
+ */
+export function computeEffectPositions(
+  text: string,
+  effect: TextEffect,
+  fontSize: number,
+  fontFamily: string,
+  fontStyle: string,
+  letterSpacing: number,
+): { positions: CharPosition[]; charWidths: number[] } | null {
   if (!text || effect.type === 'none') return null;
 
   const charWidths = measureCharWidths(text, fontSize, fontFamily, fontStyle);
   const spacing = letterSpacing + effect.spacing;
 
   let positions: CharPosition[];
-
   switch (effect.type) {
     case 'curved':
       positions = curvedPositions(text, charWidths, effect.radius, spacing, effect.curve, effect.height, effect.offset);
@@ -202,24 +208,5 @@ export function CurvedText({ text: rawText, effect, fontSize, fontFamily, fontSt
       return null;
   }
 
-  return (
-    <Group>
-      {positions.map((pos, i) => (
-        <Text
-          key={i}
-          text={pos.char}
-          x={pos.x}
-          y={pos.y}
-          rotation={pos.rotation}
-          fontSize={fontSize}
-          fontFamily={fontFamily}
-          fontStyle={fontStyle}
-          fill={fill}
-          offsetX={charWidths[i]! / 2}
-          offsetY={fontSize / 2}
-          listening={false}
-        />
-      ))}
-    </Group>
-  );
+  return { positions, charWidths };
 }

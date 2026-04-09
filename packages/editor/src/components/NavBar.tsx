@@ -137,7 +137,6 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
       const { saveDesign, updateDesign } = await import('../services/api.js');
       const data = {
         productId: store.product.id,
-        name: `${store.product.name} — Custom Design`,
         designData: store.design,
         status: 'cart',
         sizes: store.sizes,

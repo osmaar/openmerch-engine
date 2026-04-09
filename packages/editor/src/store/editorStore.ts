@@ -40,7 +40,6 @@ interface EditorState {
   historyIndex: number;
   productColor: string;
   sizes: Record<string, number>;
-  canvasOffsetMM: { x: number; y: number };
   gallery: { id: string; src: string; name: string }[];
   showPrintZone: boolean;
   stageRef: { current: unknown } | null;
@@ -61,7 +60,6 @@ interface EditorState {
   setActiveZone: (zoneId: string) => void;
   setProductColor: (color: string) => void;
   setSizeQuantity: (size: string, qty: number) => void;
-  setCanvasOffsetMM: (x: number, y: number) => void;
   addToGallery: (src: string, name: string) => void;
   removeFromGallery: (id: string) => void;
   getActiveProductZone: () => ProductZone | undefined;
@@ -116,7 +114,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   historyIndex: -1,
   productColor: '#FFFFFF',
   sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
-  canvasOffsetMM: { x: 0, y: 0 },
   gallery: [],
   showPrintZone: true,
   stageRef: null,
@@ -190,10 +187,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({ pollinationsKey: key });
   },
 
-  setCanvasOffsetMM: (x: number, y: number) => {
-    set({ canvasOffsetMM: { x, y } });
-  },
-
   addToGallery: (src: string, name: string) => {
     const { gallery } = get();
     set({ gallery: [...gallery, { id: crypto.randomUUID(), src, name }] });
@@ -245,8 +238,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       originalSrc: src,
       originalWidthMM: layerWidthMM,
       originalHeightMM: layerHeightMM,
-      x: get().canvasOffsetMM.x + (zone.canvasWidthMM - layerWidthMM) / 2,
-      y: get().canvasOffsetMM.y + (zone.canvasHeightMM - layerHeightMM) / 2,
+      // Print-area-local coordinates: 0 = top-left of the print area, in MM.
+      x: (zone.canvasWidthMM - layerWidthMM) / 2,
+      y: (zone.canvasHeightMM - layerHeightMM) / 2,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -291,7 +285,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       type: 'text',
       text: 'Your text',
       fontFamily: 'Arial',
-      fontSize: 24,
+      // 40mm — visible default for t-shirt designs. Stored in millimeters.
+      fontSize: 40,
       fill: '#000000',
       align: 'center',
       letterSpacing: 0,
@@ -299,8 +294,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       fontStyle: 'normal',
       textDecoration: '',
       textEffect: { type: 'none', radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 },
-      x: get().canvasOffsetMM.x + zone.canvasWidthMM * 0.25,
-      y: get().canvasOffsetMM.y + zone.canvasHeightMM * 0.4,
+      x: zone.canvasWidthMM * 0.25,
+      y: zone.canvasHeightMM * 0.4,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -340,7 +335,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!zone) return;
 
     const sizeMM = 40;
-    const offset = get().canvasOffsetMM;
 
     const isLineType = shapeType === 'line' || shapeType === 'arrow';
 
@@ -355,8 +349,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       heightMM: shapeType === 'line' ? 0 : sizeMM,
       sides: shapeType === 'triangle' ? 3 : shapeType === 'star' ? 5 : undefined,
       innerRadius: shapeType === 'star' ? sizeMM * 0.4 : undefined,
-      x: offset.x + (zone.canvasWidthMM - sizeMM) / 2,
-      y: offset.y + (zone.canvasHeightMM - sizeMM) / 2,
+      x: (zone.canvasWidthMM - sizeMM) / 2,
+      y: (zone.canvasHeightMM - sizeMM) / 2,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -499,14 +493,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       skewY: 0,
     };
 
-    // Re-center the layer
-    const offset = get().canvasOffsetMM;
+    // Re-center the layer (print-area-local coordinates).
     if (layer.type === 'image') {
-      updates.x = offset.x + (zone.canvasWidthMM - layer.originalWidthMM) / 2;
-      updates.y = offset.y + (zone.canvasHeightMM - layer.originalHeightMM) / 2;
+      updates.x = (zone.canvasWidthMM - layer.originalWidthMM) / 2;
+      updates.y = (zone.canvasHeightMM - layer.originalHeightMM) / 2;
     } else {
-      updates.x = offset.x + zone.canvasWidthMM * 0.25;
-      updates.y = offset.y + zone.canvasHeightMM * 0.4;
+      updates.x = zone.canvasWidthMM * 0.25;
+      updates.y = zone.canvasHeightMM * 0.4;
     }
 
     const hist = pushHistory(state);

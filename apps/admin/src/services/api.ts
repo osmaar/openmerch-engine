@@ -55,12 +55,25 @@ export const deleteProduct = (id: string) =>
   request<{ success: boolean }>(`/products/${id}`, { method: 'DELETE' });
 
 // ─── Designs ─────────────────────────────────────────────────
+export type ProductionStatus = 'queued' | 'processing' | 'completed' | 'failed' | null;
+
+export interface ProductionZoneFiles {
+  print: string;
+  mockup?: string;
+}
+
 export interface Design {
   id: string;
   productId: string;
   name: string;
   designData: unknown;
   thumbnailUrl: string | null;
+  status: string;
+  sizes: Record<string, number>;
+  productColor: string | null;
+  productionFiles: Record<string, ProductionZoneFiles> | null;
+  productionStatus: ProductionStatus;
+  productionError: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,6 +82,11 @@ export const listDesigns = () => request<Design[]>('/designs');
 export const getDesign = (id: string) => request<Design>(`/designs/${id}`);
 export const deleteDesign = (id: string) =>
   request<{ success: boolean }>(`/designs/${id}`, { method: 'DELETE' });
+export const generateProductionFiles = (id: string) =>
+  request<{ jobId: string; status: 'queued'; designId: string }>(
+    `/designs/${id}/generate-files`,
+    { method: 'POST' },
+  );
 
 // ─── Templates ───────────────────────────────────────────────
 export interface Template {

@@ -36,15 +36,35 @@ import { TransformPopover } from './TransformPopover.js';
 import { useT } from '../../i18n/useTranslation.js';
 
 const FONT_OPTIONS = [
-  // Google Fonts — popular for design
-  'Oswald', 'Bebas Neue', 'Anton', 'Pacifico', 'Permanent Marker',
-  'Righteous', 'Bangers', 'Bungee', 'Creepster', 'Press Start 2P',
-  'Black Ops One', 'Russo One', 'Orbitron', 'Audiowide', 'Monoton',
-  'Lobster', 'Dancing Script', 'Caveat', 'Satisfy', 'Great Vibes',
+  // ── Sans-serif ──
+  'Roboto', 'Open Sans', 'Lato', 'Inter', 'Nunito', 'Poppins',
+  'Montserrat', 'Raleway', 'Quicksand', 'Comfortaa', 'Oswald',
+  'Mukta', 'Rubik', 'Work Sans', 'Barlow', 'Outfit',
+  'DM Sans', 'Manrope', 'Plus Jakarta Sans', 'Lexend',
+  'IBM Plex Sans', 'Source Sans 3', 'Noto Sans', 'Figtree', 'Urbanist',
+  'Josefin Sans', 'Exo 2', 'Kanit', 'Titillium Web', 'Cabin',
+  'Mulish', 'Karla', 'Asap', 'Overpass', 'Red Hat Display',
+  // ── Serif ──
   'Playfair Display', 'Merriweather', 'Lora', 'Cinzel', 'Cormorant Garamond',
-  'Montserrat', 'Raleway', 'Poppins', 'Quicksand', 'Comfortaa',
-  'Roboto', 'Open Sans', 'Lato', 'Inter', 'Nunito',
-  // System fonts as fallback
+  'EB Garamond', 'Libre Baskerville', 'Bitter', 'Crimson Text', 'Noto Serif',
+  'DM Serif Display', 'Zilla Slab', 'Rokkitt', 'Spectral', 'Source Serif 4',
+  // ── Display / Impact ──
+  'Bebas Neue', 'Anton', 'Righteous', 'Bangers', 'Bungee',
+  'Black Ops One', 'Russo One', 'Orbitron', 'Audiowide', 'Monoton',
+  'Creepster', 'Press Start 2P', 'Fugaz One', 'Passion One', 'Bowlby One SC',
+  'Bungee Shade', 'Faster One', 'Rampart One', 'Nabla', 'Silkscreen',
+  'Alfa Slab One', 'Archivo Black', 'Teko', 'Saira Stencil One', 'Secular One',
+  'Staatliches', 'Francois One', 'Jockey One', 'Changa One', 'Coda',
+  'Graduate', 'Baumans', 'Michroma', 'Megrim', 'Iceland',
+  // ── Handwriting / Script ──
+  'Pacifico', 'Permanent Marker', 'Lobster', 'Dancing Script', 'Caveat',
+  'Satisfy', 'Great Vibes', 'Sacramento', 'Kaushan Script', 'Cookie',
+  'Yellowtail', 'Allura', 'Alex Brush', 'Tangerine', 'Pinyon Script',
+  'Rock Salt', 'Indie Flower', 'Shadows Into Light', 'Amatic SC', 'Gloria Hallelujah',
+  'Patrick Hand', 'Architects Daughter', 'Covered By Your Grace', 'Just Another Hand', 'Reenie Beanie',
+  // ── Monospace ──
+  'Fira Code', 'JetBrains Mono', 'Space Mono', 'Inconsolata', 'IBM Plex Mono',
+  // ── System fallback ──
   'Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Impact',
   'Courier New', 'Verdana',
 ];
@@ -103,10 +123,11 @@ export function TextToolbar({ layer }: TextToolbarProps) {
     maxWidth: 120,
   };
 
-  // Load Google Fonts on mount + when font changes
+  // Preload a small set of popular fonts; the rest load on selection.
   useEffect(() => {
-    FONT_OPTIONS.forEach(loadGoogleFont);
-  }, []);
+    FONT_OPTIONS.slice(0, 15).forEach(loadGoogleFont);
+    loadGoogleFont(layer.fontFamily);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadGoogleFont(layer.fontFamily);
@@ -115,14 +136,49 @@ export function TextToolbar({ layer }: TextToolbarProps) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
       <select
-        style={selectStyle}
+        style={{ ...selectStyle, fontFamily: layer.fontFamily }}
         value={layer.fontFamily}
         onChange={(e) => { loadGoogleFont(e.target.value); updateLayer(layer.id, { fontFamily: e.target.value }); }}
       >
         {FONT_OPTIONS.map((f) => (
-          <option key={f} value={f}>{f}</option>
+          <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
         ))}
       </select>
+
+      {/*
+        Font size in MILLIMETERS — the canonical unit. Range 2-200mm covers
+        everything from tiny labels to full-shirt slogans. Step 0.5 lets users
+        fine-tune below 1mm increments without overwhelming the input.
+      */}
+      {/*
+        Font size input. Internal unit is millimeters but we don't surface
+        that to users — most people associate "font size" with an opaque
+        number (Word, Quill, Google Docs all do this), so showing "mm" just
+        adds friction. The number scales linearly with the visible text so
+        the relationship stays intuitive.
+      */}
+      <input
+        type="number"
+        value={Math.round(layer.fontSize * 10) / 10}
+        min={2}
+        max={200}
+        step={0.5}
+        onChange={(e) => {
+          const v = parseFloat(e.target.value);
+          if (!isNaN(v) && v > 0) updateLayer(layer.id, { fontSize: v });
+        }}
+        title={t('Font size')}
+        style={{
+          width: 56,
+          padding: '4px 6px',
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: '#ccc',
+          borderRadius: 4,
+          fontSize: 12,
+          background: '#fff',
+        }}
+      />
 
       <PopoverAnchor isOpen={activePopover === 'editText'} popover={<EditTextPopover layer={layer} onClose={() => setActivePopover(null)} />}>
         <ToolbarButton icon={Type} tooltip={t('Edit text')} onClick={() => toggle('editText')} active={activePopover === 'editText'} />

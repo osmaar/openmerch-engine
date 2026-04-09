@@ -3,16 +3,27 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "dev": "echo 'Renderer not implemented yet'",
+    "dev": "tsc --watch --project tsconfig.json",
     "clean": "rm -rf dist *.tsbuildinfo",
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@openmerch/core": "workspace:*"
+    "@openmerch/core": "workspace:*",
+    "canvas": "^3.1.0",
+    "konva": "^9.3.16"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "typescript": "^5.7.3"
   }
 }

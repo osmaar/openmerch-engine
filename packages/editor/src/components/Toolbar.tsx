@@ -50,18 +50,28 @@ export function Toolbar(_props: ToolbarProps) {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    const img = new window.Image();
-    img.onload = () => {
-      addImageLayer(url, img.width, img.height);
-    };
-    img.src = url;
-
     e.target.value = '';
+
+    // Use a temporary blob URL only to read pixel dimensions, then upload to
+    // MinIO so the layer's src is a persistent URL the server can resolve.
+    const blobUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = async () => {
+      const { width, height } = img;
+      URL.revokeObjectURL(blobUrl);
+      try {
+        const { uploadAsset } = await import('../services/api.js');
+        const asset = await uploadAsset(file);
+        addImageLayer(asset.url, width, height);
+      } catch {
+        // Fallback: keep blob URL for this session (production rendering will fail)
+        addImageLayer(blobUrl, width, height);
+      }
+    };
+    img.src = blobUrl;
   };
 
   const has = !!selectedLayerId;

@@ -12,43 +12,21 @@ interface DesignLayerProps {
   layer: DesignLayerType;
   pxPerMM: number;
   isSelected: boolean;
-  printOriginXMM: number;
-  printOriginYMM: number;
 }
 
-export function DesignLayer({ layer, pxPerMM, isSelected, printOriginXMM, printOriginYMM }: DesignLayerProps) {
+// Layer coordinates (layer.x, layer.y) are PRINT-AREA-LOCAL in MM. The parent
+// in ProductEditor wraps these in a Konva Group anchored at (printX, printY),
+// so layer.x === 0 lands the layer at the top-left of the print area, and
+// Konva drag events give us positions already relative to the Group origin.
+export function DesignLayer({ layer, pxPerMM, isSelected }: DesignLayerProps) {
   if (layer.type === 'image') {
-    return (
-      <ImageLayerView
-        layer={layer}
-        pxPerMM={pxPerMM}
-        isSelected={isSelected}
-        printOriginXMM={printOriginXMM}
-        printOriginYMM={printOriginYMM}
-      />
-    );
+    return <ImageLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
   }
   if (layer.type === 'text') {
-    return (
-      <TextLayerView
-        layer={layer}
-        pxPerMM={pxPerMM}
-        isSelected={isSelected}
-        printOriginXMM={printOriginXMM}
-        printOriginYMM={printOriginYMM}
-      />
-    );
+    return <TextLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
   }
   if (layer.type === 'shape') {
-    return (
-      <ShapeLayerView
-        layer={layer}
-        pxPerMM={pxPerMM}
-        isSelected={isSelected}
-        printOriginXMM={printOriginXMM}
-        printOriginYMM={printOriginYMM}
-      />
-    );
+    return <ShapeLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
   }
   return null;
 }
@@ -85,11 +63,9 @@ interface ImageLayerViewProps {
   layer: DesignLayerType & { type: 'image' };
   pxPerMM: number;
   isSelected: boolean;
-  printOriginXMM: number;
-  printOriginYMM: number;
 }
 
-function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOriginYMM }: ImageLayerViewProps) {
+function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
   const [baseImage] = useImage(layer.src);
   const image = useTintedImage(baseImage ?? undefined, layer.tint, layer.tintOpacity);
   const shapeRef = useRef<Konva.Image>(null);
@@ -118,9 +94,12 @@ function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     e.target.getStage()!.container().style.cursor = 'pointer';
-    const newX = e.target.x() / pxPerMM - printOriginXMM;
-    const newY = e.target.y() / pxPerMM - printOriginYMM;
-    updateLayer(layer.id, { x: newX, y: newY });
+    // Konva returns position relative to the parent Group, which is anchored
+    // at the print area top-left, so dividing by pxPerMM gives print-area-local mm.
+    updateLayer(layer.id, {
+      x: e.target.x() / pxPerMM,
+      y: e.target.y() / pxPerMM,
+    });
   };
 
   const handleTransformEnd = () => {
@@ -128,8 +107,8 @@ function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
     if (!node) return;
 
     updateLayer(layer.id, {
-      x: node.x() / pxPerMM - printOriginXMM,
-      y: node.y() / pxPerMM - printOriginYMM,
+      x: node.x() / pxPerMM,
+      y: node.y() / pxPerMM,
       scaleX: node.scaleX(),
       scaleY: node.scaleY(),
       rotation: node.rotation(),
@@ -151,7 +130,6 @@ function ImageLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
         skewY={layer.skewY ?? 0}
         rotation={layer.rotation}
         opacity={layer.opacity}
-        globalCompositeOperation={isSelected ? 'source-over' : 'multiply'}
         draggable={!layer.locked}
         onMouseEnter={(e) => { e.target.getStage()!.container().style.cursor = 'pointer'; }}
         onMouseLeave={(e) => { e.target.getStage()!.container().style.cursor = 'default'; }}
@@ -176,11 +154,9 @@ interface TextLayerViewProps {
   layer: DesignLayerType & { type: 'text' };
   pxPerMM: number;
   isSelected: boolean;
-  printOriginXMM: number;
-  printOriginYMM: number;
 }
 
-function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOriginYMM }: TextLayerViewProps) {
+function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
   const shapeRef = useRef<Konva.Text>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const { selectLayer, updateLayer } = useEditorStore();
@@ -204,8 +180,8 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     e.target.getStage()!.container().style.cursor = 'pointer';
     updateLayer(layer.id, {
-      x: e.target.x() / pxPerMM - printOriginXMM,
-      y: e.target.y() / pxPerMM - printOriginYMM,
+      x: e.target.x() / pxPerMM,
+      y: e.target.y() / pxPerMM,
     });
   };
 
@@ -213,13 +189,24 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
     const node = shapeRef.current;
     if (!node) return;
 
+    // For text, bake the resize handle's scale into fontSize so the saved
+    // value always reflects the real visual size in MM. The numeric font size
+    // input in the toolbar then shows the truth, and the renderer doesn't
+    // need to multiply scale × fontSize separately.
+    const scale = (node.scaleX() + node.scaleY()) / 2;
+    const newFontSize = layer.fontSize * scale;
+
     updateLayer(layer.id, {
-      x: node.x() / pxPerMM - printOriginXMM,
-      y: node.y() / pxPerMM - printOriginYMM,
-      scaleX: node.scaleX(),
-      scaleY: node.scaleY(),
+      x: node.x() / pxPerMM,
+      y: node.y() / pxPerMM,
+      fontSize: newFontSize,
+      scaleX: 1,
+      scaleY: 1,
       rotation: node.rotation(),
     });
+
+    node.scaleX(1);
+    node.scaleY(1);
   };
 
   const handleDblClick = () => {
@@ -239,7 +226,7 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
     input.style.top = `${containerRect.top + textPosition.y}px`;
     input.style.left = `${containerRect.left + textPosition.x}px`;
     input.style.width = `${Math.max(textPosition.width, 100)}px`;
-    input.style.fontSize = `${layer.fontSize * layer.scaleX}px`;
+    input.style.fontSize = `${layer.fontSize * pxPerMM * layer.scaleX}px`;
     input.style.fontFamily = layer.fontFamily;
     input.style.color = layer.fill;
     input.style.border = '2px solid #4A90D9';
@@ -304,7 +291,6 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           skewY={layer.skewY ?? 0}
           rotation={layer.rotation}
           opacity={layer.opacity}
-          globalCompositeOperation={isSelected ? 'source-over' : 'multiply'}
           {...interactionProps}
         >
           {/* Invisible hit area so the group is always clickable */}
@@ -317,12 +303,23 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           />
           <CurvedText
             text={layer.text}
-            effect={effect}
-            fontSize={layer.fontSize}
+            // Scale effect parameters proportionally to fontSize so the visual
+            // result is independent of the display pxPerMM. Both the editor and
+            // the server renderer use 96/25.4 as the reference scale.
+            effect={effect ? {
+              ...effect,
+              spacing: (effect.spacing ?? 0) * pxPerMM / (96 / 25.4),
+              radius: (effect.radius ?? 0) * pxPerMM / (96 / 25.4),
+              curve: (effect.curve ?? 0) * pxPerMM / (96 / 25.4),
+              height: (effect.height ?? 0) * pxPerMM / (96 / 25.4),
+              offset: (effect.offset ?? 0) * pxPerMM / (96 / 25.4),
+            } : effect}
+            // layer.fontSize is in MM — convert to pixels for Konva display.
+            fontSize={layer.fontSize * pxPerMM}
             fontFamily={layer.fontFamily}
             fontStyle={layer.fontStyle ?? 'normal'}
             fill={layer.fill}
-            letterSpacing={layer.letterSpacing ?? 0}
+            letterSpacing={(layer.letterSpacing ?? 0) * pxPerMM / (96 / 25.4)}
           />
         </Group>
       ) : (
@@ -331,13 +328,14 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           text={layer.text}
           x={x}
           y={y}
-          fontSize={layer.fontSize}
+          // layer.fontSize is in MM — convert to pixels for Konva display.
+          fontSize={layer.fontSize * pxPerMM}
           fontFamily={layer.fontFamily}
           fontStyle={layer.fontStyle ?? 'normal'}
           textDecoration={layer.textDecoration ?? ''}
           fill={layer.fill}
           align={layer.align}
-          letterSpacing={layer.letterSpacing ?? 0}
+          letterSpacing={(layer.letterSpacing ?? 0) * pxPerMM / (96 / 25.4)}
           lineHeight={layer.lineHeight ?? 1.2}
           scaleX={layer.scaleX}
           scaleY={layer.scaleY}
@@ -345,7 +343,6 @@ function TextLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigin
           skewY={layer.skewY ?? 0}
           rotation={layer.rotation}
           opacity={layer.opacity}
-          globalCompositeOperation={isSelected ? 'source-over' : 'multiply'}
           {...interactionProps}
         />
       )}
@@ -366,11 +363,9 @@ interface ShapeLayerViewProps {
   layer: DesignLayerType & { type: 'shape' };
   pxPerMM: number;
   isSelected: boolean;
-  printOriginXMM: number;
-  printOriginYMM: number;
 }
 
-function ShapeLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOriginYMM }: ShapeLayerViewProps) {
+function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
   const shapeRef = useRef<Konva.Shape>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const { selectLayer, updateLayer } = useEditorStore();
@@ -394,17 +389,18 @@ function ShapeLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
   const h = layer.heightMM * pxPerMM;
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    const newX = e.target.x() / pxPerMM - printOriginXMM;
-    const newY = e.target.y() / pxPerMM - printOriginYMM;
-    updateLayer(layer.id, { x: newX, y: newY });
+    updateLayer(layer.id, {
+      x: e.target.x() / pxPerMM,
+      y: e.target.y() / pxPerMM,
+    });
   };
 
   const handleTransformEnd = () => {
     const node = shapeRef.current;
     if (!node) return;
     updateLayer(layer.id, {
-      x: node.x() / pxPerMM - printOriginXMM,
-      y: node.y() / pxPerMM - printOriginYMM,
+      x: node.x() / pxPerMM,
+      y: node.y() / pxPerMM,
       scaleX: node.scaleX(),
       scaleY: node.scaleY(),
       rotation: node.rotation(),
@@ -420,7 +416,6 @@ function ShapeLayerView({ layer, pxPerMM, isSelected, printOriginXMM, printOrigi
     scaleY: layer.scaleY,
     rotation: layer.rotation,
     opacity: layer.opacity,
-    globalCompositeOperation: (isSelected ? 'source-over' : 'multiply') as GlobalCompositeOperation,
     draggable: !layer.locked,
     onClick: () => selectLayer(layer.id),
     onTap: () => selectLayer(layer.id),
