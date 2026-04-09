@@ -192,7 +192,7 @@ export class FontResolver {
         console.warn(`[font-resolver] cached Google Font "${family}" is not TTF/OTF — re-downloading`);
         await fs.unlink(localPath).catch(() => {});
       }
-    } catch {}
+    } catch { /* cached file missing or unreadable — proceed to download */ }
 
     try {
       // Android 2.2 UA causes Google Fonts to return TTF URLs (the format
