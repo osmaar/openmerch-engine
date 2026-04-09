@@ -96,6 +96,7 @@ const EDITOR_TEXTS_BY_SECTION = {
     'Left', 'Center', 'Right',
     'UPPERCASE', 'lowercase', 'Title Case',
     'Normal', 'Curved', 'Oblique',
+    'Font size (mm)',
   ],
   'Image Toolbar': [
     'Replace image', 'Crop image', 'Remove background', 'Remove Background',
@@ -282,6 +283,13 @@ const ADMIN_TEXTS_BY_SECTION = {
     'Are you sure you want to delete this design? This action cannot be undone.',
     'design(s)', 'design(s)?', 'design(s) have been deleted',
     'Date range', 'From', 'To', 'Clear dates', 'Click to copy', 'Click to copy ID', 'Product ID',
+    // Production files
+    'Files', 'Files ready', 'Queued', 'Failed', 'Not generated',
+    'Generate files', 'Regenerate files', 'Generation queued',
+    'production files will be generated shortly',
+    'Production files', 'production files have been generated',
+    'Generation failed', 'Retry generation',
+    'Print file', 'Mockup preview',
   ],
   'Templates': [
     'Design Templates', 'Add New Template', 'Save Template', 'Template',
@@ -359,6 +367,7 @@ const ADMIN_TEXTS_BY_SECTION = {
     'Order', 'Order ID', 'Customer', 'Date', 'Design Files',
     'Search by ID or customer...', 'No orders yet', 'Download design',
     'order(s)',
+    'Production Files', 'No design linked to this order',
   ],
   'Settings': [
     'API Keys', 'Store Name', 'Unsplash Access Key', 'Pollinations Key',

@@ -143,7 +143,6 @@ export function useKeyboardShortcuts() {
 
             const data = {
               productId: store.product.id,
-              name: 'My Design',
               designData: store.design,
             };
 

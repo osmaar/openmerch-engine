@@ -43,26 +43,21 @@ export function PositionPopover({ layer, zoneWidthMM, zoneHeightMM, onClose }: P
 
   const positionTo = (xAlign: 'left' | 'center' | 'right', yAlign: 'top' | 'center' | 'bottom') => {
     const size = getFreshLayerSize(layer.id);
-    const { canvasOffsetMM } = useEditorStore.getState();
 
-    // Coordinates in store include the canvas offset (imgX/pxPerMM)
-    // Zone-relative 0 = canvasOffsetMM.x in store coordinates
-    const baseX = canvasOffsetMM.x;
-    const baseY = canvasOffsetMM.y;
-
-    let x = baseX;
-    let y = baseY;
+    // Layer coordinates are print-area-local (origin = top-left of print area).
+    let x = 0;
+    let y = 0;
 
     switch (xAlign) {
-      case 'left': x = baseX; break;
-      case 'center': x = baseX + (zoneWidthMM - size.w) / 2; break;
-      case 'right': x = baseX + zoneWidthMM - size.w; break;
+      case 'left': x = 0; break;
+      case 'center': x = (zoneWidthMM - size.w) / 2; break;
+      case 'right': x = zoneWidthMM - size.w; break;
     }
 
     switch (yAlign) {
-      case 'top': y = baseY; break;
-      case 'center': y = baseY + (zoneHeightMM - size.h) / 2; break;
-      case 'bottom': y = baseY + zoneHeightMM - size.h; break;
+      case 'top': y = 0; break;
+      case 'center': y = (zoneHeightMM - size.h) / 2; break;
+      case 'bottom': y = zoneHeightMM - size.h; break;
     }
 
     updateLayer(layer.id, { x, y });

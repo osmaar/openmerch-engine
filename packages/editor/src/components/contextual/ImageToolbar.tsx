@@ -52,17 +52,25 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    const img = new window.Image();
-    img.onload = () => {
-      replaceImage(layer.id, url, img.width, img.height);
-    };
-    img.src = url;
     e.target.value = '';
+
+    const blobUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = async () => {
+      const { width, height } = img;
+      URL.revokeObjectURL(blobUrl);
+      try {
+        const { uploadAsset } = await import('../../services/api.js');
+        const asset = await uploadAsset(file);
+        replaceImage(layer.id, asset.url, width, height);
+      } catch {
+        replaceImage(layer.id, blobUrl, width, height);
+      }
+    };
+    img.src = blobUrl;
   };
 
   return (
@@ -87,7 +95,7 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
       </PopoverAnchor>
 
       <PopoverAnchor isOpen={activePopover === 'fill'} popover={
-        <FillPopover currentColor={layer.tint ?? '#000000'} currentOpacity={layer.tintOpacity ?? 0} onClose={() => setActivePopover(null)} onApply={(color, opacity) => updateLayer(layer.id, { tint: color, tintOpacity: opacity })} onClear={() => updateLayer(layer.id, { tint: undefined, tintOpacity: 0 })} />
+        <FillPopover currentColor={layer.tint ?? '#000000'} currentOpacity={layer.tintOpacity ?? 1} onClose={() => setActivePopover(null)} onApply={(color, opacity) => updateLayer(layer.id, { tint: color, tintOpacity: opacity })} onClear={() => updateLayer(layer.id, { tint: undefined, tintOpacity: 0 })} />
       }>
         <ToolbarButton icon={Paintbrush} tooltip={t('Fill color')} onClick={() => toggle('fill')} active={activePopover === 'fill'} />
       </PopoverAnchor>

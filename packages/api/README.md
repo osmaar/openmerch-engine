@@ -330,10 +330,12 @@ MinIO console is available at `http://localhost:9001` (user: openmerch, pass: op
 - [x] Designs CRUD (save/load)
 - [x] Asset upload/serve with MinIO
 - [x] PostgreSQL with Drizzle ORM
-- [ ] Connect editor to API (save/load designs)
-- [ ] BullMQ production job queue
-- [ ] Sharp-based PNG/SVG export at 300 DPI
+- [x] Connect editor to API (save/load designs)
+- [x] BullMQ production job queue (Docker worker, 300 DPI print + 96 DPI mockup)
+- [x] Konva + node-canvas rendering at 300 DPI (custom fonts + Google Fonts via fontconfig)
+- [x] Admin panel (products, templates, cliparts, fonts, printing types, orders, languages, settings)
+- [x] Auto-generated design names ("Product - Design #001")
 - [ ] Settings API (API keys management)
-- [ ] Admin panel
+- [ ] Checkout flow (payment → auto production file generation)
 - [ ] rembg integration (Python remove background)
 - [ ] WooCommerce webhook handler

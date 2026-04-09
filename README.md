@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + i18n) in progress — Editor + Admin Panel are fully internationalized (English / Spanish / French shipped via seeds). Next: real Dashboard, BullMQ production jobs, CMS integration.
+> **Status:** Phase 1 (Canvas Editor) complete. Phase 2 (Backend API + Admin Panel + i18n) nearly complete — BullMQ production file generation working (300 DPI print + 96 DPI mockup), custom fonts + Google Fonts in Docker worker, full i18n (EN/ES/FR). Next: real Dashboard, checkout flow, CMS integration.
 
 ---
 
@@ -158,9 +158,9 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Editor consumes merchant resources from admin (cliparts, fonts, shapes via API)
   - [x] i18n runtime system (337 keys, English + Spanish + French shipped via seeds)
   - [x] Language selector in editor navbar with localStorage persistence
-  - [ ] Admin panel i18n (separate translation system for merchant dashboard)
+  - [x] Admin panel i18n (separate translation system for merchant dashboard)
+  - [x] BullMQ production job queue (Docker worker, 300 DPI print + 96 DPI mockup, custom fonts + Google Fonts)
   - [ ] Checkout flow (payment → production files generation)
-  - [ ] BullMQ production job queue
   - [ ] Settings API (API keys management)
   - [ ] rembg AI-powered background removal (Python)
 - [ ] 2D preview with displacement maps (Phase 2)
@@ -223,7 +223,7 @@ This loads all translations from `packages/api/seeds/translations/*.json` into t
 
 The editor uses ~337 unique strings organized in 25 sections (NavBar, Cart, Toolbars, Tabs, Popovers, Filters, AI prompts, etc.). All strings are visible in the admin panel under **Languages → Translations → OpenMerch Editor tab**, with section headers for easy navigation.
 
-The admin panel itself is currently English-only (i18n for the admin is planned for a future release).
+Both the editor and the admin panel are fully translated.
 
 ---
 

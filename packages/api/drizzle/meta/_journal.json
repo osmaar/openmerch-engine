@@ -8,6 +8,13 @@
       "when": 1774990065665,
       "tag": "0000_bitter_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775588782513,
+      "tag": "0001_wandering_sue_storm",
+      "breakpoints": true
     }
   ]
 }

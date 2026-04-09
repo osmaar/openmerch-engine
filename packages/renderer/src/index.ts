@@ -1,3 +1,4 @@
-// @openmerch/renderer — placeholder
-// Sharp-based 2D compositing engine will be implemented in Phase 2
-export {};
+export { renderDesignZone } from './render-zone.js';
+export type { RenderZoneOptions, RenderZoneResult, ImageBufferResolver, FontPathResolver } from './render-zone.js';
+export { renderDesignZoneMockup } from './render-zone-mockup.js';
+export type { RenderZoneMockupOptions, RenderZoneMockupResult } from './render-zone-mockup.js';

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
-import { Stage, Layer, Image, Rect } from 'react-konva';
+import { Stage, Layer, Image, Rect, Group } from 'react-konva';
 import type { Product, ProductZone } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
-import { useI18nStore } from '../i18n/useTranslation.js';
+import { useI18nStore, useT } from '../i18n/useTranslation.js';
 import { useImage } from '../hooks/useImage.js';
 import { useColoredProduct } from '../hooks/useColoredProduct.js';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js';
@@ -26,6 +26,7 @@ interface ProductEditorProps {
 export function ProductEditor({ product }: ProductEditorProps) {
   const { setProduct, activeZoneId, addImageLayer } = useEditorStore();
   const loadLanguages = useI18nStore((s) => s.loadLanguages);
+  const t = useT();
   useKeyboardShortcuts();
 
   useEffect(() => {
@@ -50,12 +51,20 @@ export function ProductEditor({ product }: ProductEditorProps) {
     const file = e.dataTransfer.files[0];
     if (!file || !file.type.startsWith('image/')) return;
 
-    const url = URL.createObjectURL(file);
+    const blobUrl = URL.createObjectURL(file);
     const img = new window.Image();
-    img.onload = () => {
-      addImageLayer(url, img.width, img.height);
+    img.onload = async () => {
+      const { width, height } = img;
+      URL.revokeObjectURL(blobUrl);
+      try {
+        const { uploadAsset } = await import('../services/api.js');
+        const asset = await uploadAsset(file);
+        addImageLayer(asset.url, width, height);
+      } catch {
+        addImageLayer(blobUrl, width, height);
+      }
     };
-    img.src = url;
+    img.src = blobUrl;
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -100,6 +109,27 @@ export function ProductEditor({ product }: ProductEditorProps) {
 
           {/* Floating undo/redo — top right */}
           <UndoRedoControls />
+        </div>
+
+        {/* Disclaimer + branding footer */}
+        <div style={{
+          padding: '6px 12px',
+          fontSize: 11,
+          color: '#999',
+          textAlign: 'center',
+          borderTopWidth: 1,
+          borderTopStyle: 'solid',
+          borderTopColor: '#eee',
+          background: '#fafafa',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}>
+          <span>{t('Preview is approximate. Colors and proportions may vary on the final product.')}</span>
+          <span style={{ fontSize: 10, color: '#bbb' }}>
+            © 2026 <a href="https://github.com/osmaar/openmerch-engine" target="_blank" rel="noopener noreferrer" style={{ color: '#bbb', textDecoration: 'none' }}>OpenMerch Engine</a> · Open Source · MIT
+          </span>
         </div>
       </div>
       </div>
@@ -187,14 +217,6 @@ function CanvasView({ zone }: CanvasViewProps) {
 
     return { imgX, imgY, imgW, imgH, printX, printY, printW, printH, pxPerMM };
   }, [rawImage, baseImage, width, height, zone]);
-
-  // Sync canvas offset to store so Position popover can use it
-  const setCanvasOffsetMM = useEditorStore((s) => s.setCanvasOffsetMM);
-  useEffect(() => {
-    if (layout) {
-      setCanvasOffsetMM(layout.imgX / layout.pxPerMM, layout.imgY / layout.pxPerMM);
-    }
-  }, [layout, setCanvasOffsetMM]);
 
   // Expose stage ref and layout to store for export
   useEffect(() => {
@@ -339,22 +361,24 @@ function CanvasView({ zone }: CanvasViewProps) {
           </Layer>
 
           <Layer>
-            {layers
-              .filter((l) => l.visible)
-              .map((layer) => (
-                <DesignLayer
-                  key={layer.id}
-                  layer={{
-                    ...layer,
-                    x: layer.x + zone.printAreaXMM,
-                    y: layer.y + zone.printAreaYMM,
-                  }}
-                  pxPerMM={layout.pxPerMM}
-                  isSelected={selectedLayerId === layer.id}
-                  printOriginXMM={zone.printAreaXMM}
-                  printOriginYMM={zone.printAreaYMM}
-                />
-              ))}
+            {/*
+              Design layers live inside a Group anchored at the print area.
+              This makes layer.x/y print-area-local in MM (Konva positions
+              children relative to their parent), so the saved coordinates
+              are screen-independent and reusable by the production renderer.
+            */}
+            <Group x={layout.printX} y={layout.printY}>
+              {layers
+                .filter((l) => l.visible)
+                .map((layer) => (
+                  <DesignLayer
+                    key={layer.id}
+                    layer={layer}
+                    pxPerMM={layout.pxPerMM}
+                    isSelected={selectedLayerId === layer.id}
+                  />
+                ))}
+            </Group>
           </Layer>
 
           <Layer listening={false}>

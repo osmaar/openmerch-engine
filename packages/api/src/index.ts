@@ -23,6 +23,9 @@ async function main() {
         options: { translateTime: 'HH:MM:ss', ignore: 'pid,hostname' },
       },
     },
+    // Design payloads include the full designData JSON (layers, image URLs, etc.)
+    // which can grow well beyond Fastify's 1 MB default.
+    bodyLimit: 10 * 1024 * 1024, // 10 MB
   });
 
   // Plugins

@@ -74,7 +74,13 @@ const API_BASE = (typeof window !== 'undefined' && window.location.port === '300
 export function TextTab() {
   const t = useT();
   const { addTextLayer, updateLayer, selectLayer } = useEditorStore();
-  const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
+  // Track selectedLayerId directly so Zustand re-renders on selection changes.
+  const hasTextSelected = useEditorStore((s) => {
+    if (!s.selectedLayerId || !s.design) return false;
+    const zone = s.design.zones[s.activeZoneId];
+    const layer = zone?.layers.find((l) => l.id === s.selectedLayerId);
+    return layer?.type === 'text';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [adminFonts, setAdminFonts] = useState<AdminFont[]>([]);
 
@@ -101,11 +107,22 @@ export function TextTab() {
       .catch(() => setAdminFonts([]));
   }, []);
 
+  // Read fresh selected layer at click-time — the rendered `selectedLayer`
+  // can be stale if TextTab didn't re-render after a canvas selection.
+  const getSelected = () => {
+    const s = useEditorStore.getState();
+    const sel = s.getSelectedLayer();
+    return sel?.type === 'text' ? sel : null;
+  };
+
   // If a text layer is selected, apply effect to it; otherwise create new
   const applyOrAddEffect = (effectType: 'none' | 'curved' | 'wave') => {
-    if (selectedLayer && selectedLayer.type === 'text') {
-      updateLayer(selectedLayer.id, {
-        textEffect: { type: effectType, radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 },
+    const sel = getSelected();
+    if (sel) {
+      // Preserve existing effect values — only change the type.
+      const existing = sel.textEffect ?? { type: 'none', radius: 200, spacing: 0, curve: 0, height: 0, offset: 0 };
+      updateLayer(sel.id, {
+        textEffect: { ...existing, type: effectType },
       });
       return;
     }
@@ -124,10 +141,12 @@ export function TextTab() {
   };
 
   // If a text layer is selected, change its font; otherwise create new with font
-  const applyOrAddFont = (fontFamily: string) => {
+  const applyOrAddFont = (fontFamily: string, fontId?: string) => {
     loadGoogleFont(fontFamily);
-    if (selectedLayer && selectedLayer.type === 'text') {
-      updateLayer(selectedLayer.id, { fontFamily });
+    const update = fontId ? { fontFamily, fontId } : { fontFamily, fontId: undefined };
+    const sel = getSelected();
+    if (sel) {
+      updateLayer(sel.id, update);
       return;
     }
     addTextLayer();
@@ -136,7 +155,7 @@ export function TextTab() {
     if (!zone) return;
     const lastLayer = zone.layers[zone.layers.length - 1];
     if (!lastLayer) return;
-    updateLayer(lastLayer.id, { fontFamily });
+    updateLayer(lastLayer.id, update);
     selectLayer(lastLayer.id);
   };
 
@@ -155,7 +174,7 @@ export function TextTab() {
       <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Add Text')}</div>
 
       {/* Text effect tiles — applies to selected text or creates new */}
-      {selectedLayer?.type === 'text' && (
+      {hasTextSelected && (
         <div style={{ fontSize: 10, color: '#4A90D9', fontWeight: 500 }}>{t('Text selected — click to change effect/font')}</div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
@@ -219,7 +238,7 @@ export function TextTab() {
             {adminFonts.map((font) => (
               <button
                 key={font.id}
-                onClick={() => applyOrAddFont(font.name)}
+                onClick={() => applyOrAddFont(font.name, font.id)}
                 title={font.name}
                 style={{
                   padding: '7px 5px', borderWidth: 1, borderStyle: 'solid', borderColor: '#4A90D9',
