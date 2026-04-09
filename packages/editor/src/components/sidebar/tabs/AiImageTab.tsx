@@ -3,6 +3,8 @@ import { Sparkles, Loader, AlertCircle } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
 
+const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+
 const MODELS = [
   { id: 'flux', label: 'Flux (Default)' },
   { id: 'gptimage', label: 'GPT Image' },
@@ -46,7 +48,6 @@ const styleModifiers: Record<string, string> = {
 export function AiImageTab() {
   const t = useT();
   const { addImageLayer, addToGallery, replaceImage } = useEditorStore();
-  const pollinationsKey = useEditorStore((s) => s.pollinationsKey);
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
   const isImageSelected = selectedLayer?.type === 'image';
   const [prompt, setPrompt] = useState('');
@@ -69,17 +70,12 @@ export function AiImageTab() {
     const fullPrompt = buildPrompt();
     if (!fullPrompt) return;
 
-    if (!pollinationsKey) {
-      setError('Pollinations API key not configured. Add VITE_POLLINATIONS_KEY to your .env file.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
       const seed = Math.floor(Math.random() * 999999);
-      const imageUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(fullPrompt)}?model=${model}&width=1024&height=1024&nologo=true&seed=${seed}&key=${pollinationsKey}`;
+      const imageUrl = `${API_BASE}/api/v1/proxy/pollinations/image?prompt=${encodeURIComponent(fullPrompt)}&model=${model}&width=1024&height=1024&seed=${seed}`;
 
       // Load image
       const img = new window.Image();
@@ -128,11 +124,7 @@ export function AiImageTab() {
         </div>
       )}
 
-      {!pollinationsKey && (
-        <div style={{ padding: 10, background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
-          {t('Pollinations key not configured. Add VITE_POLLINATIONS_KEY to .env')}
-        </div>
-      )}
+      {/* Pollinations is a public API — key is optional (higher rate limits) */}
 
       {/* Model */}
       <div>
@@ -195,12 +187,12 @@ export function AiImageTab() {
       {/* Generate */}
       <button
         onClick={generate}
-        disabled={loading || !prompt.trim() || !pollinationsKey}
+        disabled={loading || !prompt.trim()}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           padding: '10px 16px', borderWidth: 0, borderRadius: 8,
-          background: loading || !prompt.trim() || !pollinationsKey ? '#ccc' : '#4A90D9',
-          color: '#fff', cursor: loading || !prompt.trim() || !pollinationsKey ? 'default' : 'pointer',
+          background: loading || !prompt.trim() ? '#ccc' : '#4A90D9',
+          color: '#fff', cursor: loading || !prompt.trim() ? 'default' : 'pointer',
           fontSize: 13, fontWeight: 500,
         }}
       >

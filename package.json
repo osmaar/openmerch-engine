@@ -12,6 +12,8 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "rebuild:editor": "pnpm --filter @openmerch/core build && pnpm --filter @openmerch/editor build && pnpm --filter @openmerch/demo build",
+    "rebuild:admin": "pnpm --filter @openmerch/admin build",
+    "rebuild:all": "pnpm --filter @openmerch/core build && pnpm --filter @openmerch/editor build && pnpm --filter @openmerch/demo build && pnpm --filter @openmerch/admin build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

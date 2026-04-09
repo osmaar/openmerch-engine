@@ -49,6 +49,7 @@ interface EditorState {
   lastSavedAt: string | null;
   unsplashKey: string;
   pollinationsKey: string;
+  storeName: string;
   cartItems: CartItem[];
 
   setProduct: (product: Product) => void;
@@ -123,6 +124,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   lastSavedAt: null,
   unsplashKey: '',
   pollinationsKey: '',
+  storeName: '',
   cartItems: [],
 
   setProduct: (product: Product) => {
