@@ -253,8 +253,13 @@ export function Products() {
                         <div style={{
                           width: 36, height: 36, borderRadius: 6, background: '#f0f0f0',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          overflow: 'hidden',
                         }}>
-                          <ShirtIcon size={18} color="#888" />
+                          {(p.zones as { baseImageUrl?: string }[])?.[0]?.baseImageUrl ? (
+                            <img src={`${(import.meta.env.VITE_API_URL ?? 'http://localhost:3001')}${(p.zones as { baseImageUrl?: string }[])[0]!.baseImageUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <ShirtIcon size={18} color="#888" />
+                          )}
                         </div>
                         <div>
                           <Text size="sm" fw={500}>{p.name}</Text>

@@ -336,6 +336,9 @@ MinIO console is available at `http://localhost:9001` (user: openmerch, pass: op
 - [x] Admin panel (products, templates, cliparts, fonts, printing types, orders, languages, settings)
 - [x] Auto-generated design names ("Product - Design #001")
 - [x] Settings API (AES-256 encryption, proxy endpoints, branding/favicon/store name)
+- [x] Product seeds (13 products with variants, calibrated print zones, Printful mockups)
+- [x] Product variant system (zones per variant, variant selector in editor)
+- [ ] Product masks/overlays (design behind product surface)
 - [ ] Checkout flow (payment → auto production file generation)
 - [ ] rembg integration (Python remove background)
 - [ ] WooCommerce webhook handler

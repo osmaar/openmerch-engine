@@ -5,23 +5,27 @@ import { tshirtProduct } from './products/tshirt.js';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
-async function fetchProduct(id: string): Promise<Product> {
-  const res = await fetch(`${API_BASE}/api/v1/products/${id}`);
-  if (!res.ok) throw new Error('Product not found');
-  const data = await res.json();
-  return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    zones: data.zones as Product['zones'],
-  };
+interface ProductListItem {
+  id: string;
+  name: string;
+  slug: string;
+  zones: Product['zones'];
+  categories?: string[];
+  variants?: Product['variants'];
+  variantLabel?: string;
+  active: boolean;
+}
+
+async function fetchProducts(): Promise<ProductListItem[]> {
+  const res = await fetch(`${API_BASE}/api/v1/products`);
+  if (!res.ok) return [];
+  return res.json();
 }
 
 export function App() {
   const { setUnsplashKey, setPollinationsKey } = useEditorStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsplash = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
@@ -30,39 +34,49 @@ export function App() {
     if (pollinations) setPollinationsKey(pollinations);
   }, [setUnsplashKey, setPollinationsKey]);
 
+  // Listen for product changes from the editor's product selector modal
+  useEffect(() => {
+    const handleProductChange = () => {
+      const storeProduct = useEditorStore.getState().product;
+      if (storeProduct && storeProduct.id !== product?.id) {
+        setProduct(storeProduct);
+        localStorage.setItem('openmerch-product-slug', storeProduct.slug);
+        window.history.replaceState(null, '', `?product=${storeProduct.slug}`);
+      }
+    };
+    // Check store periodically since setProduct doesn't emit events
+    const interval = setInterval(handleProductChange, 500);
+    return () => clearInterval(interval);
+  }, [product?.id]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const productId = params.get('product');
+    const productId = params.get('product') || localStorage.getItem('openmerch-product-slug');
 
-    if (productId) {
-      // Load product from API by UUID
-      fetchProduct(productId)
-        .then((p) => setProduct(p))
-        .catch(() => setError(`Product "${productId}" not found. Using default.`))
-        .finally(() => setLoading(false));
-    } else {
-      // No product param — find first product with complete zones, fallback to hardcoded
-      fetch(`${API_BASE}/api/v1/products`)
-        .then((r) => r.json())
-        .then((products: { id: string; name: string; slug: string; zones: Product['zones'] }[]) => {
-          const valid = products.find((p) =>
-            p.zones.length > 0 && p.zones[0]?.baseImageUrl
-          );
-          if (valid) {
-            setProduct({ id: valid.id, name: valid.name, slug: valid.slug, zones: valid.zones });
+    fetchProducts()
+      .then((list) => {
+        const active = list.filter((p) => p.active && p.zones.length > 0);
+
+        const pick = (item: ProductListItem): Product => ({
+          id: item.id, name: item.name, slug: item.slug, zones: item.zones,
+          categories: item.categories, variants: item.variants, variantLabel: item.variantLabel,
+        });
+
+        if (productId) {
+          const found = active.find((p) => p.id === productId || p.slug === productId);
+          if (found) {
+            setProduct(pick(found));
+            localStorage.setItem('openmerch-product-slug', found.slug);
           } else {
-            setProduct(tshirtProduct);
+            setProduct(active[0] ? pick(active[0]) : tshirtProduct);
           }
-        })
-        .catch(() => setProduct(tshirtProduct))
-        .finally(() => setLoading(false));
-    }
+        } else {
+          setProduct(active[0] ? pick(active[0]) : tshirtProduct);
+        }
+      })
+      .catch(() => setProduct(tshirtProduct))
+      .finally(() => setLoading(false));
   }, []);
-
-  // If error fetching specific product, fallback to default
-  useEffect(() => {
-    if (error && !product) setProduct(tshirtProduct);
-  }, [error, product]);
 
   if (loading) {
     return (
@@ -74,5 +88,5 @@ export function App() {
 
   if (!product) return null;
 
-  return <ProductEditor product={product} />;
+  return <ProductEditor key={product.id} product={product} />;
 }

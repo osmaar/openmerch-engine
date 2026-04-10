@@ -23,16 +23,17 @@ interface ProductEditorProps {
   height?: number;
 }
 
-export function ProductEditor({ product }: ProductEditorProps) {
+export function ProductEditor({ product: initialProduct }: ProductEditorProps) {
   const { setProduct, activeZoneId, addImageLayer } = useEditorStore();
+  const product = useEditorStore((s) => s.product) ?? initialProduct;
   const loadLanguages = useI18nStore((s) => s.loadLanguages);
   const t = useT();
   const [showBranding, setShowBranding] = useState(true);
   useKeyboardShortcuts();
 
   useEffect(() => {
-    setProduct(product);
-  }, [product, setProduct]);
+    setProduct(initialProduct);
+  }, [initialProduct, setProduct]);
 
   useEffect(() => {
     const apiBase = (typeof window !== 'undefined' && window.location.port === '3000')

@@ -1,6 +1,9 @@
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import { config } from './config.js';
 import { healthRoutes } from './routes/health.js';
 import { productRoutes } from './routes/products.js';
@@ -31,6 +34,14 @@ async function main() {
   // Plugins
   await app.register(cors, { origin: config.corsOrigin, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] });
   await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB max
+
+  // Serve product mockup images from the repo's products/ directory
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+  await app.register(fastifyStatic, {
+    root: join(repoRoot, 'products'),
+    prefix: '/products/',
+    decorateReply: false,
+  });
 
   // Routes
   await app.register(healthRoutes);

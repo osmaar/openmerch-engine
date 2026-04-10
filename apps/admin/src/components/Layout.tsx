@@ -83,7 +83,7 @@ export function Layout() {
       label: t('Designs'),
       links: [
         { label: t('Customer Designs'), link: '/designs' },
-        { label: t('Templates'), link: '/templates' },
+        // { label: t('Templates'), link: '/templates' }, // TODO: feature/templates — needs full design editor, not just file upload
       ],
     },
     {

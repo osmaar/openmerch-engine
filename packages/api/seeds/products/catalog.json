@@ -1,0 +1,1232 @@
+[
+  {
+    "name": "Classic T-Shirt",
+    "slug": "classic-tshirt",
+    "description": "Unisex classic fit t-shirt. Soft cotton, comfortable for everyday wear.",
+    "price": 2499,
+    "categories": [
+      "T-Shirts"
+    ],
+    "printingTechniques": [
+      "DTG",
+      "DTF",
+      "Screen Printing",
+      "Sublimation"
+    ],
+    "variantLabel": "Size",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/tshirt/basic_tshirt_front.png",
+        "printAreaXMM": 150,
+        "printAreaYMM": 100,
+        "baseImageWidthMM": 500,
+        "printAreaWidthMM": 200,
+        "baseImageHeightMM": 500,
+        "printAreaHeightMM": 280
+      },
+      {
+        "id": "back",
+        "name": "Back",
+        "baseImageUrl": "/products/tshirt/basic_tshirt_back.png",
+        "printAreaXMM": 150,
+        "printAreaYMM": 85,
+        "baseImageWidthMM": 500,
+        "printAreaWidthMM": 200,
+        "baseImageHeightMM": 500,
+        "printAreaHeightMM": 300
+      }
+    ]
+  },
+  {
+    "name": "Oversized T-Shirt",
+    "slug": "oversized-tshirt",
+    "description": "Unisex oversized fit. Relaxed drop-shoulder silhouette with extra room.",
+    "price": 2999,
+    "categories": [
+      "T-Shirts"
+    ],
+    "printingTechniques": [
+      "DTG",
+      "DTF",
+      "Screen Printing",
+      "Sublimation"
+    ],
+    "variantLabel": "Size",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/tshirt-oversize/front.png",
+        "printAreaXMM": 140,
+        "printAreaYMM": 105,
+        "baseImageWidthMM": 500,
+        "printAreaWidthMM": 220,
+        "baseImageHeightMM": 500,
+        "printAreaHeightMM": 260
+      },
+      {
+        "id": "back",
+        "name": "Back",
+        "baseImageUrl": "/products/tshirt-oversize/back.png",
+        "printAreaXMM": 140,
+        "printAreaYMM": 90,
+        "baseImageWidthMM": 500,
+        "printAreaWidthMM": 220,
+        "baseImageHeightMM": 500,
+        "printAreaHeightMM": 280
+      }
+    ]
+  },
+  {
+    "name": "Box Tee",
+    "slug": "box-tee",
+    "description": "Men's box fit tee. Boxy cut with a modern streetwear look.",
+    "price": 2799,
+    "categories": [
+      "T-Shirts"
+    ],
+    "printingTechniques": [
+      "DTG",
+      "DTF",
+      "Screen Printing"
+    ],
+    "variantLabel": "Size",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/tshirt-box-tee/front.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 200,
+        "printAreaHeightMM": 320,
+        "printAreaXMM": 150,
+        "printAreaYMM": 100
+      },
+      {
+        "id": "back",
+        "name": "Back",
+        "baseImageUrl": "/products/tshirt-box-tee/back.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 200,
+        "printAreaHeightMM": 320,
+        "printAreaXMM": 150,
+        "printAreaYMM": 85
+      }
+    ]
+  },
+  {
+    "name": "Premium Hoodie",
+    "slug": "premium-hoodie",
+    "description": "Unisex premium pullover hoodie. Warm fleece, kangaroo pocket, drawstring hood.",
+    "price": 4999,
+    "categories": [
+      "Hoodies"
+    ],
+    "printingTechniques": [
+      "DTG",
+      "DTF",
+      "Screen Printing",
+      "Embroidery"
+    ],
+    "variantLabel": "Size",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/hoodie/front.png",
+        "baseImageWidthMM": 550,
+        "baseImageHeightMM": 550,
+        "printAreaWidthMM": 205,
+        "printAreaHeightMM": 180,
+        "printAreaXMM": 170,
+        "printAreaYMM": 125
+      },
+      {
+        "id": "back",
+        "name": "Back",
+        "baseImageUrl": "/products/hoodie/back.png",
+        "baseImageWidthMM": 550,
+        "baseImageHeightMM": 550,
+        "printAreaWidthMM": 200,
+        "printAreaHeightMM": 240,
+        "printAreaXMM": 175,
+        "printAreaYMM": 140
+      }
+    ]
+  },
+  {
+    "name": "Dad Hat",
+    "slug": "dad-hat",
+    "description": "Classic dad hat. Adjustable strap, low profile, curved brim.",
+    "price": 1999,
+    "categories": [
+      "Caps"
+    ],
+    "printingTechniques": [
+      "Embroidery",
+      "DTF",
+      "Heat Transfer"
+    ],
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/cap-dad-hat/front.png",
+        "baseImageWidthMM": 300,
+        "baseImageHeightMM": 300,
+        "printAreaWidthMM": 120,
+        "printAreaHeightMM": 75,
+        "printAreaXMM": 88,
+        "printAreaYMM": 78
+      }
+    ]
+  },
+  {
+    "name": "Trucker Hat",
+    "slug": "trucker-hat",
+    "description": "Retro trucker hat. Mesh back, snapback closure, structured front panel.",
+    "price": 2199,
+    "categories": [
+      "Caps"
+    ],
+    "printingTechniques": [
+      "Embroidery",
+      "DTF",
+      "Heat Transfer"
+    ],
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/cap-trucker/front.png",
+        "baseImageWidthMM": 300,
+        "baseImageHeightMM": 300,
+        "printAreaWidthMM": 125,
+        "printAreaHeightMM": 100,
+        "printAreaXMM": 88,
+        "printAreaYMM": 88
+      }
+    ]
+  },
+  {
+    "name": "Glossy Mug",
+    "slug": "glossy-mug",
+    "description": "White glossy ceramic mug. Dishwasher and microwave safe.",
+    "price": 1499,
+    "categories": [
+      "Mugs"
+    ],
+    "printingTechniques": [
+      "Sublimation"
+    ],
+    "variantLabel": "Capacity",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/mug/variants/11oz.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 260,
+        "printAreaHeightMM": 308,
+        "printAreaXMM": 120,
+        "printAreaYMM": 117
+      }
+    ],
+    "variants": [
+      {
+        "id": "11oz",
+        "name": "11 oz",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/mug/variants/11oz.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 250,
+            "printAreaHeightMM": 308,
+            "printAreaXMM": 120,
+            "printAreaYMM": 117
+          }
+        ]
+      },
+      {
+        "id": "15oz",
+        "name": "15 oz",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/mug/variants/15oz.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 230,
+            "printAreaHeightMM": 333,
+            "printAreaXMM": 136,
+            "printAreaYMM": 100
+          }
+        ]
+      },
+      {
+        "id": "20oz",
+        "name": "20 oz",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/mug/variants/20oz.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 250,
+            "printAreaHeightMM": 342,
+            "printAreaXMM": 120,
+            "printAreaYMM": 92
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "iPhone Case",
+    "slug": "iphone-case",
+    "description": "Clear protective case for iPhone. Shock-absorbing bumper, scratch-resistant back.",
+    "price": 1999,
+    "categories": [
+      "Phone Cases"
+    ],
+    "printingTechniques": [
+      "Sublimation",
+      "DTF"
+    ],
+    "variantLabel": "Device",
+    "zones": [
+      {
+        "id": "back",
+        "name": "Back",
+        "baseImageUrl": "/products/phone-case/variants/iphone-16-pro.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 175,
+        "printAreaHeightMM": 380,
+        "printAreaXMM": 160,
+        "printAreaYMM": 65
+      }
+    ],
+    "variants": [
+      {
+        "id": "iphone-7-8",
+        "name": "iPhone 7/8",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-7-8.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 175,
+            "printAreaHeightMM": 375,
+            "printAreaXMM": 160,
+            "printAreaYMM": 60
+          }
+        ]
+      },
+      {
+        "id": "iphone-se",
+        "name": "iPhone SE",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-se.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 375,
+            "printAreaXMM": 160,
+            "printAreaYMM": 60
+          }
+        ]
+      },
+      {
+        "id": "iphone-x-xs",
+        "name": "iPhone X/XS",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-x-xs.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 190,
+            "printAreaHeightMM": 390,
+            "printAreaXMM": 155,
+            "printAreaYMM": 55
+          }
+        ]
+      },
+      {
+        "id": "iphone-xr",
+        "name": "iPhone XR",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-xr.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 190,
+            "printAreaHeightMM": 390,
+            "printAreaXMM": 155,
+            "printAreaYMM": 55
+          }
+        ]
+      },
+      {
+        "id": "iphone-11",
+        "name": "iPhone 11",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-11.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 370,
+            "printAreaXMM": 160,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-11-pro",
+        "name": "iPhone 11 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-11-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 185,
+            "printAreaHeightMM": 385,
+            "printAreaXMM": 155,
+            "printAreaYMM": 65
+          }
+        ]
+      },
+      {
+        "id": "iphone-11-pro-max",
+        "name": "iPhone 11 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-11-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 415,
+            "printAreaXMM": 150,
+            "printAreaYMM": 50
+          }
+        ]
+      },
+      {
+        "id": "iphone-12-mini",
+        "name": "iPhone 12 Mini",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-12-mini.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 165,
+            "printAreaHeightMM": 340,
+            "printAreaXMM": 165,
+            "printAreaYMM": 110
+          }
+        ]
+      },
+      {
+        "id": "iphone-12",
+        "name": "iPhone 12",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-12.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 375,
+            "printAreaXMM": 160,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-12-pro",
+        "name": "iPhone 12 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-12-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 185,
+            "printAreaHeightMM": 380,
+            "printAreaXMM": 155,
+            "printAreaYMM": 70
+          }
+        ]
+      },
+      {
+        "id": "iphone-12-pro-max",
+        "name": "iPhone 12 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-12-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 195,
+            "printAreaHeightMM": 405,
+            "printAreaXMM": 150,
+            "printAreaYMM": 45
+          }
+        ]
+      },
+      {
+        "id": "iphone-13-mini",
+        "name": "iPhone 13 Mini",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-13-mini.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 165,
+            "printAreaHeightMM": 340,
+            "printAreaXMM": 165,
+            "printAreaYMM": 105
+          }
+        ]
+      },
+      {
+        "id": "iphone-13",
+        "name": "iPhone 13",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-13.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 190,
+            "printAreaHeightMM": 375,
+            "printAreaXMM": 155,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-13-pro",
+        "name": "iPhone 13 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-13-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 185,
+            "printAreaHeightMM": 375,
+            "printAreaXMM": 155,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-13-pro-max",
+        "name": "iPhone 13 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-13-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 205,
+            "printAreaHeightMM": 415,
+            "printAreaXMM": 145,
+            "printAreaYMM": 35
+          }
+        ]
+      },
+      {
+        "id": "iphone-14",
+        "name": "iPhone 14",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-14.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 185,
+            "printAreaHeightMM": 370,
+            "printAreaXMM": 155,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-14-plus",
+        "name": "iPhone 14 Plus",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-14-plus.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 410,
+            "printAreaXMM": 150,
+            "printAreaYMM": 35
+          }
+        ]
+      },
+      {
+        "id": "iphone-14-pro",
+        "name": "iPhone 14 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-14-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 370,
+            "printAreaXMM": 160,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-14-pro-max",
+        "name": "iPhone 14 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-14-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 410,
+            "printAreaXMM": 150,
+            "printAreaYMM": 35
+          }
+        ]
+      },
+      {
+        "id": "iphone-15",
+        "name": "iPhone 15",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-15.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 370,
+            "printAreaXMM": 160,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-15-plus",
+        "name": "iPhone 15 Plus",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-15-plus.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 410,
+            "printAreaXMM": 150,
+            "printAreaYMM": 35
+          }
+        ]
+      },
+      {
+        "id": "iphone-15-pro",
+        "name": "iPhone 15 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-15-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 370,
+            "printAreaXMM": 160,
+            "printAreaYMM": 75
+          }
+        ]
+      },
+      {
+        "id": "iphone-15-pro-max",
+        "name": "iPhone 15 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-15-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 410,
+            "printAreaXMM": 150,
+            "printAreaYMM": 35
+          }
+        ]
+      },
+      {
+        "id": "iphone-16",
+        "name": "iPhone 16",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-16.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 380,
+            "printAreaXMM": 160,
+            "printAreaYMM": 70
+          }
+        ]
+      },
+      {
+        "id": "iphone-16-plus",
+        "name": "iPhone 16 Plus",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-16-plus.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 420,
+            "printAreaXMM": 150,
+            "printAreaYMM": 30
+          }
+        ]
+      },
+      {
+        "id": "iphone-16-pro",
+        "name": "iPhone 16 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-16-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 390,
+            "printAreaXMM": 160,
+            "printAreaYMM": 60
+          }
+        ]
+      },
+      {
+        "id": "iphone-16-pro-max",
+        "name": "iPhone 16 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-16-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 200,
+            "printAreaHeightMM": 425,
+            "printAreaXMM": 150,
+            "printAreaYMM": 25
+          }
+        ]
+      },
+      {
+        "id": "iphone-17",
+        "name": "iPhone 17",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-17.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 170,
+            "printAreaHeightMM": 365,
+            "printAreaXMM": 165,
+            "printAreaYMM": 85
+          }
+        ]
+      },
+      {
+        "id": "iphone-17-air",
+        "name": "iPhone 17 Air",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-17-air.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 315,
+            "printAreaXMM": 160,
+            "printAreaYMM": 135
+          }
+        ]
+      },
+      {
+        "id": "iphone-17-pro",
+        "name": "iPhone 17 Pro",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-17-pro.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 170,
+            "printAreaHeightMM": 260,
+            "printAreaXMM": 165,
+            "printAreaYMM": 195
+          }
+        ]
+      },
+      {
+        "id": "iphone-17-pro-max",
+        "name": "iPhone 17 Pro Max",
+        "zones": [
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/phone-case/variants/iphone-17-pro-max.png",
+            "baseImageWidthMM": 500,
+            "baseImageHeightMM": 500,
+            "printAreaWidthMM": 180,
+            "printAreaHeightMM": 295,
+            "printAreaXMM": 160,
+            "printAreaYMM": 155
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Wall Art Poster",
+    "slug": "wall-art-poster",
+    "description": "Enhanced matte paper poster. Museum-quality with vivid colors.",
+    "price": 2499,
+    "categories": [
+      "Posters"
+    ],
+    "printingTechniques": [
+      "Sublimation"
+    ],
+    "variantLabel": "Dimensions",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/wall-art/variants/18x24.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 400,
+        "printAreaHeightMM": 300,
+        "printAreaXMM": 50,
+        "printAreaYMM": 100
+      }
+    ],
+    "variants": [
+      {
+        "id": "5x7",
+        "name": "5×7 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/wall-art/variants/5x7.png",
+            "printAreaXMM": 65,
+            "printAreaYMM": 65,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 370,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 310
+          }
+        ]
+      },
+      {
+        "id": "8x10",
+        "name": "8×10 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/wall-art/variants/8x10.png",
+            "printAreaXMM": 60,
+            "printAreaYMM": 60,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 380,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 320
+          }
+        ]
+      },
+      {
+        "id": "12x16",
+        "name": "12×16 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/wall-art/variants/12x16.png",
+            "printAreaXMM": 55,
+            "printAreaYMM": 55,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 390,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 330
+          }
+        ]
+      },
+      {
+        "id": "16x20",
+        "name": "16×20 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/wall-art/variants/16x20.png",
+            "printAreaXMM": 52,
+            "printAreaYMM": 52,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 395,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 335
+          }
+        ]
+      },
+      {
+        "id": "18x24",
+        "name": "18×24 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/wall-art/variants/18x24.png",
+            "printAreaXMM": 50,
+            "printAreaYMM": 50,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 400,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 340
+          }
+        ]
+      },
+      {
+        "id": "24x36",
+        "name": "24×36 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/wall-art/variants/24x36.png",
+            "printAreaXMM": 45,
+            "printAreaYMM": 45,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 410,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 350
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Flag Poster",
+    "slug": "flag-poster",
+    "description": "All-over print flag. Grommets at top for hanging. Vibrant dye-sublimation print.",
+    "price": 3499,
+    "categories": [
+      "Posters"
+    ],
+    "printingTechniques": [
+      "Sublimation"
+    ],
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/poster/front.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 270,
+        "printAreaHeightMM": 430,
+        "printAreaXMM": 115,
+        "printAreaYMM": 40
+      }
+    ]
+  },
+  {
+    "name": "Desk Mat",
+    "slug": "desk-mat",
+    "description": "Large desk mat. Non-slip rubber base, smooth fabric top.",
+    "price": 3999,
+    "categories": [
+      "Desk Mats"
+    ],
+    "printingTechniques": [
+      "Sublimation"
+    ],
+    "variantLabel": "Dimensions",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/desk-mat/variants/16x32.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 470,
+        "printAreaHeightMM": 235,
+        "printAreaXMM": 15,
+        "printAreaYMM": 130
+      }
+    ],
+    "variants": [
+      {
+        "id": "12x18",
+        "name": "12×18 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/desk-mat/variants/12x18.png",
+            "printAreaXMM": 65,
+            "printAreaYMM": 148,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 370,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 200
+          }
+        ]
+      },
+      {
+        "id": "12x22",
+        "name": "12×22 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/desk-mat/variants/12x22.png",
+            "printAreaXMM": 55,
+            "printAreaYMM": 150,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 390,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 195
+          }
+        ]
+      },
+      {
+        "id": "16x32",
+        "name": "16×32 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/desk-mat/variants/16x32.png",
+            "printAreaXMM": 45,
+            "printAreaYMM": 150,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 410,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 195
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mousepad",
+    "slug": "mousepad",
+    "description": "White mousepad with anti-slip rubber base. Perfect for custom designs.",
+    "price": 1299,
+    "categories": [
+      "Mousepads"
+    ],
+    "printingTechniques": [
+      "Sublimation"
+    ],
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/mousepad/front.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 450,
+        "printAreaHeightMM": 375,
+        "printAreaXMM": 25,
+        "printAreaYMM": 60
+      }
+    ]
+  },
+  {
+    "name": "Throw Pillow",
+    "slug": "throw-pillow",
+    "description": "All-over print throw pillow. Soft spun polyester cover with concealed zipper.",
+    "price": 2999,
+    "categories": [
+      "Pillows"
+    ],
+    "printingTechniques": [
+      "Sublimation"
+    ],
+    "variantLabel": "Dimensions",
+    "zones": [
+      {
+        "id": "front",
+        "name": "Front",
+        "baseImageUrl": "/products/pillow/variants/18x18-front.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 315,
+        "printAreaHeightMM": 315,
+        "printAreaXMM": 90,
+        "printAreaYMM": 95
+      },
+      {
+        "id": "back",
+        "name": "Back",
+        "baseImageUrl": "/products/pillow/variants/18x18-back.png",
+        "baseImageWidthMM": 500,
+        "baseImageHeightMM": 500,
+        "printAreaWidthMM": 315,
+        "printAreaHeightMM": 315,
+        "printAreaXMM": 90,
+        "printAreaYMM": 95
+      }
+    ],
+    "variants": [
+      {
+        "id": "18x18",
+        "name": "18×18 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/pillow/variants/18x18-front.png",
+            "printAreaXMM": 95,
+            "printAreaYMM": 75,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 310,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 310
+          },
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/pillow/variants/18x18-back.png",
+            "printAreaXMM": 95,
+            "printAreaYMM": 75,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 310,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 310
+          }
+        ]
+      },
+      {
+        "id": "20x12",
+        "name": "20×12 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/pillow/variants/20x12-front.png",
+            "printAreaXMM": 60,
+            "printAreaYMM": 130,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 380,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 210
+          },
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/pillow/variants/20x12-back.png",
+            "printAreaXMM": 60,
+            "printAreaYMM": 130,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 380,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 210
+          }
+        ]
+      },
+      {
+        "id": "22x22",
+        "name": "22×22 in",
+        "zones": [
+          {
+            "id": "front",
+            "name": "Front",
+            "baseImageUrl": "/products/pillow/variants/22x22-front.png",
+            "printAreaXMM": 85,
+            "printAreaYMM": 65,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 330,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 330
+          },
+          {
+            "id": "back",
+            "name": "Back",
+            "baseImageUrl": "/products/pillow/variants/22x22-back.png",
+            "printAreaXMM": 85,
+            "printAreaYMM": 65,
+            "baseImageWidthMM": 500,
+            "printAreaWidthMM": 330,
+            "baseImageHeightMM": 500,
+            "printAreaHeightMM": 330
+          }
+        ]
+      }
+    ]
+  }
+]
