@@ -8,6 +8,13 @@ import {
 import { notifications } from '@mantine/notifications';
 import { ArrowLeft, Save, Plus, Trash2, Upload } from 'lucide-react';
 import { getProduct, createProduct, updateProduct } from '../services/api.js';
+
+const API_BASE = (typeof window !== 'undefined' && window.location.port !== '3001') ? 'http://localhost:3001' : '';
+/** Resolve asset URLs — relative paths need the API base */
+function resolveUrl(url: string): string {
+  if (!url || url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+}
 import { useT } from '../i18n/useTranslation.js';
 
 interface Stage {
@@ -85,7 +92,7 @@ export function ProductEdit() {
   const [printingTechniques, setPrintingTechniques] = useState<string[]>([]);
   const [active, setActive] = useState(true);
 
-  // Design stages
+  // Design stages (main product zones)
   const [stages, setStages] = useState<Stage[]>([
     {
       id: 'front', name: 'Front', baseImageUrl: '',
@@ -95,6 +102,12 @@ export function ProductEdit() {
       exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
     },
   ]);
+
+  // Variants
+  interface VariantData { id: string; name: string; zones?: Stage[] }
+  const [variants, setVariants] = useState<VariantData[]>([]);
+  const [variantLabel, setVariantLabel] = useState('');
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState(-1); // -1 = main zones
 
   // Attributes
   const [attributes, setAttributes] = useState<Attribute[]>([]);
@@ -114,6 +127,20 @@ export function ProductEdit() {
         setCategories(p.categories ?? []);
         setPrintingTechniques(p.printingTechniques ?? []);
         setActive(p.active);
+        // Load variants
+        if (p.variants && (p.variants as VariantData[]).length > 0) {
+          setVariants((p.variants as VariantData[]).map((v) => ({
+            id: v.id, name: v.name,
+            zones: v.zones ? (v.zones as Stage[]).map((z) => ({
+              id: z.id, name: z.name, baseImageUrl: z.baseImageUrl ?? '',
+              baseImageWidthMM: z.baseImageWidthMM ?? 500, baseImageHeightMM: z.baseImageHeightMM ?? 500,
+              printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
+              printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
+              exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
+            })) : undefined,
+          })));
+        }
+        if (p.variantLabel) setVariantLabel(p.variantLabel as string);
         if (p.zones && (p.zones as Stage[]).length > 0) {
           setStages((p.zones as Stage[]).map((z) => ({
             id: z.id, name: z.name,
@@ -165,6 +192,16 @@ export function ProductEdit() {
           printAreaWidthMM: s.printAreaWidthMM, printAreaHeightMM: s.printAreaHeightMM,
           printAreaXMM: s.printAreaXMM, printAreaYMM: s.printAreaYMM,
         })),
+        variants: variants.map((v) => ({
+          id: v.id, name: v.name,
+          zones: v.zones?.map((z) => ({
+            id: z.id, name: z.name, baseImageUrl: z.baseImageUrl,
+            baseImageWidthMM: z.baseImageWidthMM, baseImageHeightMM: z.baseImageHeightMM,
+            printAreaWidthMM: z.printAreaWidthMM, printAreaHeightMM: z.printAreaHeightMM,
+            printAreaXMM: z.printAreaXMM, printAreaYMM: z.printAreaYMM,
+          })),
+        })),
+        variantLabel: variantLabel || null,
       };
       if (isNew) {
         await createProduct(data as Parameters<typeof createProduct>[0]);
@@ -201,8 +238,20 @@ export function ProductEdit() {
   };
 
   const updateStage = (idx: number, updates: Partial<Stage>) => {
-    setStages(stages.map((s, i) => i === idx ? { ...s, ...updates } : s));
+    if (selectedVariantIdx === -1) {
+      setStages(stages.map((s, i) => i === idx ? { ...s, ...updates } : s));
+    } else {
+      setVariants(variants.map((v, vi) => {
+        if (vi !== selectedVariantIdx || !v.zones) return v;
+        return { ...v, zones: v.zones.map((z, zi) => zi === idx ? { ...z, ...updates } : z) };
+      }));
+    }
   };
+
+  // Active stages based on variant selection
+  const activeStages = selectedVariantIdx === -1
+    ? stages
+    : variants[selectedVariantIdx]?.zones ?? stages;
 
   const addAttribute = () => {
     setAttributes([...attributes, {
@@ -317,6 +366,45 @@ export function ProductEdit() {
         {/* TAB 2: Design */}
         <Tabs.Panel value="design">
           <Stack gap="md">
+            {/* Variant selector — if product has variants, show tabs to edit each variant's zones */}
+            {variants.length > 0 && (
+              <Paper p="md" radius="md" withBorder>
+                <Text fw={600} size="sm" mb="xs">{variantLabel || t('Variants')} ({variants.length})</Text>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  <button
+                    onClick={() => setSelectedVariantIdx(-1)}
+                    style={{
+                      padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer',
+                      borderWidth: 2, borderStyle: 'solid',
+                      borderColor: selectedVariantIdx === -1 ? '#4A90D9' : '#e0e0e0',
+                      background: selectedVariantIdx === -1 ? '#EBF2FA' : '#fff',
+                      color: selectedVariantIdx === -1 ? '#4A90D9' : '#555',
+                    }}
+                  >
+                    {t('Default')}
+                  </button>
+                  {variants.map((v, vi) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariantIdx(vi)}
+                      style={{
+                        padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer',
+                        borderWidth: 2, borderStyle: 'solid',
+                        borderColor: selectedVariantIdx === vi ? '#4A90D9' : '#e0e0e0',
+                        background: selectedVariantIdx === vi ? '#EBF2FA' : '#fff',
+                        color: selectedVariantIdx === vi ? '#4A90D9' : '#555',
+                      }}
+                    >
+                      {v.name} {v.zones ? `(${v.zones.length} ${t('zones')})` : `(${t('uses default')})`}
+                    </button>
+                  ))}
+                </div>
+                <Text size="xs" c="dimmed" mt={6}>
+                  {selectedVariantIdx === -1 ? t('Editing default zones — used when no variant is selected') : `${t('Editing zones for')}: ${variants[selectedVariantIdx]?.name}`}
+                </Text>
+              </Paper>
+            )}
+
             <Group justify="space-between">
               <Text fw={600} size="sm">{t('Product Stages')}</Text>
               <Button variant="light" size="xs" leftSection={<Plus size={14} />} onClick={addStage}>
@@ -324,7 +412,7 @@ export function ProductEdit() {
               </Button>
             </Group>
 
-            {stages.map((stage, idx) => (
+            {activeStages.map((stage, idx) => (
               <Paper key={stage.id} p="lg" radius="md" withBorder>
                 <Group justify="space-between" mb="md">
                   <Group gap="sm">
@@ -391,7 +479,7 @@ export function ProductEdit() {
                         justifyContent: 'center',
                       }}>
                         {stage.baseImageUrl ? (
-                          <img src={stage.baseImageUrl} alt={stage.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                          <img src={resolveUrl(stage.baseImageUrl)} alt={stage.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                         ) : (
                           <Stack
                             align="center"
@@ -461,16 +549,18 @@ export function ProductEdit() {
                     <NumberInput
                       label={t('Width (mm)')}
                       value={stage.printAreaWidthMM}
-                      onChange={(v) => updateStage(idx, { printAreaWidthMM: Number(v) || 0 })}
+                      onChange={(v) => { if (typeof v === 'number') updateStage(idx, { printAreaWidthMM: v }); }}
                       size="sm"
-                      min={0}
+                      min={1}
+                      step={5}
                     />
                     <NumberInput
                       label={t('Height (mm)')}
                       value={stage.printAreaHeightMM}
-                      onChange={(v) => updateStage(idx, { printAreaHeightMM: Number(v) || 0 })}
+                      onChange={(v) => { if (typeof v === 'number') updateStage(idx, { printAreaHeightMM: v }); }}
                       size="sm"
-                      min={0}
+                      min={1}
+                      step={5}
                     />
                   </Group>
 
@@ -478,16 +568,18 @@ export function ProductEdit() {
                     <NumberInput
                       label={t('Offset X (mm)')}
                       value={stage.printAreaXMM}
-                      onChange={(v) => updateStage(idx, { printAreaXMM: Number(v) || 0 })}
+                      onChange={(v) => { if (typeof v === 'number') updateStage(idx, { printAreaXMM: v }); }}
                       size="sm"
                       min={0}
+                      step={5}
                     />
                     <NumberInput
                       label={t('Offset Y (mm)')}
                       value={stage.printAreaYMM}
-                      onChange={(v) => updateStage(idx, { printAreaYMM: Number(v) || 0 })}
+                      onChange={(v) => { if (typeof v === 'number') updateStage(idx, { printAreaYMM: v }); }}
                       size="sm"
                       min={0}
+                      step={5}
                     />
                   </Group>
 

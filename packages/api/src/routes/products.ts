@@ -32,7 +32,7 @@ export async function productRoutes(app: FastifyInstance) {
   });
 
   // PUT /api/v1/products/:id
-  app.put<{ Params: { id: string }; Body: { name?: string; slug?: string; description?: string; price?: number; categories?: string[]; printingTechniques?: string[]; active?: boolean; zones?: unknown[] } }>(
+  app.put<{ Params: { id: string }; Body: { name?: string; slug?: string; description?: string; price?: number; categories?: string[]; printingTechniques?: string[]; active?: boolean; zones?: unknown[]; variants?: unknown[]; variantLabel?: string | null } }>(
     '/api/v1/products/:id',
     async (req, reply) => {
       const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -44,6 +44,8 @@ export async function productRoutes(app: FastifyInstance) {
       if (req.body.printingTechniques !== undefined) updates.printingTechniques = JSON.stringify(req.body.printingTechniques);
       if (req.body.active !== undefined) updates.active = req.body.active;
       if (req.body.zones !== undefined) updates.zones = JSON.stringify(req.body.zones);
+      if (req.body.variants !== undefined) updates.variants = JSON.stringify(req.body.variants);
+      if (req.body.variantLabel !== undefined) updates.variantLabel = req.body.variantLabel;
 
       const [product] = await db.update(products).set(updates).where(eq(products.id, req.params.id)).returning();
       if (!product) return reply.code(404).send({ error: 'Product not found', code: 'PRODUCT_NOT_FOUND' });

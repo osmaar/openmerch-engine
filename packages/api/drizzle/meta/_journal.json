@@ -15,6 +15,13 @@
       "when": 1775588782513,
       "tag": "0001_wandering_sue_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775836503068,
+      "tag": "0002_graceful_iceman",
+      "breakpoints": true
     }
   ]
 }

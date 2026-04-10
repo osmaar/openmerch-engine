@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 2 nearly complete — Settings API with AES-256 encryption, Unsplash/Pollinations proxy (keys never reach browser), BullMQ production jobs, full i18n (EN/ES/FR). Next: more product seeds, rembg AI background removal, CMS integration.
+> **Status:** Phase 2 nearly complete — 13 product bases with variants (T-shirts, Hoodies, Caps, Mugs, Phone Cases, Posters, Desk Mats, Mousepads, Pillows), Settings API with encryption, BullMQ production jobs, full i18n (EN/ES/FR). Next: product masks/overlays, rembg AI background removal, CMS integration.
 
 ---
 

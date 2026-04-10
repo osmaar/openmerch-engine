@@ -41,6 +41,8 @@ export interface Product {
   printingTechniques: string[];
   active: boolean;
   zones: unknown[];
+  variants?: unknown[];
+  variantLabel?: string | null;
   createdAt: string;
   updatedAt: string;
 }

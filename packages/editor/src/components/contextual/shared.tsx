@@ -7,16 +7,18 @@ interface ToolbarButtonProps {
   onClick: () => void;
   active?: boolean;
   danger?: boolean;
+  disabled?: boolean;
 }
 
-export function ToolbarButton({ icon: Icon, tooltip, onClick, active, danger }: ToolbarButtonProps) {
-  const baseColor = danger ? '#e53935' : active ? '#4A90D9' : '#555';
+export function ToolbarButton({ icon: Icon, tooltip, onClick, active, danger, disabled }: ToolbarButtonProps) {
+  const baseColor = disabled ? '#ccc' : danger ? '#e53935' : active ? '#4A90D9' : '#555';
   const bgColor = active ? '#EBF2FA' : 'transparent';
 
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       title={tooltip}
+      disabled={disabled}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -28,8 +30,9 @@ export function ToolbarButton({ icon: Icon, tooltip, onClick, active, danger }: 
         borderColor: active ? '#4A90D9' : 'transparent',
         borderRadius: 4,
         background: bgColor,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         color: baseColor,
+        opacity: disabled ? 0.5 : 1,
         padding: 0,
       }}
     >

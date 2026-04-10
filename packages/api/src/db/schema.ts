@@ -11,6 +11,8 @@ export const products = pgTable('products', {
   printingTechniques: jsonb('printing_techniques').notNull().default('[]'),
   active: boolean('active').notNull().default(true),
   zones: jsonb('zones').notNull().default('[]'),
+  variants: jsonb('variants').default('[]'),
+  variantLabel: varchar('variant_label', { length: 50 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

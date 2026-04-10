@@ -3,6 +3,24 @@ export interface Product {
   name: string;
   slug: string;
   zones: ProductZone[];
+  /** Product categories (e.g. ["T-Shirts"], ["Phone Cases"]). */
+  categories?: string[];
+  /** Product variants (e.g. phone models, mug sizes, poster dimensions).
+   *  Each variant can override the product zones with its own mockup images
+   *  and print area dimensions. For clothing, variants are sizes (S/M/L/XL)
+   *  and don't change zones. */
+  variants?: ProductVariant[];
+  /** Label for the variant selector (e.g. "Device", "Size", "Dimensions"). */
+  variantLabel?: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  /** Display name (e.g. "iPhone 16 Pro", "15 oz", "18×24 in"). */
+  name: string;
+  /** If set, these zones replace the product's default zones when this variant
+   *  is selected — different mockup image, different print area. */
+  zones?: ProductZone[];
 }
 
 export interface ProductZone {

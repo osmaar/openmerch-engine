@@ -50,9 +50,11 @@ interface EditorState {
   unsplashKey: string;
   pollinationsKey: string;
   storeName: string;
+  selectedVariantId: string | null;
   cartItems: CartItem[];
 
   setProduct: (product: Product) => void;
+  setVariant: (variantId: string) => void;
   addToCart: (item: CartItem) => void;
   removeFromCart: (designId: string) => void;
   clearCart: () => void;
@@ -125,15 +127,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   unsplashKey: '',
   pollinationsKey: '',
   storeName: '',
+  selectedVariantId: null,
   cartItems: [],
 
   setProduct: (product: Product) => {
+    // If the first variant has its own zones, use those as the initial zones
+    const firstVariant = product.variants?.[0];
+    const initialZones = (firstVariant?.zones && firstVariant.zones.length > 0)
+      ? firstVariant.zones
+      : product.zones;
+    const initialProduct = { ...product, zones: initialZones };
+
     const design: Design = {
       id: crypto.randomUUID(),
       productId: product.id,
-      activeZone: product.zones[0]?.id ?? 'front',
+      activeZone: initialZones[0]?.id ?? 'front',
       zones: Object.fromEntries(
-        product.zones.map((zone) => [
+        initialZones.map((zone) => [
           zone.id,
           {
             zoneId: zone.id,
@@ -146,13 +156,47 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     };
 
     set({
-      product,
-      activeZoneId: product.zones[0]?.id ?? 'front',
+      product: initialProduct,
+      activeZoneId: initialZones[0]?.id ?? 'front',
       design,
       selectedLayerId: null,
+      selectedVariantId: firstVariant?.id ?? null,
       history: [],
       historyIndex: -1,
     });
+  },
+
+  setVariant: (variantId: string) => {
+    const { product } = get();
+    if (!product?.variants) return;
+    const variant = product.variants.find((v) => v.id === variantId);
+    if (!variant) return;
+
+    // If variant has its own zones, swap them on the product
+    if (variant.zones) {
+      const updatedProduct = { ...product, zones: variant.zones };
+      // Re-initialize design zones for the new dimensions
+      const design = {
+        id: crypto.randomUUID(),
+        productId: product.id,
+        activeZone: variant.zones[0]?.id ?? 'front',
+        zones: Object.fromEntries(
+          variant.zones.map((zone) => [
+            zone.id,
+            { zoneId: zone.id, canvasWidthMM: zone.printAreaWidthMM, canvasHeightMM: zone.printAreaHeightMM, layers: [] },
+          ]),
+        ),
+      };
+      set({
+        product: updatedProduct,
+        activeZoneId: variant.zones[0]?.id ?? 'front',
+        design,
+        selectedVariantId: variantId,
+        selectedLayerId: null,
+      });
+    } else {
+      set({ selectedVariantId: variantId });
+    }
   },
 
   addToCart: (item: CartItem) => {

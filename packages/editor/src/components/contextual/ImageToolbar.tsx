@@ -78,7 +78,7 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
       <ToolbarButton icon={ImagePlus} tooltip={t('Replace image')} onClick={handleReplace} />
       <ToolbarButton icon={Crop} tooltip={t('Crop image')} onClick={() => { setShowCrop(true); setActivePopover(null); }} />
 
-      <ToolbarButton icon={Eraser} tooltip={t('Remove background')} onClick={() => setShowRemoveBg(true)} />
+      <ToolbarButton icon={Eraser} tooltip={layer.src.includes('.svg') ? t('SVGs already have transparent background') : t('Remove background')} onClick={() => { if (!layer.src.includes('.svg')) setShowRemoveBg(true); }} disabled={layer.src.includes('.svg')} />
 
       {showRemoveBg && (
         <RemoveBgPopover imageSrc={layer.src} onClose={() => setShowRemoveBg(false)} onApply={(processedSrc) => {
