@@ -38,6 +38,7 @@ RUN pnpm install --frozen-lockfile
 COPY packages/core packages/core
 COPY packages/renderer packages/renderer
 COPY packages/api packages/api
+COPY products products
 
 # Build dependency packages first, then the API.
 RUN pnpm --filter @openmerch/core build \
@@ -68,6 +69,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY --from=builder /deploy /app
+# Product mockup images — needed by the worker for mockup rendering
+COPY --from=builder /repo/products /app/products
 
 ENV NODE_ENV=production
 EXPOSE 3001

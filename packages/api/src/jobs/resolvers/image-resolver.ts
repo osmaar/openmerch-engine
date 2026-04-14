@@ -9,9 +9,19 @@
 // so the same image isn't fetched twice. SVG sources are rasterized via sharp
 // at high resolution so they don't pixelate when scaled up by Konva.
 
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { minioClient } from '../../storage/minio.js';
 import { config } from '../../config.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// In dev: __dirname = packages/api/src/jobs/resolvers → 5 levels up = repo root
+// In Docker: __dirname = /app/dist/jobs/resolvers → but /app/products exists directly
+const REPO_ROOT_DEV = join(__dirname, '..', '..', '..', '..', '..');
+const REPO_ROOT_DOCKER = '/app';
+const REPO_ROOT = existsSync(join(REPO_ROOT_DEV, 'products')) ? REPO_ROOT_DEV : REPO_ROOT_DOCKER;
 
 const ASSETS_PREFIX = '/api/v1/assets/';
 
@@ -39,6 +49,9 @@ export class ImageResolver {
       buffer = await this.fromMinio(key);
     } else if (src.startsWith('http://') || src.startsWith('https://')) {
       buffer = await this.fromHttp(src);
+    } else if (src.startsWith('/products/')) {
+      // Product mockup images served from the repo's products/ directory
+      buffer = await this.fromProductsDir(src);
     } else {
       throw new Error(`Unsupported image src: ${src.slice(0, 100)}`);
     }
@@ -76,6 +89,17 @@ export class ImageResolver {
       })
       .png()
       .toBuffer();
+  }
+
+  private async fromProductsDir(src: string): Promise<Buffer> {
+    // src is like "/products/hoodie/front.png"
+    // Try filesystem first (dev), then HTTP fallback (Docker)
+    const filePath = join(REPO_ROOT, src);
+    if (existsSync(filePath)) return readFileSync(filePath);
+
+    // Fallback: fetch from own API server
+    const url = `http://localhost:${config.port}${src}`;
+    return this.fromHttp(url);
   }
 
   private fromDataUrl(src: string): Buffer {

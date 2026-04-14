@@ -155,10 +155,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       ),
     };
 
+    // Reset sizes and color based on product category
+    const cats = product.categories ?? [];
+    const hasSizes = cats.some((c) => ['T-Shirts', 'Hoodies'].includes(c));
+    const hasColor = cats.some((c) => ['T-Shirts', 'Hoodies', 'Caps'].includes(c));
+    const sizes: Record<string, number> = hasSizes
+      ? { S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
+      : { QTY: 1 };
+
     set({
       product: initialProduct,
       activeZoneId: initialZones[0]?.id ?? 'front',
       design,
+      sizes,
+      productColor: hasColor ? get().productColor : '#FFFFFF',
       selectedLayerId: null,
       selectedVariantId: firstVariant?.id ?? null,
       history: [],
@@ -175,16 +185,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     // If variant has its own zones, swap them on the product
     if (variant.zones) {
       const updatedProduct = { ...product, zones: variant.zones };
-      // Re-initialize design zones for the new dimensions
+      // Preserve existing design layers — just update zone dimensions
+      const currentDesign = get().design;
       const design = {
-        id: crypto.randomUUID(),
+        id: currentDesign?.id ?? crypto.randomUUID(),
         productId: product.id,
         activeZone: variant.zones[0]?.id ?? 'front',
         zones: Object.fromEntries(
-          variant.zones.map((zone) => [
-            zone.id,
-            { zoneId: zone.id, canvasWidthMM: zone.printAreaWidthMM, canvasHeightMM: zone.printAreaHeightMM, layers: [] },
-          ]),
+          variant.zones.map((zone) => {
+            // Keep existing layers if this zone already has them
+            const existing = currentDesign?.zones[zone.id];
+            return [
+              zone.id,
+              {
+                zoneId: zone.id,
+                canvasWidthMM: zone.printAreaWidthMM,
+                canvasHeightMM: zone.printAreaHeightMM,
+                layers: existing?.layers ?? [],
+              },
+            ];
+          }),
         ),
       };
       set({

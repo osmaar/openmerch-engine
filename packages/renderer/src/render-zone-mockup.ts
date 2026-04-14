@@ -180,6 +180,25 @@ export async function renderDesignZoneMockup(
     }
   }
 
+  // 3. Draw product overlay ON TOP of designs (camera cutout, edges, bumper).
+  //    Transparent areas let the design show through.
+  if (options.resolveImage && options.zone.overlayImageUrl) {
+    try {
+      const overlayBuffer = await options.resolveImage(options.zone.overlayImageUrl);
+      const overlayImg = await loadImage(overlayBuffer);
+      const overlayNode = new Konva.Image({
+        image: overlayImg,
+        x: 0,
+        y: 0,
+        width: widthPx,
+        height: heightPx,
+      });
+      layer.add(overlayNode);
+    } catch (err) {
+      console.warn('[mockup] failed to load overlay image:', (err as Error).message);
+    }
+  }
+
   layer.draw();
 
   const nodeCanvas = getNodeCanvas(stage);

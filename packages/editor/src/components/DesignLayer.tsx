@@ -12,21 +12,23 @@ interface DesignLayerProps {
   layer: DesignLayerType;
   pxPerMM: number;
   isSelected: boolean;
+  /** When true, Transformer is rendered externally (outside clipped group) */
+  hideTransformer?: boolean;
 }
 
 // Layer coordinates (layer.x, layer.y) are PRINT-AREA-LOCAL in MM. The parent
 // in ProductEditor wraps these in a Konva Group anchored at (printX, printY),
 // so layer.x === 0 lands the layer at the top-left of the print area, and
 // Konva drag events give us positions already relative to the Group origin.
-export function DesignLayer({ layer, pxPerMM, isSelected }: DesignLayerProps) {
+export function DesignLayer({ layer, pxPerMM, isSelected, hideTransformer }: DesignLayerProps) {
   if (layer.type === 'image') {
-    return <ImageLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
+    return <ImageLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} hideTransformer={hideTransformer} />;
   }
   if (layer.type === 'text') {
-    return <TextLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
+    return <TextLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} hideTransformer={hideTransformer} />;
   }
   if (layer.type === 'shape') {
-    return <ShapeLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
+    return <ShapeLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} hideTransformer={hideTransformer} />;
   }
   return null;
 }
@@ -63,9 +65,10 @@ interface ImageLayerViewProps {
   layer: DesignLayerType & { type: 'image' };
   pxPerMM: number;
   isSelected: boolean;
+  hideTransformer?: boolean;
 }
 
-function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
+function ImageLayerView({ layer, pxPerMM, isSelected, hideTransformer }: ImageLayerViewProps) {
   const [baseImage] = useImage(layer.src);
   const image = useTintedImage(baseImage ?? undefined, layer.tint, layer.tintOpacity);
   const shapeRef = useRef<Konva.Image>(null);
@@ -119,6 +122,8 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
     <>
       <Image
         ref={shapeRef}
+        id={layer.id}
+        name="design-element"
         image={image}
         x={x}
         y={y}
@@ -130,7 +135,7 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
         skewY={layer.skewY ?? 0}
         rotation={layer.rotation}
         opacity={layer.opacity}
-        draggable={!layer.locked}
+        draggable={isSelected && !layer.locked}
         onMouseEnter={(e) => { e.target.getStage()!.container().style.cursor = 'pointer'; }}
         onMouseLeave={(e) => { e.target.getStage()!.container().style.cursor = 'default'; }}
         onDragStart={(e) => { e.target.getStage()!.container().style.cursor = 'grabbing'; }}
@@ -139,7 +144,7 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
         onDragEnd={handleDragEnd}
         onTransformEnd={handleTransformEnd}
       />
-      {isSelected && (
+      {isSelected && !hideTransformer && (
         <Transformer
           ref={trRef}
           keepRatio={true}
@@ -154,9 +159,10 @@ interface TextLayerViewProps {
   layer: DesignLayerType & { type: 'text' };
   pxPerMM: number;
   isSelected: boolean;
+  hideTransformer?: boolean;
 }
 
-function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
+function TextLayerView({ layer, pxPerMM, isSelected, hideTransformer }: TextLayerViewProps) {
   const shapeRef = useRef<Konva.Text>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const { selectLayer, updateLayer } = useEditorStore();
@@ -258,7 +264,7 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
   const hasEffect = effect && effect.type !== 'none';
 
   const interactionProps = {
-    draggable: !layer.locked,
+    draggable: isSelected && !layer.locked,
     onMouseEnter: (e: Konva.KonvaEventObject<MouseEvent>) => { e.target.getStage()!.container().style.cursor = 'pointer'; },
     onMouseLeave: (e: Konva.KonvaEventObject<MouseEvent>) => { e.target.getStage()!.container().style.cursor = 'default'; },
     onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => { e.target.getStage()!.container().style.cursor = 'grabbing'; },
@@ -283,6 +289,8 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
       {hasEffect ? (
         <Group
           ref={shapeRef as unknown as React.RefObject<Konva.Group>}
+          id={layer.id}
+          name="design-element"
           x={x}
           y={y}
           scaleX={layer.scaleX}
@@ -325,6 +333,7 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
       ) : (
         <Text
           ref={shapeRef}
+          id={layer.id}
           text={layer.text}
           x={x}
           y={y}
@@ -346,7 +355,7 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
           {...interactionProps}
         />
       )}
-      {isSelected && (
+      {isSelected && !hideTransformer && (
         <Transformer
           ref={trRef}
           keepRatio={false}
@@ -363,9 +372,10 @@ interface ShapeLayerViewProps {
   layer: DesignLayerType & { type: 'shape' };
   pxPerMM: number;
   isSelected: boolean;
+  hideTransformer?: boolean;
 }
 
-function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
+function ShapeLayerView({ layer, pxPerMM, isSelected, hideTransformer }: ShapeLayerViewProps) {
   const shapeRef = useRef<Konva.Shape>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const { selectLayer, updateLayer } = useEditorStore();
@@ -408,6 +418,8 @@ function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
   };
 
   const commonProps = {
+    id: layer.id,
+    name: 'design-element',
     x, y,
     fill: layer.fill,
     stroke: layer.stroke,
@@ -416,7 +428,7 @@ function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
     scaleY: layer.scaleY,
     rotation: layer.rotation,
     opacity: layer.opacity,
-    draggable: !layer.locked,
+    draggable: isSelected && !layer.locked,
     onClick: () => selectLayer(layer.id),
     onTap: () => selectLayer(layer.id),
     onDragEnd: handleDragEnd,
@@ -466,7 +478,7 @@ function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
   return (
     <>
       {renderShape()}
-      {isSelected && (
+      {isSelected && !hideTransformer && (
         <Transformer
           ref={trRef}
           keepRatio={false}

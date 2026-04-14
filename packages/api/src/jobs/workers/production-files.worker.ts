@@ -64,11 +64,36 @@ async function processJob(
     const layers: DesignLayer[] = designZone?.layers ?? [];
 
     // Skip zones with no design — no layers means nothing to render or print.
-    // Showing an empty production file entry for a zone the client never touched
-    // just confuses the merchant in the admin view.
     if (layers.length === 0) {
       job.log(`Skipping zone "${productZone.id}" — no layers`);
       continue;
+    }
+
+    // If the design was created with a variant that has different print area
+    // dimensions, use those instead of the product's default zones.
+    // The design zone stores canvasWidthMM/HeightMM matching the variant's
+    // printAreaWidthMM/HeightMM at the time of design creation.
+    const renderZone: ProductZone = { ...productZone };
+    if (designZone && designZone.canvasWidthMM && designZone.canvasHeightMM) {
+      if (Math.abs(designZone.canvasWidthMM - productZone.printAreaWidthMM) > 1 ||
+          Math.abs(designZone.canvasHeightMM - productZone.printAreaHeightMM) > 1) {
+        // Design was made with a different variant — find matching variant zones
+        const variants = (product.variants as { id: string; zones?: ProductZone[] }[]) ?? [];
+        const matchingVariant = variants.find((v) =>
+          v.zones?.some((vz) =>
+            Math.abs(vz.printAreaWidthMM - designZone.canvasWidthMM) < 2 &&
+            Math.abs(vz.printAreaHeightMM - designZone.canvasHeightMM) < 2 &&
+            vz.id === productZone.id
+          )
+        );
+        if (matchingVariant?.zones) {
+          const matchingZone = matchingVariant.zones.find((vz) => vz.id === productZone.id);
+          if (matchingZone) {
+            Object.assign(renderZone, matchingZone);
+            job.log(`Using variant "${matchingVariant.id}" zones for "${productZone.id}"`);
+          }
+        }
+      }
     }
 
     job.log(`Rendering zone "${productZone.id}" (${layers.length} layer(s))`);
@@ -76,7 +101,7 @@ async function processJob(
     try {
       // 1. Print file (the contract): bare design at 300 DPI.
       const printResult = await renderDesignZone({
-        zone: productZone,
+        zone: renderZone,
         layers,
         dpi: 300,
         resolveImage: (src) => imageResolver.resolve(src),
@@ -101,7 +126,7 @@ async function processJob(
       //    Best-effort — if it fails we still keep the print file.
       try {
         const mockupResult = await renderDesignZoneMockup({
-          zone: productZone,
+          zone: renderZone,
           layers,
           dpi: 96,
           resolveImage: (src) => imageResolver.resolve(src),

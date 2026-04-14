@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
-import { Stage, Layer, Image, Rect, Group } from 'react-konva';
+import { Stage, Layer, Image, Rect, Group, Transformer } from 'react-konva';
 import type { Product, ProductZone } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 import { useI18nStore, useT } from '../i18n/useTranslation.js';
@@ -181,6 +181,7 @@ function CanvasView({ zone }: CanvasViewProps) {
   const productColor = useEditorStore((s) => s.productColor);
   const [rawImage, status] = useImage(zone.baseImageUrl);
   const baseImage = useColoredProduct(rawImage, productColor);
+  const [overlayImage] = useImage(zone.overlayImageUrl ?? '');
   const design = useEditorStore((s) => s.design);
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
@@ -263,7 +264,7 @@ function CanvasView({ zone }: CanvasViewProps) {
         selectLayer(null);
       }
     },
-    [selectLayer],
+    [selectLayer, layout],
   );
 
   const handleDragMove = useCallback(
@@ -290,34 +291,28 @@ function CanvasView({ zone }: CanvasViewProps) {
         node.y(node.y() + (snapY - rect.y));
       }
 
-      // Check if element is completely outside print zone — fade it
-      const updatedRect = node.getClientRect({ relativeTo: node.getStage() ?? undefined });
-      const isOutside =
-        updatedRect.x + updatedRect.width < layout.printX ||
-        updatedRect.x > layout.printX + layout.printW ||
-        updatedRect.y + updatedRect.height < layout.printY ||
-        updatedRect.y > layout.printY + layout.printH;
-
-      node.opacity(isOutside ? 0.25 : 1);
+      // If dragged completely outside, constrain to keep at least part visible
+      if (layout) {
+        const node = e.target;
+        const nodeRect = node.getClientRect({ relativeTo: node.getStage() ?? undefined });
+        const fullyOutside =
+          nodeRect.x + nodeRect.width < layout.printX ||
+          nodeRect.x > layout.printX + layout.printW ||
+          nodeRect.y + nodeRect.height < layout.printY ||
+          nodeRect.y > layout.printY + layout.printH;
+        if (fullyOutside) {
+          // Snap back: center in print area (coordinates relative to parent Group)
+          node.x(layout.printW / 2 - nodeRect.width / 2);
+          node.y(layout.printH / 2 - nodeRect.height / 2);
+        }
+      }
     },
     [layout],
   );
 
-  const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback(() => {
     setSnapGuides([]);
-
-    // Keep faded if dropped outside print zone
-    if (layout) {
-      const rect = e.target.getClientRect({ relativeTo: e.target.getStage() ?? undefined });
-      const isOutside =
-        rect.x + rect.width < layout.printX ||
-        rect.x > layout.printX + layout.printW ||
-        rect.y + rect.height < layout.printY ||
-        rect.y > layout.printY + layout.printH;
-
-      e.target.opacity(isOutside ? 0.25 : 1);
-    }
-  }, [layout]);
+  }, []);
 
   // Zoom with mouse wheel
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -387,7 +382,14 @@ function CanvasView({ zone }: CanvasViewProps) {
               children relative to their parent), so the saved coordinates
               are screen-independent and reusable by the production renderer.
             */}
-            <Group x={layout.printX} y={layout.printY}>
+            <Group
+              x={layout.printX}
+              y={layout.printY}
+              clipX={0}
+              clipY={0}
+              clipWidth={layout.printW}
+              clipHeight={layout.printH}
+            >
               {layers
                 .filter((l) => l.visible)
                 .map((layer) => (
@@ -396,12 +398,29 @@ function CanvasView({ zone }: CanvasViewProps) {
                     layer={layer}
                     pxPerMM={layout.pxPerMM}
                     isSelected={selectedLayerId === layer.id}
+                    hideTransformer
                   />
                 ))}
             </Group>
           </Layer>
 
+          {/* Transformer layer — OUTSIDE the clip so handles are always visible */}
+          <Layer>
+            <SharedTransformer stageRef={stageRef} selectedLayerId={selectedLayerId} />
+          </Layer>
+
           <Layer listening={false}>
+            {/* Product overlay — renders ON TOP of designs (camera cutout, edges, bumper) */}
+            {zone.overlayImageUrl && overlayImage && (
+              <Image
+                image={overlayImage}
+                x={layout.imgX}
+                y={layout.imgY}
+                width={layout.imgW}
+                height={layout.imgH}
+              />
+            )}
+
             {showPrintZone && (
               <Rect
                 x={layout.printX}
@@ -428,5 +447,48 @@ function CanvasView({ zone }: CanvasViewProps) {
       {/* Zoom controls */}
       <ZoomControls stageRef={stageRef} zoom={_zoom} setZoom={setZoom} />
     </div>
+  );
+}
+
+/** Transformer rendered OUTSIDE the clipped design Group so handles stay visible */
+function SharedTransformer({ stageRef, selectedLayerId }: { stageRef: React.RefObject<Konva.Stage | null>; selectedLayerId: string | null }) {
+  const trRef = useRef<Konva.Transformer>(null);
+
+  useEffect(() => {
+    const attach = () => {
+      const tr = trRef.current;
+      const stage = stageRef.current;
+      if (!tr || !stage) return;
+      if (!selectedLayerId) { tr.nodes([]); tr.getLayer()?.batchDraw(); return; }
+
+      const node = stage.findOne(`#${selectedLayerId}`);
+      if (node) {
+        tr.nodes([node as Konva.Node]);
+      } else {
+        tr.nodes([]);
+      }
+      tr.getLayer()?.batchDraw();
+    };
+    attach();
+    // Retry after a frame in case the node wasn't mounted yet
+    const raf = requestAnimationFrame(attach);
+    return () => cancelAnimationFrame(raf);
+  }, [selectedLayerId, stageRef]);
+
+  return (
+    <Transformer
+      ref={trRef}
+      rotateEnabled
+      rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+      rotationSnapTolerance={8}
+      anchorSize={8}
+      borderStroke="#4A90D9"
+      anchorStroke="#4A90D9"
+      anchorFill="#fff"
+      anchorCornerRadius={2}
+      rotateAnchorOffset={25}
+      keepRatio={false}
+      enabledAnchors={['top-left', 'top-center', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-center', 'bottom-right']}
+    />
   );
 }

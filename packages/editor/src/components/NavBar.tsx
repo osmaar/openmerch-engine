@@ -122,7 +122,7 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
 
     const totalUnits = Object.values(store.sizes).reduce((a, b) => a + b, 0);
     if (totalUnits === 0) {
-      showToast(t('Select at least one size and quantity in the Product tab.'), 'error');
+      showToast(t('Select quantity in the Product tab before adding to cart.'), 'error');
       return;
     }
 
@@ -166,7 +166,10 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
 
       useEditorStore.setState({ savedDesignId: null });
       store.addToCart(cartItem);
-      useEditorStore.setState({ sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } });
+      // Reset sizes based on product type
+      const cats = store.product.categories ?? [];
+      const hasSizes = cats.some((c: string) => ['T-Shirts', 'Hoodies'].includes(c));
+      useEditorStore.setState({ sizes: hasSizes ? { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } : { QTY: 1 } });
 
       showToast(t('Added to cart!'), 'success');
       onAdded();
@@ -368,6 +371,8 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
 
   // Get state from store
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
+  const product = useEditorStore((s) => s.product);
+  const hasMultipleZones = (product?.zones.length ?? 0) > 1;
   const canvasLayout = useEditorStore((s) => s.canvasLayout);
   const pxPerMM = canvasLayout?.pxPerMM ?? 1;
   const widthMM = canvasLayout ? canvasLayout.printW / pxPerMM : 0;
@@ -463,10 +468,12 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
         <ToggleSwitch value={includeBase} onChange={setIncludeBase} />
       </div>
 
-      <div style={rowStyle}>
-        <span>{activeZoneId === 'front' ? t('Include back?') : t('Include front?')}</span>
-        <ToggleSwitch value={includeBack} onChange={setIncludeBack} />
-      </div>
+      {hasMultipleZones && (
+        <div style={rowStyle}>
+          <span>{activeZoneId === 'front' ? t('Include back?') : t('Include front?')}</span>
+          <ToggleSwitch value={includeBack} onChange={setIncludeBack} />
+        </div>
+      )}
 
       {exportError && (
         <div style={{ padding: '6px 14px', fontSize: 11, color: '#E65100', background: '#FFF3E0' }}>

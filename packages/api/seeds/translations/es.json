@@ -967,5 +967,11 @@
   "uses default": "usa predeterminado",
   "Editing default zones — used when no variant is selected": "Editando zonas predeterminadas — se usan cuando no hay variante seleccionada",
   "Editing zones for": "Editando zonas de",
-  "Variants": "Variantes"
+  "Variants": "Variantes",
+  "Product Overlay": "Overlay del Producto",
+  "PNG with transparency. Opaque areas render ON TOP of the design (camera cutouts, product edges). Transparent areas let the design show through.": "PNG con transparencia. Las áreas opacas se renderizan ENCIMA del diseño (recortes de cámara, bordes del producto). Las áreas transparentes dejan ver el diseño.",
+  "Upload Overlay Image": "Subir Imagen de Overlay",
+  "Change Overlay": "Cambiar Overlay",
+  "Remove Overlay": "Quitar Overlay",
+  "Select quantity in the Product tab before adding to cart.": "Selecciona la cantidad en la pestaña de Producto antes de agregar al carrito."
 }

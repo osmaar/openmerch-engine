@@ -207,14 +207,14 @@ async function exportMockupPreview(
   hiddenNodes.forEach((n) => n.visible(true));
   stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
 
-  // Composite: mockup + design clipped to print zone
+  // Composite: mockup + design clipped to print zone + overlay on top
   const finalCanvas = document.createElement('canvas');
   finalCanvas.width = mockupCanvas.width;
   finalCanvas.height = mockupCanvas.height;
   const ctx = finalCanvas.getContext('2d');
   if (!ctx) throw new Error('No canvas context');
 
-  // Draw mockup
+  // Draw mockup (base product image)
   ctx.drawImage(mockupCanvas, 0, 0);
 
   // Clip design to print zone area
@@ -229,6 +229,40 @@ async function exportMockupPreview(
   ctx.clip();
   ctx.drawImage(designCanvas, 0, 0);
   ctx.restore();
+
+  // Pass 3: Draw overlay on top (product mask — camera cutouts, edges, shapes)
+  // The overlay sits in the non-listening layers. We capture just those layers
+  // with design hidden, then composite on top.
+  designLayers.forEach((layer) => { (layer as unknown as KonvaNode).visible(false); });
+  // Also hide the base image layer (layer 0) — we only want overlay from layer 2+
+  let firstLayer: KonvaLayer | undefined;
+  let layerIdx = 0;
+  stage.getLayers().forEach((l: KonvaLayer) => { if (layerIdx === 0) firstLayer = l; layerIdx++; });
+  if (firstLayer) firstLayer.getChildren().forEach((n: KonvaNode) => n.visible(false));
+  // Hide print zone guide and snap guides (keep only overlay images)
+  const guideNodes: KonvaNode[] = [];
+  stage.getLayers().forEach((layer: KonvaLayer) => {
+    if (!layer.listening()) {
+      layer.getChildren().forEach((node: KonvaNode & { getClassName?: () => string }) => {
+        if (node.getClassName?.() !== 'Image') {
+          node.visible(false);
+          guideNodes.push(node);
+        }
+      });
+    }
+  });
+  stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
+  await new Promise((r) => setTimeout(r, 50));
+
+  const overlayCanvas = stage.toCanvas({ x: cropX, y: cropY, width: cropW, height: cropH, pixelRatio });
+  ctx.drawImage(overlayCanvas, 0, 0);
+
+  // Restore everything
+  designLayers.forEach((layer) => { (layer as unknown as KonvaNode).visible(true); });
+  if (firstLayer) firstLayer.getChildren().forEach((n: KonvaNode) => n.visible(true));
+  guideNodes.forEach((n) => n.visible(true));
+  hiddenNodes.forEach((n) => n.visible(true));
+  stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
 
   if (options.format === 'png') {
     downloadCanvas(finalCanvas, `${filename}.png`);

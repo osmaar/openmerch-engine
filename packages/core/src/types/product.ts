@@ -33,6 +33,10 @@ export interface ProductZone {
   printAreaXMM: number;
   printAreaYMM: number;
   baseImageUrl: string;
+  /** Optional overlay PNG rendered ON TOP of design layers. Transparent areas
+   *  let the design show through; opaque areas represent product features
+   *  (camera cutout, edges, bumper) that should appear above the design. */
+  overlayImageUrl?: string;
 }
 
 export type DecorationTechnique = 'sublimation' | 'screenPrinting' | 'embroidery';

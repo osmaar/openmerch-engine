@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 2 nearly complete — 13 product bases with variants (T-shirts, Hoodies, Caps, Mugs, Phone Cases, Posters, Desk Mats, Mousepads, Pillows), Settings API with encryption, BullMQ production jobs, full i18n (EN/ES/FR). Next: product masks/overlays, rembg AI background removal, CMS integration.
+> **Status:** Phase 2 nearly complete — Product overlay/mask system (designs clip to print area, overlays render product features on top), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. Next: rembg AI background removal, displacement maps, CMS integration.
 
 ---
 
@@ -161,6 +161,8 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Admin panel i18n (separate translation system for merchant dashboard)
   - [x] BullMQ production job queue (Docker worker, 300 DPI print + 96 DPI mockup, custom fonts + Google Fonts)
   - [x] Settings API (AES-256 encryption, proxy endpoints, dynamic branding/favicon/store name)
+  - [x] Product overlay/mask system (designs clip to print area, overlays for camera/edges/shapes)
+  - [x] Interactive Konva zone editor in admin (drag & resize print areas visually)
   - [ ] Checkout flow (payment → production files generation)
   - [ ] rembg AI-powered background removal (Python)
 - [ ] 2D preview with displacement maps (Phase 2)

@@ -50,6 +50,9 @@ importers:
       '@mantine/notifications':
         specifier: ^9.0.0
         version: 9.0.0(@mantine/core@9.0.0(@mantine/hooks@9.0.0(react@19.2.4))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@mantine/hooks@9.0.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      konva:
+        specifier: ^9.3.18
+        version: 9.3.22
       lucide-react:
         specifier: ^0.511.0
         version: 0.511.0(react@19.2.4)
@@ -59,6 +62,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      react-konva:
+        specifier: ^19.0.3
+        version: 19.2.3(@types/react@19.2.14)(konva@9.3.22)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-router-dom:
         specifier: ^7.6.1
         version: 7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

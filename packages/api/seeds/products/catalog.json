@@ -231,10 +231,10 @@
         "baseImageUrl": "/products/mug/variants/11oz.png",
         "baseImageWidthMM": 500,
         "baseImageHeightMM": 500,
-        "printAreaWidthMM": 260,
-        "printAreaHeightMM": 308,
-        "printAreaXMM": 120,
-        "printAreaYMM": 117
+        "printAreaWidthMM": 250,
+        "printAreaHeightMM": 307,
+        "printAreaXMM": 125,
+        "printAreaYMM": 114
       }
     ],
     "variants": [
@@ -249,9 +249,9 @@
             "baseImageWidthMM": 500,
             "baseImageHeightMM": 500,
             "printAreaWidthMM": 250,
-            "printAreaHeightMM": 308,
+            "printAreaHeightMM": 309,
             "printAreaXMM": 120,
-            "printAreaYMM": 117
+            "printAreaYMM": 115
           }
         ]
       },
@@ -266,9 +266,9 @@
             "baseImageWidthMM": 500,
             "baseImageHeightMM": 500,
             "printAreaWidthMM": 230,
-            "printAreaHeightMM": 333,
+            "printAreaHeightMM": 328,
             "printAreaXMM": 136,
-            "printAreaYMM": 100
+            "printAreaYMM": 105
           }
         ]
       },
@@ -283,9 +283,9 @@
             "baseImageWidthMM": 500,
             "baseImageHeightMM": 500,
             "printAreaWidthMM": 250,
-            "printAreaHeightMM": 342,
+            "printAreaHeightMM": 333,
             "printAreaXMM": 120,
-            "printAreaYMM": 92
+            "printAreaYMM": 101
           }
         ]
       }
@@ -311,10 +311,10 @@
         "baseImageUrl": "/products/phone-case/variants/iphone-16-pro.png",
         "baseImageWidthMM": 500,
         "baseImageHeightMM": 500,
-        "printAreaWidthMM": 175,
-        "printAreaHeightMM": 380,
-        "printAreaXMM": 160,
-        "printAreaYMM": 65
+        "printAreaWidthMM": 179,
+        "printAreaHeightMM": 375,
+        "printAreaXMM": 159,
+        "printAreaYMM": 68
       }
     ],
     "variants": [
@@ -705,7 +705,8 @@
             "printAreaWidthMM": 200,
             "printAreaHeightMM": 410,
             "printAreaXMM": 150,
-            "printAreaYMM": 35
+            "printAreaYMM": 35,
+            "overlayImageUrl": "/products/phone-case/overlays/iphone-15-pro-max-overlay.png"
           }
         ]
       },
@@ -841,7 +842,8 @@
             "printAreaWidthMM": 180,
             "printAreaHeightMM": 295,
             "printAreaXMM": 160,
-            "printAreaYMM": 155
+            "printAreaYMM": 155,
+            "overlayImageUrl": "/products/phone-case/overlays/iphone-17-pro-max-overlay.png"
           }
         ]
       }
@@ -881,12 +883,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/wall-art/variants/5x7.png",
-            "printAreaXMM": 65,
-            "printAreaYMM": 65,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 370,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 310
+            "printAreaWidthMM": 213,
+            "printAreaHeightMM": 153,
+            "printAreaXMM": 143,
+            "printAreaYMM": 174
           }
         ]
       },
@@ -898,12 +900,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/wall-art/variants/8x10.png",
-            "printAreaXMM": 60,
-            "printAreaYMM": 60,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 380,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 320
+            "printAreaWidthMM": 302,
+            "printAreaHeightMM": 241,
+            "printAreaXMM": 99,
+            "printAreaYMM": 130
           }
         ]
       },
@@ -915,12 +917,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/wall-art/variants/12x16.png",
-            "printAreaXMM": 55,
-            "printAreaYMM": 55,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 390,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 330
+            "printAreaWidthMM": 302,
+            "printAreaHeightMM": 224,
+            "printAreaXMM": 99,
+            "printAreaYMM": 138
           }
         ]
       },
@@ -932,12 +934,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/wall-art/variants/16x20.png",
-            "printAreaXMM": 52,
-            "printAreaYMM": 52,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 395,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 335
+            "printAreaWidthMM": 375,
+            "printAreaHeightMM": 302,
+            "printAreaXMM": 62,
+            "printAreaYMM": 99
           }
         ]
       },
@@ -949,12 +951,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/wall-art/variants/18x24.png",
-            "printAreaXMM": 50,
-            "printAreaYMM": 50,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 400,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 340
+            "printAreaWidthMM": 400,
+            "printAreaHeightMM": 300,
+            "printAreaXMM": 50,
+            "printAreaYMM": 101
           }
         ]
       },
@@ -966,12 +968,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/wall-art/variants/24x36.png",
-            "printAreaXMM": 45,
-            "printAreaYMM": 45,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 410,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 350
+            "printAreaWidthMM": 402,
+            "printAreaHeightMM": 268,
+            "printAreaXMM": 49,
+            "printAreaYMM": 116
           }
         ]
       }
@@ -1021,10 +1023,10 @@
         "baseImageUrl": "/products/desk-mat/variants/16x32.png",
         "baseImageWidthMM": 500,
         "baseImageHeightMM": 500,
-        "printAreaWidthMM": 470,
-        "printAreaHeightMM": 235,
-        "printAreaXMM": 15,
-        "printAreaYMM": 130
+        "printAreaWidthMM": 462,
+        "printAreaHeightMM": 231,
+        "printAreaXMM": 19,
+        "printAreaYMM": 132
       }
     ],
     "variants": [
@@ -1036,12 +1038,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/desk-mat/variants/12x18.png",
-            "printAreaXMM": 65,
-            "printAreaYMM": 148,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 370,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 200
+            "printAreaWidthMM": 297,
+            "printAreaHeightMM": 198,
+            "printAreaXMM": 101,
+            "printAreaYMM": 147
           }
         ]
       },
@@ -1053,12 +1055,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/desk-mat/variants/12x22.png",
-            "printAreaXMM": 55,
-            "printAreaYMM": 150,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 390,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 195
+            "printAreaWidthMM": 316,
+            "printAreaHeightMM": 170,
+            "printAreaXMM": 91,
+            "printAreaYMM": 162
           }
         ]
       },
@@ -1070,12 +1072,12 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/desk-mat/variants/16x32.png",
-            "printAreaXMM": 45,
-            "printAreaYMM": 150,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 410,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 195
+            "printAreaWidthMM": 463,
+            "printAreaHeightMM": 230,
+            "printAreaXMM": 18,
+            "printAreaYMM": 133
           }
         ]
       }
@@ -1151,23 +1153,23 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/pillow/variants/18x18-front.png",
-            "printAreaXMM": 95,
-            "printAreaYMM": 75,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 310,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 310
+            "printAreaWidthMM": 324,
+            "printAreaHeightMM": 313,
+            "printAreaXMM": 85,
+            "printAreaYMM": 91
           },
           {
             "id": "back",
             "name": "Back",
             "baseImageUrl": "/products/pillow/variants/18x18-back.png",
-            "printAreaXMM": 95,
-            "printAreaYMM": 75,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 310,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 310
+            "printAreaWidthMM": 310,
+            "printAreaHeightMM": 310,
+            "printAreaXMM": 95,
+            "printAreaYMM": 75
           }
         ]
       },
@@ -1179,23 +1181,23 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/pillow/variants/20x12-front.png",
-            "printAreaXMM": 60,
-            "printAreaYMM": 130,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 380,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 210
+            "printAreaWidthMM": 362,
+            "printAreaHeightMM": 220,
+            "printAreaXMM": 70,
+            "printAreaYMM": 141
           },
           {
             "id": "back",
             "name": "Back",
             "baseImageUrl": "/products/pillow/variants/20x12-back.png",
-            "printAreaXMM": 60,
-            "printAreaYMM": 130,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 380,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 210
+            "printAreaWidthMM": 380,
+            "printAreaHeightMM": 210,
+            "printAreaXMM": 60,
+            "printAreaYMM": 130
           }
         ]
       },
@@ -1207,23 +1209,23 @@
             "id": "front",
             "name": "Front",
             "baseImageUrl": "/products/pillow/variants/22x22-front.png",
-            "printAreaXMM": 85,
-            "printAreaYMM": 65,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 330,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 330
+            "printAreaWidthMM": 403,
+            "printAreaHeightMM": 394,
+            "printAreaXMM": 48,
+            "printAreaYMM": 58
           },
           {
             "id": "back",
             "name": "Back",
             "baseImageUrl": "/products/pillow/variants/22x22-back.png",
-            "printAreaXMM": 85,
-            "printAreaYMM": 65,
             "baseImageWidthMM": 500,
-            "printAreaWidthMM": 330,
             "baseImageHeightMM": 500,
-            "printAreaHeightMM": 330
+            "printAreaWidthMM": 330,
+            "printAreaHeightMM": 330,
+            "printAreaXMM": 85,
+            "printAreaYMM": 65
           }
         ]
       }
