@@ -84,22 +84,32 @@ pnpm db:generate
 pnpm db:migrate
 ```
 
-### 4. Seed Default Translations (i18n)
+### 4. Seed Default Data (i18n + Products)
 
-OpenMerch ships with **English** (default), **Spanish**, and **French** translations for **both the editor and the admin panel**. Load them into the database:
+OpenMerch ships seed data for **languages**, **translations**, and the **13 base products** (with variants and overlays). One command loads everything:
 
 ```bash
 cd packages/api
 pnpm db:seed
 ```
 
-This reads JSON files from `seeds/translations/*.json` and inserts them as languages + translations. The script is **idempotent** — running it multiple times won't overwrite existing translations.
+The script (`src/seed.ts`) is **idempotent** — running it multiple times won't overwrite existing data.
 
 **What gets seeded:**
-- Languages: Spanish (es), French (fr)
-- ~490 translation keys per language covering the entire editor UI **and** admin panel UI (all pages, modals, toasts, validation messages, API error messages)
-- English is the source language (no translation needed — it's hardcoded)
-- API error messages (`Product not found`, `Asset not found`, etc.) are also seeded so the frontend can translate them via `t(error.message)`
+
+| Source | What it creates |
+|---|---|
+| `seeds/translations/*.json` (en, es, fr) | Languages + ~490 translation keys per language (editor + admin UI) |
+| `seeds/products/catalog.json` | 13 products with zones, variants, and `overlayImageUrl` references |
+
+**Products seeded** (from `seeds/products/catalog.json`):
+
+13 base products covering t-shirts, hoodies, caps, mugs, phone cases, posters, mats, mousepads and pillows. Each `overlayImageUrl` in the catalog points to a PNG that must exist on disk under `products/<slug>/overlays/` (consumed by the Docker worker) and `apps/demo/public/products/<slug>/overlays/` (served to the browser editor). The corresponding PSD sources live in `overlays-products-base/` at the repo root. See the [Product Overlays section in the root README](../../README.md#product-overlays) for the full workflow.
+
+**Translations seeded:**
+- Languages: Spanish (es), French (fr) — English is the source (hardcoded, no translation needed)
+- ~490 keys per language covering the editor UI and admin panel UI (pages, modals, toasts, validation, API error messages)
+- API error messages (`Product not found`, `Asset not found`, etc.) are seeded too, so the frontend can translate them via `t(error.message)`
 
 **Adding a new language to the seed:**
 
@@ -338,7 +348,7 @@ MinIO console is available at `http://localhost:9001` (user: openmerch, pass: op
 - [x] Settings API (AES-256 encryption, proxy endpoints, branding/favicon/store name)
 - [x] Product seeds (13 products with variants, calibrated print zones, Printful mockups)
 - [x] Product variant system (zones per variant, variant selector in editor)
-- [x] Product masks/overlays (overlay system, Konva zone editor, clip visual, variant-aware rendering)
+- [x] Product masks/overlays (overlay system, Konva zone editor, clip visual, variant-aware rendering, 21 overlay PNGs versioned with PSD sources)
 - [ ] Checkout flow (payment → auto production file generation)
 - [ ] rembg integration (Python remove background)
 - [ ] WooCommerce webhook handler

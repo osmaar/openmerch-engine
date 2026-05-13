@@ -1,0 +1,57 @@
+iPhone Case overlays — pendientes
+==================================
+
+Overlay listo (1/31):
+  - iphone-17-pro-max
+
+Pendientes (30/31):
+   1. iphone-7-8
+   2. iphone-se
+   3. iphone-x-xs
+   4. iphone-xr
+   5. iphone-11
+   6. iphone-11-pro
+   7. iphone-11-pro-max
+   8. iphone-12-mini
+   9. iphone-12
+  10. iphone-12-pro
+  11. iphone-12-pro-max
+  12. iphone-13-mini
+  13. iphone-13
+  14. iphone-13-pro
+  15. iphone-13-pro-max
+  16. iphone-14
+  17. iphone-14-plus
+  18. iphone-14-pro
+  19. iphone-14-pro-max
+  20. iphone-15
+  21. iphone-15-plus
+  22. iphone-15-pro
+  23. iphone-15-pro-max
+  24. iphone-16
+  25. iphone-16-plus
+  26. iphone-16-pro
+  27. iphone-16-pro-max
+  28. iphone-17
+  29. iphone-17-air
+  30. iphone-17-pro
+
+Proceso (resumen):
+  1. Abrir el PSD base (iphone-17-pro-max.psd) o partir del mockup en
+     products/phone-case/variants/<model>.png
+  2. Recortar superficie imprimible (la parte transparente) — todo lo demás
+     opaco (cámara, bordes, esquinas redondeadas).
+  3. Exportar PNG con transparencia → guardar como
+     <model>-overlay.png en esta carpeta.
+  4. Copiar a:
+       products/phone-case/overlays/<model>-overlay.png
+       apps/demo/public/products/phone-case/overlays/<model>-overlay.png
+  5. En packages/api/seeds/products/catalog.json, dentro de la variante
+     correspondiente del iPhone Case, agregar el campo:
+       "overlayImageUrl": "/products/phone-case/overlays/<model>-overlay.png"
+  6. Volver a correr el seed (o solo recargar la página en admin si el
+     producto ya fue importado vía UI).
+
+Nota: la cobertura del MVP se considera completa con solo el 17 Pro Max
+como ejemplo. El resto queda como trabajo del merchant según los modelos
+que efectivamente quiera ofrecer.

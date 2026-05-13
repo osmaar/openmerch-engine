@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 2 nearly complete — Product overlay/mask system (designs clip to print area, overlays render product features on top), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. Next: rembg AI background removal, displacement maps, CMS integration.
+> **Status:** Phase 2 complete — Product overlay/mask system closed with MVP coverage (21 overlays across 7 product types, 7 PSD sources versioned), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. Next: rembg AI background removal, displacement maps, CMS integration.
 
 ---
 
@@ -33,9 +33,20 @@ OpenMerch Engine lets any ecommerce store offer visual product customization dir
 
 ## Supported Products (MVP)
 
-- T-shirts
+13 base products with calibrated print zones, variants, and overlay masks where applicable:
 
-> More products (hoodies, mugs, caps, phone cases, posters, mousepads) coming in future releases.
+| Product | Variants | Overlay |
+|---|---|---|
+| Classic / Oversized / Box T-Shirt | S/M/L/XL × 12 colors | — |
+| Premium Hoodie | sizes × colors | — |
+| Dad Hat / Trucker Hat | one size × colors | — |
+| Glossy Mug | 11 oz / 15 oz / 20 oz | ✅ |
+| iPhone Case | 31 models (iPhone 7 → 17 Pro Max) | ⚠️ 1/31 (17 Pro Max only) |
+| Wall Art Poster | 5×7 → 24×36 in (6 sizes) | ✅ |
+| Flag Poster | one size | ✅ |
+| Desk Mat | 12×18 / 12×22 / 16×32 in | ✅ |
+| Mousepad | one size | ✅ |
+| Throw Pillow | 18×18 / 20×12 / 22×22 in (front + back) | ✅ |
 
 ## Decoration Techniques (MVP)
 
@@ -86,8 +97,17 @@ openmerch-engine/
 │   └── admin/        # Merchant admin panel (Mantine UI)
 ├── plugins/
 │   └── plugin-woocommerce/   # WooCommerce PHP plugin
-└── products/
-    └── tshirt/       # Product assets and zone definitions
+├── products/                  # Product mockups + overlays consumed by the worker
+│   ├── tshirt/
+│   ├── mug/
+│   ├── phone-case/
+│   │   ├── variants/          # Per-model base mockups (iphone-17-pro-max.png, …)
+│   │   └── overlays/          # Per-model overlay PNGs (camera cutouts, edges)
+│   └── …                      # one folder per product slug
+└── overlays-products-base/    # PSD sources for overlays (artist working files)
+    ├── case iphone/
+    ├── mug/
+    └── …                      # one folder per product, with the .psd + exported PNGs
 ```
 
 **Stack:** React 19 · TypeScript · Konva.js · Zustand · Fastify · BullMQ · Sharp · PostgreSQL · Redis · MinIO · Python + pyembroidery
@@ -226,6 +246,72 @@ This loads all translations from `packages/api/seeds/translations/*.json` into t
 The editor uses ~337 unique strings organized in 25 sections (NavBar, Cart, Toolbars, Tabs, Popovers, Filters, AI prompts, etc.). All strings are visible in the admin panel under **Languages → Translations → OpenMerch Editor tab**, with section headers for easy navigation.
 
 Both the editor and the admin panel are fully translated.
+
+---
+
+## Product Overlays
+
+Overlays are PNGs with transparency that render **on top** of the customer's design — they reproduce features of the physical product that the design cannot cover: phone-camera cutouts, rounded corners, rim of a mug, edges of a poster, etc. They make the preview (and the production-file export) look like the real product.
+
+### Where overlays live
+
+```
+overlays-products-base/         ← PSD sources (artist working files, versioned)
+  case iphone/iphone-17-pro-max.psd
+  mug/mug.psd
+  …
+
+products/<slug>/overlays/        ← PNGs consumed by the Docker worker (production files)
+  mug/overlays/11oz-overlay.png
+  phone-case/overlays/iphone-17-pro-max-overlay.png
+  …
+
+apps/demo/public/products/<slug>/overlays/   ← Same PNGs, served by Vite to the browser editor
+```
+
+The two PNG copies are intentional and must stay in sync: the worker reads from `products/` (mounted into the Docker image), while the browser-side editor fetches from `apps/demo/public/products/` over HTTP.
+
+### How they get applied at runtime
+
+Each zone (or variant zone) in `packages/api/seeds/products/catalog.json` may carry an `overlayImageUrl`:
+
+```json
+{
+  "id": "iphone-17-pro-max",
+  "name": "iPhone 17 Pro Max",
+  "zones": [{
+    "id": "back",
+    "baseImageUrl": "/products/phone-case/variants/iphone-17-pro-max.png",
+    "overlayImageUrl": "/products/phone-case/overlays/iphone-17-pro-max-overlay.png",
+    ...
+  }]
+}
+```
+
+When the seed runs (`pnpm --filter @openmerch/api db:seed`), the path is stored in the `products.zones` / `products.variants` JSONB column. Both the editor (compositing layer above the design) and the renderer (3-pass export: base → clipped design → overlay) honor that field automatically.
+
+### Adding overlays for a new product
+
+1. **Create the PSD** in `overlays-products-base/<product>/`, working from the base mockup as a reference layer.
+2. **Cut out the printable area** (delete it to transparent). Everything else stays opaque — the parts of the product that should sit on top of the design.
+3. **Export each variant** as `<variant>-overlay.png` (or `<zone>-overlay.png` for single-zone products) into the same folder.
+4. **Copy the exported PNGs** to both:
+   - `products/<slug>/overlays/<variant>-overlay.png`
+   - `apps/demo/public/products/<slug>/overlays/<variant>-overlay.png`
+5. **Add the path** to the corresponding zone in `packages/api/seeds/products/catalog.json`:
+   ```json
+   "overlayImageUrl": "/products/<slug>/overlays/<variant>-overlay.png"
+   ```
+6. **Re-run the product seed:**
+   ```bash
+   pnpm --filter @openmerch/api db:seed
+   ```
+
+Alternatively, a merchant who already has the platform running can upload overlays via **Admin → Products → Edit → Zone → Upload Overlay Image** without touching the seed. That path stores the overlay against the running database only and is the right choice for store-specific products that won't ship with the open-source project.
+
+### Current coverage
+
+21 overlays across 7 product types are versioned and load automatically with `db:seed:products`. T-shirts, hoodies, and caps don't ship with overlays — they have no cutouts that warrant one. The iPhone Case ships with the iPhone 17 Pro Max overlay only as a reference; the pending models (30/31) are listed in `overlays-products-base/case iphone/TODO.txt` with the full step-by-step process.
 
 ---
 

@@ -234,7 +234,8 @@
         "printAreaWidthMM": 250,
         "printAreaHeightMM": 307,
         "printAreaXMM": 125,
-        "printAreaYMM": 114
+        "printAreaYMM": 114,
+        "overlayImageUrl": "/products/mug/overlays/11oz-overlay.png"
       }
     ],
     "variants": [
@@ -251,7 +252,8 @@
             "printAreaWidthMM": 250,
             "printAreaHeightMM": 309,
             "printAreaXMM": 120,
-            "printAreaYMM": 115
+            "printAreaYMM": 115,
+            "overlayImageUrl": "/products/mug/overlays/11oz-overlay.png"
           }
         ]
       },
@@ -268,7 +270,8 @@
             "printAreaWidthMM": 230,
             "printAreaHeightMM": 328,
             "printAreaXMM": 136,
-            "printAreaYMM": 105
+            "printAreaYMM": 105,
+            "overlayImageUrl": "/products/mug/overlays/15oz-overlay.png"
           }
         ]
       },
@@ -285,7 +288,8 @@
             "printAreaWidthMM": 250,
             "printAreaHeightMM": 333,
             "printAreaXMM": 120,
-            "printAreaYMM": 101
+            "printAreaYMM": 101,
+            "overlayImageUrl": "/products/mug/overlays/20oz-overlay.png"
           }
         ]
       }
@@ -705,8 +709,7 @@
             "printAreaWidthMM": 200,
             "printAreaHeightMM": 410,
             "printAreaXMM": 150,
-            "printAreaYMM": 35,
-            "overlayImageUrl": "/products/phone-case/overlays/iphone-15-pro-max-overlay.png"
+            "printAreaYMM": 35
           }
         ]
       },
@@ -871,7 +874,8 @@
         "printAreaWidthMM": 400,
         "printAreaHeightMM": 300,
         "printAreaXMM": 50,
-        "printAreaYMM": 100
+        "printAreaYMM": 100,
+        "overlayImageUrl": "/products/wall-art/overlays/18x24-overlay.png"
       }
     ],
     "variants": [
@@ -888,7 +892,8 @@
             "printAreaWidthMM": 213,
             "printAreaHeightMM": 153,
             "printAreaXMM": 143,
-            "printAreaYMM": 174
+            "printAreaYMM": 174,
+            "overlayImageUrl": "/products/wall-art/overlays/5x7-overlay.png"
           }
         ]
       },
@@ -905,7 +910,8 @@
             "printAreaWidthMM": 302,
             "printAreaHeightMM": 241,
             "printAreaXMM": 99,
-            "printAreaYMM": 130
+            "printAreaYMM": 130,
+            "overlayImageUrl": "/products/wall-art/overlays/8x10-overlay.png"
           }
         ]
       },
@@ -922,7 +928,8 @@
             "printAreaWidthMM": 302,
             "printAreaHeightMM": 224,
             "printAreaXMM": 99,
-            "printAreaYMM": 138
+            "printAreaYMM": 138,
+            "overlayImageUrl": "/products/wall-art/overlays/12x16-overlay.png"
           }
         ]
       },
@@ -939,7 +946,8 @@
             "printAreaWidthMM": 375,
             "printAreaHeightMM": 302,
             "printAreaXMM": 62,
-            "printAreaYMM": 99
+            "printAreaYMM": 99,
+            "overlayImageUrl": "/products/wall-art/overlays/16x20-overlay.png"
           }
         ]
       },
@@ -956,7 +964,8 @@
             "printAreaWidthMM": 400,
             "printAreaHeightMM": 300,
             "printAreaXMM": 50,
-            "printAreaYMM": 101
+            "printAreaYMM": 101,
+            "overlayImageUrl": "/products/wall-art/overlays/18x24-overlay.png"
           }
         ]
       },
@@ -973,7 +982,8 @@
             "printAreaWidthMM": 402,
             "printAreaHeightMM": 268,
             "printAreaXMM": 49,
-            "printAreaYMM": 116
+            "printAreaYMM": 116,
+            "overlayImageUrl": "/products/wall-art/overlays/24x36-overlay.png"
           }
         ]
       }
@@ -1000,7 +1010,8 @@
         "printAreaWidthMM": 270,
         "printAreaHeightMM": 430,
         "printAreaXMM": 115,
-        "printAreaYMM": 40
+        "printAreaYMM": 40,
+        "overlayImageUrl": "/products/poster/overlays/front-overlay.png"
       }
     ]
   },
@@ -1026,7 +1037,8 @@
         "printAreaWidthMM": 462,
         "printAreaHeightMM": 231,
         "printAreaXMM": 19,
-        "printAreaYMM": 132
+        "printAreaYMM": 132,
+        "overlayImageUrl": "/products/desk-mat/overlays/16x32-overlay.png"
       }
     ],
     "variants": [
@@ -1043,7 +1055,8 @@
             "printAreaWidthMM": 297,
             "printAreaHeightMM": 198,
             "printAreaXMM": 101,
-            "printAreaYMM": 147
+            "printAreaYMM": 147,
+            "overlayImageUrl": "/products/desk-mat/overlays/12x18-overlay.png"
           }
         ]
       },
@@ -1060,7 +1073,8 @@
             "printAreaWidthMM": 316,
             "printAreaHeightMM": 170,
             "printAreaXMM": 91,
-            "printAreaYMM": 162
+            "printAreaYMM": 162,
+            "overlayImageUrl": "/products/desk-mat/overlays/12x22-overlay.png"
           }
         ]
       },
@@ -1077,7 +1091,8 @@
             "printAreaWidthMM": 463,
             "printAreaHeightMM": 230,
             "printAreaXMM": 18,
-            "printAreaYMM": 133
+            "printAreaYMM": 133,
+            "overlayImageUrl": "/products/desk-mat/overlays/16x32-overlay.png"
           }
         ]
       }
@@ -1104,7 +1119,8 @@
         "printAreaWidthMM": 450,
         "printAreaHeightMM": 375,
         "printAreaXMM": 25,
-        "printAreaYMM": 60
+        "printAreaYMM": 60,
+        "overlayImageUrl": "/products/mousepad/overlays/front-overlay.png"
       }
     ]
   },
@@ -1130,7 +1146,8 @@
         "printAreaWidthMM": 315,
         "printAreaHeightMM": 315,
         "printAreaXMM": 90,
-        "printAreaYMM": 95
+        "printAreaYMM": 95,
+        "overlayImageUrl": "/products/pillow/overlays/18x18-front-overlay.png"
       },
       {
         "id": "back",
@@ -1141,7 +1158,8 @@
         "printAreaWidthMM": 315,
         "printAreaHeightMM": 315,
         "printAreaXMM": 90,
-        "printAreaYMM": 95
+        "printAreaYMM": 95,
+        "overlayImageUrl": "/products/pillow/overlays/18x18-back-overlay.png"
       }
     ],
     "variants": [
@@ -1158,7 +1176,8 @@
             "printAreaWidthMM": 324,
             "printAreaHeightMM": 313,
             "printAreaXMM": 85,
-            "printAreaYMM": 91
+            "printAreaYMM": 91,
+            "overlayImageUrl": "/products/pillow/overlays/18x18-front-overlay.png"
           },
           {
             "id": "back",
@@ -1169,7 +1188,8 @@
             "printAreaWidthMM": 310,
             "printAreaHeightMM": 310,
             "printAreaXMM": 95,
-            "printAreaYMM": 75
+            "printAreaYMM": 75,
+            "overlayImageUrl": "/products/pillow/overlays/18x18-back-overlay.png"
           }
         ]
       },
@@ -1186,7 +1206,8 @@
             "printAreaWidthMM": 362,
             "printAreaHeightMM": 220,
             "printAreaXMM": 70,
-            "printAreaYMM": 141
+            "printAreaYMM": 141,
+            "overlayImageUrl": "/products/pillow/overlays/20x12-front-overlay.png"
           },
           {
             "id": "back",
@@ -1197,7 +1218,8 @@
             "printAreaWidthMM": 380,
             "printAreaHeightMM": 210,
             "printAreaXMM": 60,
-            "printAreaYMM": 130
+            "printAreaYMM": 130,
+            "overlayImageUrl": "/products/pillow/overlays/20x12-back-overlay.png"
           }
         ]
       },
@@ -1214,7 +1236,8 @@
             "printAreaWidthMM": 403,
             "printAreaHeightMM": 394,
             "printAreaXMM": 48,
-            "printAreaYMM": 58
+            "printAreaYMM": 58,
+            "overlayImageUrl": "/products/pillow/overlays/22x22-front-overlay.png"
           },
           {
             "id": "back",
@@ -1225,7 +1248,8 @@
             "printAreaWidthMM": 330,
             "printAreaHeightMM": 330,
             "printAreaXMM": 85,
-            "printAreaYMM": 65
+            "printAreaYMM": 65,
+            "overlayImageUrl": "/products/pillow/overlays/22x22-back-overlay.png"
           }
         ]
       }
