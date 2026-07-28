@@ -8,7 +8,26 @@ interface ExportOptions {
   dpi?: number;
 }
 
-let exportCounter = 0;
+/** Characters that don't survive a filesystem path unescaped, replaced with "-". */
+const UNSAFE_FILENAME_CHARS = /[^a-z0-9_-]+/gi;
+
+function slugifyForFilename(value: string): string {
+  return value.replace(UNSAFE_FILENAME_CHARS, '-');
+}
+
+/**
+ * `{producto}_{variante}_{uuid}` — lets merchants match a downloaded file
+ * back to the exact product/variant/design it came from without opening it.
+ * Falls back to "product"/"default" when a product or variant isn't set
+ * (e.g. single-variant products never populate `selectedVariantId`).
+ */
+function buildExportFilename(): string {
+  const { product, selectedVariantId, design } = useEditorStore.getState();
+  const productPart = slugifyForFilename(product?.slug ?? 'product');
+  const variantPart = slugifyForFilename(selectedVariantId ?? 'default');
+  const uuidPart = design?.id ?? crypto.randomUUID();
+  return `${productPart}_${variantPart}_${uuidPart}`;
+}
 
 export async function exportDesign(options: ExportOptions): Promise<void> {
   const { stageRef, canvasLayout, showPrintZone } = useEditorStore.getState();
@@ -46,12 +65,13 @@ export async function exportDesign(options: ExportOptions): Promise<void> {
 
   await new Promise((r) => setTimeout(r, 200));
 
-  exportCounter++;
-
   try {
     // Export current zone
     const currentZone = useEditorStore.getState().activeZoneId;
-    const filename = `design_openmerch_${exportCounter}_${currentZone}`;
+    const baseFilename = buildExportFilename();
+    // Only disambiguate with the zone id when both sides are being exported —
+    // otherwise front/back would download as two files with the identical name.
+    const filename = options.includeBack ? `${baseFilename}_${currentZone}` : baseFilename;
 
     if (options.includeBase) {
       await exportMockupPreview(stage, canvasLayout, options, filename);
@@ -73,7 +93,7 @@ export async function exportDesign(options: ExportOptions): Promise<void> {
           const newLayout = useEditorStore.getState().canvasLayout;
           const newStage = useEditorStore.getState().stageRef?.current as KonvaStage | null;
           if (newLayout && newStage) {
-            const backFilename = `design_openmerch_${exportCounter}_${otherZone.id}`;
+            const backFilename = `${baseFilename}_${otherZone.id}`;
             if (options.includeBase) {
               await exportMockupPreview(newStage, newLayout, options, backFilename);
             } else {
@@ -175,6 +195,11 @@ async function exportMockupPreview(
   stage.getLayers().forEach((layer: KonvaLayer) => {
     if (!layer.listening()) {
       layer.getChildren().forEach((node: KonvaNode & { x?: () => number; y?: () => number; width?: () => number; height?: () => number; getClassName?: () => string }) => {
+        // Skip the displacement-preview snapshot (see ProductEditor.tsx) — it's
+        // also a non-listening Image, sized to the print area rather than the
+        // full mockup, and would otherwise win this "last Image wins" scan and
+        // crop the export down to just the print area (no visible garment).
+        if (node.name?.() === 'displacement-preview') return;
         if (node.getClassName?.() === 'Image' && node.width && node.height) {
           imgX = node.x?.() ?? 0;
           imgY = node.y?.() ?? 0;
@@ -258,12 +283,15 @@ async function exportMockupPreview(
   let layerIdx = 0;
   stage.getLayers().forEach((l: KonvaLayer) => { if (layerIdx === 0) firstLayer = l; layerIdx++; });
   if (firstLayer) firstLayer.getChildren().forEach((n: KonvaNode) => n.visible(false));
-  // Hide print zone guide and snap guides (keep only overlay images)
+  // Hide print zone guide and snap guides (keep only the actual overlay images).
+  // The displacement-preview snapshot is also a non-listening Image, so it
+  // must be excluded explicitly here too — otherwise it would leak into this
+  // "overlay only" composite even though it isn't part of the product overlay.
   const guideNodes: KonvaNode[] = [];
   stage.getLayers().forEach((layer: KonvaLayer) => {
     if (!layer.listening()) {
       layer.getChildren().forEach((node: KonvaNode & { getClassName?: () => string }) => {
-        if (node.getClassName?.() !== 'Image') {
+        if (node.getClassName?.() !== 'Image' || node.name?.() === 'displacement-preview') {
           node.visible(false);
           guideNodes.push(node);
         }
@@ -376,7 +404,7 @@ function downloadUrl(url: string, filename: string): void {
   document.body.removeChild(a);
 }
 
-type KonvaNode = { visible: (v: boolean) => void; getClassName?: () => string; x?: () => number; y?: () => number; width?: () => number; height?: () => number };
+type KonvaNode = { visible: (v: boolean) => void; getClassName?: () => string; name?: () => string; x?: () => number; y?: () => number; width?: () => number; height?: () => number };
 type KonvaLayer = { listening: () => boolean; batchDraw: () => void; getChildren: () => { forEach: (fn: (n: KonvaNode) => void) => void } };
 type KonvaStage = {
   toCanvas: (config: Record<string, unknown>) => HTMLCanvasElement;

@@ -42,3 +42,16 @@ export { tintImagePixels, isWhiteTintColor } from './utils/tint-image.js';
  * without pulling in `lib.dom` as a dependency.
  */
 export type { TintableImage } from './utils/tint-image.js';
+
+/**
+ * Distort a mockup preview image with a two-channel displacement map so a
+ * design appears to follow a garment's fabric folds (preview-only — never
+ * applied to the print-ready file). See {@link ProductZone.displacementMapUrl}
+ * for the map format.
+ */
+export { applyDisplacementMap } from './utils/displacement-map.js';
+/**
+ * Minimal `ImageData`-like shape accepted by {@link applyDisplacementMap} —
+ * same duck-typing rationale as {@link TintableImage}.
+ */
+export type { DisplaceableImage } from './utils/displacement-map.js';

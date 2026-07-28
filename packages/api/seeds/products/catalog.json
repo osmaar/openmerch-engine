@@ -24,7 +24,9 @@
         "baseImageWidthMM": 500,
         "printAreaWidthMM": 200,
         "baseImageHeightMM": 500,
-        "printAreaHeightMM": 280
+        "printAreaHeightMM": 280,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3
       },
       {
         "id": "back",
@@ -35,7 +37,9 @@
         "baseImageWidthMM": 500,
         "printAreaWidthMM": 200,
         "baseImageHeightMM": 500,
-        "printAreaHeightMM": 300
+        "printAreaHeightMM": 300,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3
       }
     ]
   },
@@ -64,7 +68,9 @@
         "baseImageWidthMM": 500,
         "printAreaWidthMM": 220,
         "baseImageHeightMM": 500,
-        "printAreaHeightMM": 260
+        "printAreaHeightMM": 260,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3
       },
       {
         "id": "back",
@@ -75,7 +81,9 @@
         "baseImageWidthMM": 500,
         "printAreaWidthMM": 220,
         "baseImageHeightMM": 500,
-        "printAreaHeightMM": 280
+        "printAreaHeightMM": 280,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3
       }
     ]
   },
@@ -103,7 +111,9 @@
         "printAreaWidthMM": 200,
         "printAreaHeightMM": 320,
         "printAreaXMM": 150,
-        "printAreaYMM": 100
+        "printAreaYMM": 100,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3
       },
       {
         "id": "back",
@@ -114,7 +124,9 @@
         "printAreaWidthMM": 200,
         "printAreaHeightMM": 320,
         "printAreaXMM": 150,
-        "printAreaYMM": 85
+        "printAreaYMM": 85,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3
       }
     ]
   },
@@ -143,7 +155,9 @@
         "printAreaWidthMM": 205,
         "printAreaHeightMM": 180,
         "printAreaXMM": 170,
-        "printAreaYMM": 125
+        "printAreaYMM": 125,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3.5
       },
       {
         "id": "back",
@@ -154,7 +168,9 @@
         "printAreaWidthMM": 200,
         "printAreaHeightMM": 240,
         "printAreaXMM": 175,
-        "printAreaYMM": 140
+        "printAreaYMM": 140,
+        "displacementMapUrl": "/products/tshirt/displacement-front.png",
+        "displacementStrengthMM": 3.5
       }
     ]
   },
@@ -1056,7 +1072,9 @@
             "printAreaHeightMM": 198,
             "printAreaXMM": 101,
             "printAreaYMM": 147,
-            "overlayImageUrl": "/products/desk-mat/overlays/12x18-overlay.png"
+            "overlayImageUrl": "/products/desk-mat/overlays/12x18-overlay.png",
+            "displacementMapUrl": "/products/desk-mat/displacement-front.png",
+            "displacementStrengthMM": 2
           }
         ]
       },
@@ -1074,7 +1092,9 @@
             "printAreaHeightMM": 170,
             "printAreaXMM": 91,
             "printAreaYMM": 162,
-            "overlayImageUrl": "/products/desk-mat/overlays/12x22-overlay.png"
+            "overlayImageUrl": "/products/desk-mat/overlays/12x22-overlay.png",
+            "displacementMapUrl": "/products/desk-mat/displacement-front.png",
+            "displacementStrengthMM": 2
           }
         ]
       },
@@ -1092,7 +1112,9 @@
             "printAreaHeightMM": 230,
             "printAreaXMM": 18,
             "printAreaYMM": 133,
-            "overlayImageUrl": "/products/desk-mat/overlays/16x32-overlay.png"
+            "overlayImageUrl": "/products/desk-mat/overlays/16x32-overlay.png",
+            "displacementMapUrl": "/products/desk-mat/displacement-front.png",
+            "displacementStrengthMM": 2
           }
         ]
       }
@@ -1147,7 +1169,9 @@
         "printAreaHeightMM": 315,
         "printAreaXMM": 90,
         "printAreaYMM": 95,
-        "overlayImageUrl": "/products/pillow/overlays/18x18-front-overlay.png"
+        "overlayImageUrl": "/products/pillow/overlays/18x18-front-overlay.png",
+        "displacementMapUrl": "/products/pillow/displacement-front.png",
+        "displacementStrengthMM": 5
       },
       {
         "id": "back",
@@ -1159,7 +1183,9 @@
         "printAreaHeightMM": 315,
         "printAreaXMM": 90,
         "printAreaYMM": 95,
-        "overlayImageUrl": "/products/pillow/overlays/18x18-back-overlay.png"
+        "overlayImageUrl": "/products/pillow/overlays/18x18-back-overlay.png",
+        "displacementMapUrl": "/products/pillow/displacement-front.png",
+        "displacementStrengthMM": 5
       }
     ],
     "variants": [
@@ -1177,7 +1203,9 @@
             "printAreaHeightMM": 313,
             "printAreaXMM": 85,
             "printAreaYMM": 91,
-            "overlayImageUrl": "/products/pillow/overlays/18x18-front-overlay.png"
+            "overlayImageUrl": "/products/pillow/overlays/18x18-front-overlay.png",
+            "displacementMapUrl": "/products/pillow/displacement-front.png",
+            "displacementStrengthMM": 5
           },
           {
             "id": "back",
@@ -1189,7 +1217,9 @@
             "printAreaHeightMM": 310,
             "printAreaXMM": 95,
             "printAreaYMM": 75,
-            "overlayImageUrl": "/products/pillow/overlays/18x18-back-overlay.png"
+            "overlayImageUrl": "/products/pillow/overlays/18x18-back-overlay.png",
+            "displacementMapUrl": "/products/pillow/displacement-front.png",
+            "displacementStrengthMM": 5
           }
         ]
       },
@@ -1207,7 +1237,9 @@
             "printAreaHeightMM": 220,
             "printAreaXMM": 70,
             "printAreaYMM": 141,
-            "overlayImageUrl": "/products/pillow/overlays/20x12-front-overlay.png"
+            "overlayImageUrl": "/products/pillow/overlays/20x12-front-overlay.png",
+            "displacementMapUrl": "/products/pillow/displacement-front.png",
+            "displacementStrengthMM": 5
           },
           {
             "id": "back",
@@ -1219,7 +1251,9 @@
             "printAreaHeightMM": 210,
             "printAreaXMM": 60,
             "printAreaYMM": 130,
-            "overlayImageUrl": "/products/pillow/overlays/20x12-back-overlay.png"
+            "overlayImageUrl": "/products/pillow/overlays/20x12-back-overlay.png",
+            "displacementMapUrl": "/products/pillow/displacement-front.png",
+            "displacementStrengthMM": 5
           }
         ]
       },
@@ -1237,7 +1271,9 @@
             "printAreaHeightMM": 394,
             "printAreaXMM": 48,
             "printAreaYMM": 58,
-            "overlayImageUrl": "/products/pillow/overlays/22x22-front-overlay.png"
+            "overlayImageUrl": "/products/pillow/overlays/22x22-front-overlay.png",
+            "displacementMapUrl": "/products/pillow/displacement-front.png",
+            "displacementStrengthMM": 5
           },
           {
             "id": "back",
@@ -1249,7 +1285,9 @@
             "printAreaHeightMM": 330,
             "printAreaXMM": 85,
             "printAreaYMM": 65,
-            "overlayImageUrl": "/products/pillow/overlays/22x22-back-overlay.png"
+            "overlayImageUrl": "/products/pillow/overlays/22x22-back-overlay.png",
+            "displacementMapUrl": "/products/pillow/displacement-front.png",
+            "displacementStrengthMM": 5
           }
         ]
       }

@@ -1,0 +1,31 @@
+Throw Pillow displacement maps — pendientes
+=============================================
+
+Mapa listo (1/1, placeholder procedural, reusado en las 4 variantes y sus
+2 caras cada una — default + 18x18 + 20x12 + 22x22, front y back):
+  - front/back (displacement-front.png) — mismo criterio que desk-mat: el
+    sampling del mapa es normalizado (UV 0-1), así que un solo PNG sirve
+    para todas las combinaciones de tamaño/aspecto sin generar uno por
+    variante.
+
+Diferencia deliberada respecto al placeholder de la playera: amplitud más
+alta (55 vs 40) y frecuencia más baja (70 vs 25/36) — ondas más grandes y
+suaves, porque una almohada rellena tiene pliegues anchos y esponjosos, no
+las arrugas finas y tensas de una prenda de tela plana. strengthMM también
+más alto (5mm vs 3mm de la playera) para que se note más el volumen.
+
+Pendiente (real, hecho a mano en Photoshop):
+  1. El patrón actual es ondas seno/coseno generadas por código
+     (generate.mjs en esta misma carpeta), NO un mapa real del relleno/
+     costuras de la almohada.
+  2. Proceso esperado: foto/escaneo de una almohada real rellena con buena
+     luz rasante para que el volumen/costuras sean visibles → pintar
+     canales R (horizontal) / G (vertical) en Photoshop, centrados en
+     (128,128) → exportar PNG → reemplazar products/pillow/displacement-
+     front.png y su copia en apps/demo/public/products/pillow/ → es
+     razonable que front y back terminen con mapas DISTINTOS si el
+     relleno/costuras se ven distinto de cada lado (hoy comparten el mismo
+     placeholder por simplicidad).
+
+Nota: displacementMapUrl/displacementStrengthMM son PREVIEW-ONLY — nunca se
+aplican al archivo de impresión final, solo al mockup/editor.

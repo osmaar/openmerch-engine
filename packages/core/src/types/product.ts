@@ -37,6 +37,17 @@ export interface ProductZone {
    *  let the design show through; opaque areas represent product features
    *  (camera cutout, edges, bumper) that should appear above the design. */
   overlayImageUrl?: string;
+  /** Optional two-channel (R=horizontal, G=vertical) displacement map PNG,
+   *  both channels centered at 128 (no displacement), classic Photoshop
+   *  "Displace" filter format. Applied ONLY to the mockup/preview compositing
+   *  (never to the print-ready file) so the design appears to follow the
+   *  garment's fabric folds. */
+  displacementMapUrl?: string;
+  /** Displacement strength in millimeters (converted to px via the render's
+   *  pxPerMM/dpi, same convention as every other zone dimension) — resolution-
+   *  independent so editor and server mockup produce the same physical
+   *  distortion. Defaults to a small conservative value if unset. */
+  displacementStrengthMM?: number;
 }
 
 export type DecorationTechnique = 'sublimation' | 'screenPrinting' | 'embroidery';

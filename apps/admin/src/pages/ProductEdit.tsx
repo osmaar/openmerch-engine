@@ -32,6 +32,8 @@ interface Stage {
   cropMarks: boolean;
   useMaskLayer: boolean;
   overlayImageUrl: string;
+  displacementMapUrl: string;
+  displacementStrengthMM?: number;
 }
 
 interface Attribute {
@@ -70,6 +72,8 @@ const CATEGORIES = [
   'Tote Bags',
 ];
 
+const DEFAULT_DISPLACEMENT_STRENGTH_MM = 3;
+
 const PRINTING_SIZES = [
   'A0 (841 x 1189 mm)',
   'A1 (594 x 841 mm)',
@@ -102,6 +106,7 @@ export function ProductEdit() {
       printAreaWidthMM: 200, printAreaHeightMM: 300,
       printAreaXMM: 150, printAreaYMM: 105,
       exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
+      displacementMapUrl: '', displacementStrengthMM: undefined,
     },
   ]);
 
@@ -139,6 +144,7 @@ export function ProductEdit() {
               printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
               printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
               exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false, overlayImageUrl: z.overlayImageUrl ?? '',
+              displacementMapUrl: z.displacementMapUrl ?? '', displacementStrengthMM: z.displacementStrengthMM,
             })) : undefined,
           })));
         }
@@ -151,6 +157,7 @@ export function ProductEdit() {
             printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
             printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
             exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false, overlayImageUrl: z.overlayImageUrl ?? '',
+            displacementMapUrl: z.displacementMapUrl ?? '', displacementStrengthMM: z.displacementStrengthMM,
           })));
         }
       }).catch(() => {
@@ -194,6 +201,8 @@ export function ProductEdit() {
           printAreaWidthMM: s.printAreaWidthMM, printAreaHeightMM: s.printAreaHeightMM,
           printAreaXMM: s.printAreaXMM, printAreaYMM: s.printAreaYMM,
           overlayImageUrl: s.overlayImageUrl || undefined,
+          displacementMapUrl: s.displacementMapUrl || undefined,
+          displacementStrengthMM: s.displacementStrengthMM,
         })),
         variants: variants.map((v) => ({
           id: v.id, name: v.name,
@@ -203,6 +212,8 @@ export function ProductEdit() {
             printAreaWidthMM: z.printAreaWidthMM, printAreaHeightMM: z.printAreaHeightMM,
             printAreaXMM: z.printAreaXMM, printAreaYMM: z.printAreaYMM,
             overlayImageUrl: z.overlayImageUrl || undefined,
+            displacementMapUrl: z.displacementMapUrl || undefined,
+            displacementStrengthMM: z.displacementStrengthMM,
           })),
         })),
         variantLabel: variantLabel || null,
@@ -233,6 +244,7 @@ export function ProductEdit() {
       printAreaWidthMM: 200, printAreaHeightMM: 300,
       printAreaXMM: 150, printAreaYMM: 105,
       exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
+      displacementMapUrl: '', displacementStrengthMM: undefined,
     }]);
   };
 
@@ -645,6 +657,74 @@ export function ProductEdit() {
 
                   <Divider />
 
+                  {/* Product Displacement Map */}
+                  <div>
+                    <Text size="sm" fw={500} mb={4}>{t('Product Displacement Map')}</Text>
+                    <Text size="xs" c="dimmed" mb={8}>
+                      {t('Optional fabric texture map — makes the design follow the garment\'s wrinkles in the editor preview only (never applied to the print file). Two-channel displacement PNG, see docs/ARCHITECTURE.md.')}
+                    </Text>
+                    {stage.displacementMapUrl ? (
+                      <Group gap="sm" align="center">
+                        <div style={{ width: 80, height: 80, borderRadius: 6, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #ddd' }}>
+                          <img src={resolveUrl(stage.displacementMapUrl)} alt="Displacement map" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        </div>
+                        <Stack gap={4}>
+                          <Button variant="light" size="xs" leftSection={<Upload size={14} />} onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/png';
+                            input.onchange = () => {
+                              const file = input.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = () => updateStage(idx, { displacementMapUrl: reader.result as string });
+                              reader.readAsDataURL(file);
+                            };
+                            input.click();
+                          }}>
+                            {t('Change Displacement Map')}
+                          </Button>
+                          <Button variant="subtle" size="xs" color="red" onClick={() => updateStage(idx, { displacementMapUrl: '' })}>
+                            {t('Remove Displacement Map')}
+                          </Button>
+                        </Stack>
+                      </Group>
+                    ) : (
+                      <Button variant="light" size="xs" leftSection={<Upload size={14} />} onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/png';
+                        input.onchange = () => {
+                          const file = input.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => updateStage(idx, { displacementMapUrl: reader.result as string });
+                          reader.readAsDataURL(file);
+                        };
+                        input.click();
+                      }}>
+                        {t('Upload Displacement Map')}
+                      </Button>
+                    )}
+                    {stage.displacementMapUrl && (
+                      <NumberInput
+                        label={t('Displacement Strength (mm)')}
+                        description={t('How strongly the design bends with the fabric folds')}
+                        value={stage.displacementStrengthMM ?? DEFAULT_DISPLACEMENT_STRENGTH_MM}
+                        onChange={(v) => { if (typeof v === 'number') updateStage(idx, { displacementStrengthMM: v }); }}
+                        size="sm"
+                        mt="sm"
+                        w={220}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        decimalScale={1}
+                      />
+                    )}
+                  </div>
+
+                  <Divider />
+
                   {/* Image upload + Reset */}
                   <Group>
                     {stage.baseImageUrl ? (
@@ -686,6 +766,7 @@ export function ProductEdit() {
                       printAreaWidthMM: 200, printAreaHeightMM: 300,
                       printAreaXMM: 150, printAreaYMM: 105,
                       exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
+                      displacementMapUrl: '', displacementStrengthMM: undefined,
                     })}>
                       {t('Reset All')}
                     </Button>

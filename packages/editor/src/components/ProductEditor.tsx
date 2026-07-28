@@ -6,6 +6,7 @@ import { useI18nStore, useT } from '../i18n/useTranslation.js';
 import { useImage } from '../hooks/useImage.js';
 import { useColoredProduct } from '../hooks/useColoredProduct.js';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js';
+import { useDisplacedDesignPreview } from '../hooks/useDisplacedDesignPreview.js';
 import { DesignLayer } from './DesignLayer.js';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides.js';
 import type { SnapGuide } from './SnapGuides.js';
@@ -183,8 +184,14 @@ interface CanvasLayout {
 function CanvasView({ zone }: CanvasViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
+  const designGroupRef = useRef<Konva.Group>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [_zoom, setZoom] = useState(1);
+  // Suppresses the distorted preview layer while a drag/transform gesture is
+  // in progress, so the user sees the real interactive layer move without
+  // distortion; the preview recomputes (debounced) and covers it again once
+  // the gesture ends.
+  const [isDragging, setIsDragging] = useState(false);
   const productColor = useEditorStore((s) => s.productColor);
   const [rawImage, status] = useImage(zone.baseImageUrl);
   const baseImage = useColoredProduct(rawImage, productColor);
@@ -317,9 +324,30 @@ function CanvasView({ zone }: CanvasViewProps) {
     [layout],
   );
 
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
   const handleDragEnd = useCallback(() => {
     setSnapGuides([]);
+    setIsDragging(false);
   }, []);
+
+  const handleTransformStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleTransformEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const displacedPreviewCanvas = useDisplacedDesignPreview({
+    groupRef: designGroupRef,
+    zone,
+    layers,
+    layout,
+    isDragging,
+  });
 
   // Zoom with mouse wheel
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -366,6 +394,7 @@ function CanvasView({ zone }: CanvasViewProps) {
           height={height}
           onClick={handleStageClick}
           onTap={handleStageClick}
+          onDragStart={handleDragStart}
           onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}
           onWheel={handleWheel}
@@ -390,6 +419,7 @@ function CanvasView({ zone }: CanvasViewProps) {
               are screen-independent and reusable by the production renderer.
             */}
             <Group
+              ref={designGroupRef}
               x={layout.printX}
               y={layout.printY}
               clipX={0}
@@ -410,9 +440,37 @@ function CanvasView({ zone }: CanvasViewProps) {
             </Group>
           </Layer>
 
-          {/* Transformer layer — OUTSIDE the clip so handles are always visible */}
+          {/*
+            Distorted "fabric follows the design" preview — a snapshot of the
+            Group above, run through the displacement map, drawn as a flat
+            image directly over it. Non-listening so clicks/drags still reach
+            the real interactive Group underneath. Hidden mid-gesture so the
+            user sees the undistorted layer move live; see useDisplacedDesignPreview.
+          */}
+          {zone.displacementMapUrl && (
+            <Layer listening={false} visible={!isDragging}>
+              {displacedPreviewCanvas && (
+                <Image
+                  name="displacement-preview"
+                  image={displacedPreviewCanvas}
+                  x={layout.printX}
+                  y={layout.printY}
+                  width={layout.printW}
+                  height={layout.printH}
+                />
+              )}
+            </Layer>
+          )}
+
+          {/* Transformer layer — OUTSIDE the clip so handles are always visible, and rendered
+              above the distorted preview so selection handles stay visible over it. */}
           <Layer>
-            <SharedTransformer stageRef={stageRef} selectedLayerId={selectedLayerId} />
+            <SharedTransformer
+              stageRef={stageRef}
+              selectedLayerId={selectedLayerId}
+              onTransformStart={handleTransformStart}
+              onTransformEnd={handleTransformEnd}
+            />
           </Layer>
 
           <Layer listening={false}>
@@ -456,8 +514,15 @@ function CanvasView({ zone }: CanvasViewProps) {
   );
 }
 
+interface SharedTransformerProps {
+  stageRef: React.RefObject<Konva.Stage | null>;
+  selectedLayerId: string | null;
+  onTransformStart: () => void;
+  onTransformEnd: () => void;
+}
+
 /** Transformer rendered OUTSIDE the clipped design Group so handles stay visible */
-function SharedTransformer({ stageRef, selectedLayerId }: { stageRef: React.RefObject<Konva.Stage | null>; selectedLayerId: string | null }) {
+function SharedTransformer({ stageRef, selectedLayerId, onTransformStart, onTransformEnd }: SharedTransformerProps) {
   const trRef = useRef<Konva.Transformer>(null);
 
   useEffect(() => {
@@ -484,6 +549,8 @@ function SharedTransformer({ stageRef, selectedLayerId }: { stageRef: React.RefO
   return (
     <Transformer
       ref={trRef}
+      onTransformStart={onTransformStart}
+      onTransformEnd={onTransformEnd}
       rotateEnabled
       rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
       rotationSnapTolerance={8}
