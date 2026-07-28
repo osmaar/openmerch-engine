@@ -443,6 +443,13 @@ const ADMIN_TEXTS_BY_SECTION = {
     'Custom Design Configuration',
     'Export Include Base', 'Export for printing includes product base image',
     'Crop Marks & Bleed', 'Show guideline for crop marks & bleed on the editor',
+    'Product Overlay',
+    'PNG with transparency. Opaque areas render ON TOP of the design (camera cutouts, product edges). Transparent areas let the design show through.',
+    'Upload Overlay Image', 'Change Overlay', 'Remove Overlay',
+    'Product Displacement Map',
+    'Optional fabric texture map — makes the design follow the garment\'s wrinkles in the editor preview only (never applied to the print file). Two-channel displacement PNG, see docs/ARCHITECTURE.md.',
+    'Upload Displacement Map', 'Change Displacement Map', 'Remove Displacement Map',
+    'Displacement Strength (mm)', 'How strongly the design bends with the fabric folds',
   ],
   'Product Edit — Attributes': [
     'Attributes', 'Product Attributes', 'Product Colors',

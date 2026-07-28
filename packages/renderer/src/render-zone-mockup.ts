@@ -2,15 +2,16 @@ import {
   mmToPx,
   tintImagePixels,
   isWhiteTintColor,
+  applyDisplacementMap,
   MAX_RENDER_DIMENSION_PX,
   MM_PER_INCH,
 } from '@openmerch/core';
-import type { DesignLayer, ImageLayer, ProductZone, ShapeLayer, TextLayer } from '@openmerch/core';
+import type { DesignLayer, DisplaceableImage, ImageLayer, ProductZone, ShapeLayer, TextLayer } from '@openmerch/core';
 import { addShapeLayer } from './layers/shape.js';
 import { addImageLayer } from './layers/image.js';
 import { addTextLayer, registerFontsForTextLayers } from './layers/text.js';
 import { getKonvaNode, getNodeCanvas } from './konva-node.js';
-import type { KonvaImageSource } from './konva-types.js';
+import type { KonvaImageSource, KonvaLayer, KonvaModule } from './konva-types.js';
 import type { ImageBufferResolver, FontPathResolver } from './render-zone.js';
 import { loadImage, createCanvas } from 'canvas';
 
@@ -123,31 +124,51 @@ export async function renderDesignZoneMockup(
   const clipWidthPx = options.zone.printAreaWidthMM * pxPerMM;
   const clipHeightPx = options.zone.printAreaHeightMM * pxPerMM;
 
-  const designGroup = new Konva.Group({
-    x: offsetX * pxPerMM,
-    y: offsetY * pxPerMM,
-    clipX: 0,
-    clipY: 0,
-    clipWidth: clipWidthPx,
-    clipHeight: clipHeightPx,
-  });
-  layer.add(designGroup);
+  const displacementMapUrl = options.zone.displacementMapUrl;
+  const resolveImage = options.resolveImage;
 
-  for (const designLayer of options.layers) {
-    if (designLayer.visible === false) continue;
+  if (displacementMapUrl && resolveImage) {
+    await drawDisplacedDesignGroup({
+      Konva,
+      layer,
+      layers: options.layers,
+      resolveImage,
+      resolveFont: options.resolveFont,
+      pxPerMM,
+      offsetX,
+      offsetY,
+      clipWidthPx,
+      clipHeightPx,
+      displacementMapUrl,
+      displacementStrengthMM: options.zone.displacementStrengthMM,
+    });
+  } else {
+    const designGroup = new Konva.Group({
+      x: offsetX * pxPerMM,
+      y: offsetY * pxPerMM,
+      clipX: 0,
+      clipY: 0,
+      clipWidth: clipWidthPx,
+      clipHeight: clipHeightPx,
+    });
+    layer.add(designGroup);
 
-    if (designLayer.type === 'shape') {
-      addShapeLayer(designGroup, designLayer as ShapeLayer, pxPerMM, Konva);
-    } else if (designLayer.type === 'image') {
-      if (!options.resolveImage) continue;
-      const buffer = await options.resolveImage((designLayer as ImageLayer).src);
-      await addImageLayer(designGroup, designLayer as ImageLayer, buffer, pxPerMM, Konva);
-    } else if (designLayer.type === 'text') {
-      const textLayer = designLayer as TextLayer;
-      const fontPath = options.resolveFont
-        ? await options.resolveFont(textLayer.fontFamily)
-        : null;
-      addTextLayer(designGroup, textLayer, fontPath, pxPerMM, Konva);
+    for (const designLayer of options.layers) {
+      if (designLayer.visible === false) continue;
+
+      if (designLayer.type === 'shape') {
+        addShapeLayer(designGroup, designLayer as ShapeLayer, pxPerMM, Konva);
+      } else if (designLayer.type === 'image') {
+        if (!resolveImage) continue;
+        const buffer = await resolveImage((designLayer as ImageLayer).src);
+        await addImageLayer(designGroup, designLayer as ImageLayer, buffer, pxPerMM, Konva);
+      } else if (designLayer.type === 'text') {
+        const textLayer = designLayer as TextLayer;
+        const fontPath = options.resolveFont
+          ? await options.resolveFont(textLayer.fontFamily)
+          : null;
+        addTextLayer(designGroup, textLayer, fontPath, pxPerMM, Konva);
+      }
     }
   }
 
@@ -176,4 +197,118 @@ export async function renderDesignZoneMockup(
   const buffer = nodeCanvas.toBuffer('image/png', { compressionLevel: 9 });
 
   return { buffer, widthPx, heightPx, dpi };
+}
+
+interface DrawDisplacedDesignGroupOptions {
+  Konva: KonvaModule;
+  /** The mockup's main layer — the finished, cropped design image is added here. */
+  layer: KonvaLayer;
+  layers: DesignLayer[];
+  resolveImage: ImageBufferResolver;
+  resolveFont?: FontPathResolver;
+  pxPerMM: number;
+  offsetX: number;
+  offsetY: number;
+  clipWidthPx: number;
+  clipHeightPx: number;
+  displacementMapUrl: string;
+  displacementStrengthMM?: number;
+}
+
+/**
+ * Renders the design layers to an offscreen canvas, runs the result through
+ * `applyDisplacementMap`, and adds the finished bitmap to `layer` in place of
+ * the plain clipped design Group — this is what makes the design appear to
+ * follow the garment's fabric folds instead of sitting flat on top.
+ *
+ * The offscreen canvas is drawn `padPx` larger than the print area on every
+ * side, with every design layer shifted inward by `padPx`, before the crop
+ * back down to size. This margin exists solely so `applyDisplacementMap`'s
+ * clamp-to-edge sampling has real design pixels to read from near the print
+ * area's border — without it, displacement near an edge would sample (and
+ * stretch) the print area's own boundary pixels, showing up as a visibly
+ * smeared strip along the crop.
+ */
+async function drawDisplacedDesignGroup(options: DrawDisplacedDesignGroupOptions): Promise<void> {
+  const {
+    Konva,
+    layer,
+    layers,
+    resolveImage,
+    resolveFont,
+    pxPerMM,
+    offsetX,
+    offsetY,
+    clipWidthPx,
+    clipHeightPx,
+    displacementMapUrl,
+    displacementStrengthMM,
+  } = options;
+
+  const strengthPx = (displacementStrengthMM ?? 0) * pxPerMM;
+  const padPx = Math.ceil(strengthPx);
+
+  const designWidthPx = Math.round(clipWidthPx);
+  const designHeightPx = Math.round(clipHeightPx);
+  const paddedWidthPx = designWidthPx + 2 * padPx;
+  const paddedHeightPx = designHeightPx + 2 * padPx;
+
+  const offscreenStage = new Konva.Stage({ width: paddedWidthPx, height: paddedHeightPx });
+  const offscreenLayer = new Konva.Layer();
+  offscreenStage.add(offscreenLayer);
+
+  // All design layers are added to this offset wrapper (instead of directly to
+  // offscreenLayer) so every layer lands padPx to the right/down of where it
+  // would sit on the real print area — see the padding rationale above.
+  const paddedGroup = new Konva.Group({ x: padPx, y: padPx });
+  offscreenLayer.add(paddedGroup);
+
+  for (const designLayer of layers) {
+    if (designLayer.visible === false) continue;
+
+    if (designLayer.type === 'shape') {
+      addShapeLayer(paddedGroup, designLayer as ShapeLayer, pxPerMM, Konva);
+    } else if (designLayer.type === 'image') {
+      const buffer = await resolveImage((designLayer as ImageLayer).src);
+      await addImageLayer(paddedGroup, designLayer as ImageLayer, buffer, pxPerMM, Konva);
+    } else if (designLayer.type === 'text') {
+      const textLayer = designLayer as TextLayer;
+      const fontPath = resolveFont ? await resolveFont(textLayer.fontFamily) : null;
+      addTextLayer(paddedGroup, textLayer, fontPath, pxPerMM, Konva);
+    }
+  }
+
+  offscreenLayer.draw();
+  const offscreenCanvas = getNodeCanvas(offscreenStage);
+  const offscreenCtx = offscreenCanvas.getContext('2d');
+  const designImageData: DisplaceableImage = offscreenCtx.getImageData(0, 0, paddedWidthPx, paddedHeightPx);
+
+  const mapBuffer = await resolveImage(displacementMapUrl);
+  const mapImage = await loadImage(mapBuffer);
+  const mapCanvas = createCanvas(paddedWidthPx, paddedHeightPx);
+  const mapCtx = mapCanvas.getContext('2d');
+  // The map asset may be a different resolution than the padded design area —
+  // stretch it to cover exactly the padded canvas so it samples 1:1 against
+  // designImageData (applyDisplacementMap already bilinearly resamples the
+  // map internally, so this stretch doesn't lose precision beyond that).
+  mapCtx.drawImage(mapImage, 0, 0, paddedWidthPx, paddedHeightPx);
+  const mapImageData: DisplaceableImage = mapCtx.getImageData(0, 0, paddedWidthPx, paddedHeightPx);
+
+  applyDisplacementMap(designImageData, mapImageData, strengthPx);
+  offscreenCtx.putImageData(designImageData, 0, 0);
+
+  // Crop the padding back off: only the centered designWidthPx x designHeightPx
+  // region — the actual print area — belongs in the mockup.
+  const croppedCanvas = createCanvas(designWidthPx, designHeightPx);
+  const croppedCtx = croppedCanvas.getContext('2d');
+  croppedCtx.drawImage(offscreenCanvas, -padPx, -padPx);
+
+  const designNode = new Konva.Image({
+    image: croppedCanvas,
+    x: offsetX * pxPerMM,
+    y: offsetY * pxPerMM,
+    width: designWidthPx,
+    height: designHeightPx,
+  });
+  layer.add(designNode);
 }

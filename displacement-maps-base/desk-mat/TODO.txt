@@ -1,0 +1,27 @@
+Desk Mat displacement maps — pendientes
+========================================
+
+Mapa listo (1/1, placeholder procedural, reusado en las 3 variantes):
+  - front (displacement-front.png) — wireado en las 3 variantes (12x18,
+    12x22, 16x32) del producto "desk-mat" en la DB. El mismo PNG sirve para
+    las 3 porque el sampling del mapa es normalizado (UV 0-1) e independiente
+    de la resolución/dimensiones físicas de cada variante — no hace falta un
+    archivo distinto por tamaño salvo que el relieve real de la tela varíe
+    entre tamaños de mat (no es el caso, es el mismo material).
+
+Pendiente (real, hecho a mano en Photoshop):
+  1. El patrón actual es ondas seno/coseno generadas por código
+     (generate.mjs en esta misma carpeta), amplitud más sutil que la
+     playera (30 vs 40) porque un desk mat es una superficie más rígida/
+     plana que una prenda — no tiene pliegues dramáticos, a lo sumo una
+     textura fina de tela/neopreno. NO es un mapa real de la superficie.
+  2. Proceso esperado: foto/escaneo de la superficie real del mat con luz
+     rasante → pintar canales R (horizontal) / G (vertical) en Photoshop,
+     centrados en (128,128) → exportar PNG → reemplazar
+     products/desk-mat/displacement-front.png y su copia en
+     apps/demo/public/products/desk-mat/ → ajustar displacementStrengthMM
+     a ojo en las 3 variantes si el relieve real pide más o menos intensidad
+     que el placeholder (hoy: 2mm, más sutil que los 3mm de la playera).
+
+Nota: displacementMapUrl/displacementStrengthMM son PREVIEW-ONLY — nunca se
+aplican al archivo de impresión final, solo al mockup/editor.

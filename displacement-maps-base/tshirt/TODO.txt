@@ -1,0 +1,45 @@
+T-Shirt displacement maps — pendientes
+=======================================
+
+Mapa listo (1/1, placeholder procedural):
+  - front (displacement-front.png)
+
+Pendientes (real, hecho a mano en Photoshop):
+  1. front  <- el que está ahora es un patrón de ondas seno/coseno generado
+              por código (packages/core/scripts/generate-displacement-map.mjs),
+              NO un mapa real de la tela. Sirve solo para validar que el
+              pipeline de displacement (sampling bilineal, strength en mm,
+              wireado en catalog.json, etc.) funciona de punta a punta.
+  2. back   <- sin mapa todavía (displacementMapUrl no seteado en la zona
+              "back" del catalog.json).
+
+Proceso esperado (mapa real):
+  1. Tomar una foto o escaneo de la tela real de la prenda, con buena luz
+     rasante para que las arrugas/pliegues sean visibles (igual que se
+     fotografía una textura de tela para un normal map).
+  2. En Photoshop, pintar dos canales sobre esa foto:
+       - Canal R (rojo)  = desplazamiento horizontal
+       - Canal G (verde) = desplazamiento vertical
+     Ambos centrados en gris medio (128,128) = sin desplazamiento. El canal
+     B no se usa (se puede dejar en 128 o descartar). Este es exactamente el
+     formato que consume nativamente Filter > Distort > Displace.
+  3. Exportar como PNG (con o sin alpha, no importa — solo se leen R y G).
+  4. Copiar el PNG a:
+       products/tshirt/displacement-<zona>.png
+       apps/demo/public/products/tshirt/displacement-<zona>.png
+  5. En packages/api/seeds/products/catalog.json, dentro de la zona
+     correspondiente del producto "classic-tshirt" (o el slug que
+     corresponda), agregar los campos:
+       "displacementMapUrl": "/products/tshirt/displacement-<zona>.png"
+       "displacementStrengthMM": <valor en mm, ajustar a ojo>
+  6. Volver a correr el seed (o recargar la página en admin si el producto
+     ya fue importado vía UI).
+
+Nota: displacementMapUrl/displacementStrengthMM son PREVIEW-ONLY — nunca se
+aplican al archivo de impresión final, solo al mockup/editor para que el
+diseño parezca seguir los pliegues de la tela.
+
+Nota 2: la cobertura de esta Etapa A se considera completa con solo la zona
+"front" de classic-tshirt como ejemplo end-to-end. El resto de zonas/
+productos (back, oversized-tshirt, box-tee, hoodie, etc.) queda pendiente
+como trabajo de diseño real, no de código.
