@@ -35,13 +35,11 @@ export function ImageToolbar({ layer }: ImageToolbarProps) {
   const [showRemoveBg, setShowRemoveBg] = useState(false);
   const [activePopover, setActivePopover] = useState<PopoverName>(null);
   const t = useT();
-  const {
-    updateLayer,
-    replaceImage,
-    applyFilter,
-    duplicateLayer,
-    removeLayer,
-  } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
+  const replaceImage = useEditorStore((s) => s.replaceImage);
+  const applyFilter = useEditorStore((s) => s.applyFilter);
+  const duplicateLayer = useEditorStore((s) => s.duplicateLayer);
+  const removeLayer = useEditorStore((s) => s.removeLayer);
   const designZone = useEditorStore((s) => s.design?.zones[s.activeZoneId]);
 
   const toggle = (name: PopoverName) => {

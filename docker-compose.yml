@@ -2,8 +2,12 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    # Bound to 127.0.0.1 — this is the local-dev Postgres with default
+    # credentials (openmerch/openmerch). If this compose file is ever run on
+    # a non-localhost host (e.g. a VPS), keep the loopback binding or drop
+    # the port mapping entirely and put a firewall/reverse-proxy in front.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: openmerch
       POSTGRES_PASSWORD: openmerch
@@ -14,17 +18,25 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # Bound to 127.0.0.1 — local-dev Redis with no auth configured. If this
+    # compose file is ever run on a non-localhost host (e.g. a VPS), keep the
+    # loopback binding or drop the port mapping and put a firewall/reverse-
+    # proxy in front instead.
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
 
   minio:
     image: minio/minio:latest
     restart: unless-stopped
+    # Bound to 127.0.0.1 — local-dev MinIO with default credentials
+    # (openmerch/openmerch123). If this compose file is ever run on a
+    # non-localhost host (e.g. a VPS), keep the loopback binding or drop
+    # these port mappings and put a firewall/reverse-proxy in front instead.
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
       MINIO_ROOT_USER: openmerch
       MINIO_ROOT_PASSWORD: openmerch123
@@ -47,8 +59,12 @@ services:
       context: .
       dockerfile: packages/api/Dockerfile
     restart: unless-stopped
+    # Bound to 127.0.0.1 — this is the dev/local API entrypoint. If this
+    # compose file is ever run on a non-localhost host (e.g. a VPS), keep the
+    # loopback binding or drop the port mapping and put a firewall/reverse-
+    # proxy in front instead.
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       DATABASE_URL: postgres://openmerch:openmerch@postgres:5432/openmerch
       REDIS_URL: redis://redis:6379
@@ -57,7 +73,12 @@ services:
       MINIO_ACCESS_KEY: openmerch
       MINIO_SECRET_KEY: openmerch123
       MINIO_BUCKET: openmerch
-      CORS_ORIGIN: "*"
+      # Comma-separated list of browser origins allowed to call the API. No auth on
+      # the API, so never hardcode "*" here — set CORS_ORIGIN in the host .env instead.
+      CORS_ORIGIN: "${CORS_ORIGIN:-http://localhost:3000,http://localhost:3002}"
+      # Required in production — the API refuses to start without it. Generate with:
+      # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
     depends_on:
       - postgres
       - redis
@@ -80,6 +101,11 @@ services:
       dockerfile: packages/api/Dockerfile
     restart: unless-stopped
     command: ["node", "dist/worker.js"]
+    # The image's HEALTHCHECK curls the API's HTTP health endpoint, which this
+    # process doesn't expose — disable it here so the worker isn't marked
+    # unhealthy for lacking a port it was never meant to have.
+    healthcheck:
+      disable: true
     environment:
       DATABASE_URL: postgres://openmerch:openmerch@postgres:5432/openmerch
       REDIS_URL: redis://redis:6379
@@ -88,6 +114,8 @@ services:
       MINIO_ACCESS_KEY: openmerch
       MINIO_SECRET_KEY: openmerch123
       MINIO_BUCKET: openmerch
+      # Must match the API's key — this worker decrypts the same stored secrets.
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
     depends_on:
       - postgres
       - redis

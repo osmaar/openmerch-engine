@@ -3,8 +3,9 @@ import { ShoppingBag, ShoppingCart, Minus, Plus, X, Loader } from 'lucide-react'
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
 import type { Product } from '@openmerch/core';
+import { getBaseUrl } from '../../../services/api.js';
 
-const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+const API_BASE = getBaseUrl();
 
 export const PRODUCT_COLORS = [
   { name: 'White', value: '#FFFFFF' },
@@ -146,7 +147,7 @@ export function ProductTab() {
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#595959', marginTop: 4 }}>
             {t('Total')}: {Object.values(sizes).reduce((a, b) => a + b, 0)} {t('units')}
           </div>
         </div>
@@ -223,7 +224,7 @@ function ProductSelectorModal({ currentProductId, onSelect, onClose }: {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: '#eee' }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 16, color: '#333' }}>{t('Select Product')}</div>
-            <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>{products.length} {t('products available')}</div>
+            <div style={{ fontSize: 12, color: '#595959', marginTop: 2 }}>{products.length} {t('products available')}</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: '#999', padding: 4 }}>
             <X size={20} />

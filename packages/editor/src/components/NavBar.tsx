@@ -16,6 +16,7 @@ import { useEditorStore } from '../store/editorStore.js';
 import type { CartItem } from '../store/editorStore.js';
 import { PRODUCT_COLORS } from './sidebar/tabs/ProductTab.js';
 import { useI18nStore, useT } from '../i18n/useTranslation.js';
+import { MM_PER_INCH } from '@openmerch/core';
 
 export function NavBar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -381,8 +382,8 @@ function PrintDropdown({ onClose }: { onClose: () => void }) {
   const formatSize = (mm: number): string => {
     switch (unit) {
       case 'cm': return (mm / 10).toFixed(1);
-      case 'inch': return (mm / 25.4).toFixed(1);
-      case 'px': return Math.round(mm / 25.4 * 300).toString();
+      case 'inch': return (mm / MM_PER_INCH).toFixed(1);
+      case 'px': return Math.round(mm / MM_PER_INCH * 300).toString();
     }
   };
 
@@ -682,7 +683,7 @@ function CartDropdown({ onClose }: { onClose: () => void }) {
                 {/* Product thumbnail */}
                 <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', background: '#f8f8f8', border: '1px solid #eee', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {item.productImage ? (
-                    <img src={item.productImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={item.productImage} alt={item.productName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   ) : (
                     <ShoppingCart size={16} color="#ccc" />
                   )}
@@ -705,7 +706,7 @@ function CartDropdown({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={() => handleRemove(item.designId)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#e74c3c', flexShrink: 0, opacity: 0.6, transition: 'opacity 0.15s' }}
-                  title="Remove from cart"
+                  title={t('Remove from cart')}
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; }}
                 >

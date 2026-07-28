@@ -77,7 +77,9 @@ type PopoverName = 'editText' | 'effects' | 'align' | 'case' | 'arrange' | 'posi
 
 export function TextToolbar({ layer }: TextToolbarProps) {
   const [activePopover, setActivePopover] = useState<PopoverName>(null);
-  const { updateLayer, duplicateLayer, removeLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
+  const duplicateLayer = useEditorStore((s) => s.duplicateLayer);
+  const removeLayer = useEditorStore((s) => s.removeLayer);
   const designZone = useEditorStore((s) => s.design?.zones[s.activeZoneId]);
   const t = useT();
 

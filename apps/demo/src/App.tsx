@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ProductEditor, useEditorStore } from '@openmerch/editor';
 import type { Product } from '@openmerch/core';
+import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { tshirtProduct } from './products/tshirt.js';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -36,17 +37,15 @@ export function App() {
 
   // Listen for product changes from the editor's product selector modal
   useEffect(() => {
-    const handleProductChange = () => {
-      const storeProduct = useEditorStore.getState().product;
+    const unsubscribe = useEditorStore.subscribe((state) => {
+      const storeProduct = state.product;
       if (storeProduct && storeProduct.id !== product?.id) {
         setProduct(storeProduct);
         localStorage.setItem('openmerch-product-slug', storeProduct.slug);
         window.history.replaceState(null, '', `?product=${storeProduct.slug}`);
       }
-    };
-    // Check store periodically since setProduct doesn't emit events
-    const interval = setInterval(handleProductChange, 500);
-    return () => clearInterval(interval);
+    });
+    return unsubscribe;
   }, [product?.id]);
 
   useEffect(() => {
@@ -88,5 +87,9 @@ export function App() {
 
   if (!product) return null;
 
-  return <ProductEditor key={product.id} product={product} />;
+  return (
+    <ErrorBoundary>
+      <ProductEditor key={product.id} product={product} />
+    </ErrorBoundary>
+  );
 }

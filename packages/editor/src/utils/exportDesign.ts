@@ -101,6 +101,28 @@ export async function exportDesign(options: ExportOptions): Promise<void> {
   }
 }
 
+/**
+ * Computes the print-zone clip rectangle (in the composited canvas's own
+ * pixel space) that the design layer gets clipped to when compositing the
+ * mockup export. `crop{X,Y}` is the mockup image's own crop origin (from
+ * `stage.toCanvas({ x: cropX, y: cropY, ... })`), so the print zone's
+ * position has to be re-expressed relative to that crop before scaling up
+ * by `pixelRatio` — otherwise the clip rect would be offset by the crop.
+ */
+export function computePrintZoneCropRect(
+  layout: Pick<CanvasLayout, 'printX' | 'printY' | 'printW' | 'printH'>,
+  cropX: number,
+  cropY: number,
+  pixelRatio: number,
+): { pzX: number; pzY: number; pzW: number; pzH: number } {
+  return {
+    pzX: (layout.printX - cropX) * pixelRatio,
+    pzY: (layout.printY - cropY) * pixelRatio,
+    pzW: layout.printW * pixelRatio,
+    pzH: layout.printH * pixelRatio,
+  };
+}
+
 // Export full mockup: complete t-shirt with design clipped to print zone
 async function exportMockupPreview(
   stage: KonvaStage,
@@ -218,10 +240,7 @@ async function exportMockupPreview(
   ctx.drawImage(mockupCanvas, 0, 0);
 
   // Clip design to print zone area
-  const pzX = (layout.printX - cropX) * pixelRatio;
-  const pzY = (layout.printY - cropY) * pixelRatio;
-  const pzW = layout.printW * pixelRatio;
-  const pzH = layout.printH * pixelRatio;
+  const { pzX, pzY, pzW, pzH } = computePrintZoneCropRect(layout, cropX, cropY, pixelRatio);
 
   ctx.save();
   ctx.beginPath();

@@ -1,53 +1,18 @@
-import { mmToPx } from '@openmerch/core';
+import {
+  mmToPx,
+  tintImagePixels,
+  isWhiteTintColor,
+  MAX_RENDER_DIMENSION_PX,
+  MM_PER_INCH,
+} from '@openmerch/core';
 import type { DesignLayer, ImageLayer, ProductZone, ShapeLayer, TextLayer } from '@openmerch/core';
 import { addShapeLayer } from './layers/shape.js';
 import { addImageLayer } from './layers/image.js';
 import { addTextLayer, registerFontsForTextLayers } from './layers/text.js';
 import { getKonvaNode, getNodeCanvas } from './konva-node.js';
+import type { KonvaImageSource } from './konva-types.js';
 import type { ImageBufferResolver, FontPathResolver } from './render-zone.js';
 import { loadImage, createCanvas } from 'canvas';
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-}
-
-/**
- * Applies the same luminance-based tint as the editor's `useColoredProduct`
- * hook so the admin mockup reflects the customer's chosen product color.
- */
-function tintImage(src: { data: Uint8ClampedArray; width: number; height: number }, color: string): void {
-  if (!color || color === '#ffffff' || color === '#FFFFFF') return;
-  const [cr, cg, cb] = hexToRgb(color);
-  const { data, width, height } = src;
-
-  // Detect transparency
-  let hasTransparency = false;
-  for (let i = 3; i < data.length; i += 4) {
-    if (data[i]! < 250) { hasTransparency = true; break; }
-  }
-
-  // Detect dark background (sample corners)
-  const corners = [0, (width - 1) * 4, (height - 1) * width * 4, ((height - 1) * width + width - 1) * 4];
-  let darkCorners = 0;
-  for (const idx of corners) {
-    const lum = data[idx]! * 0.299 + data[idx + 1]! * 0.587 + data[idx + 2]! * 0.114;
-    if (lum < 50) darkCorners++;
-  }
-  const hasDarkBg = darkCorners >= 3;
-  const DARK = 40, LIGHT = 240;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i]!, g = data[i + 1]!, b = data[i + 2]!, a = data[i + 3]!;
-    if (a < 10) continue;
-    if (!hasTransparency && !hasDarkBg && r > LIGHT && g > LIGHT && b > LIGHT) continue;
-    if (!hasTransparency && hasDarkBg && r < DARK && g < DARK && b < DARK) continue;
-    const lum = r * 0.299 + g * 0.587 + b * 0.114;
-    data[i] = Math.round((lum / 255) * cr);
-    data[i + 1] = Math.round((lum / 255) * cg);
-    data[i + 2] = Math.round((lum / 255) * cb);
-  }
-}
 
 export interface RenderZoneMockupOptions {
   zone: ProductZone;
@@ -97,7 +62,14 @@ export async function renderDesignZoneMockup(
 
   const widthPx = Math.round(mmToPx(options.zone.baseImageWidthMM, dpi));
   const heightPx = Math.round(mmToPx(options.zone.baseImageHeightMM, dpi));
-  const pxPerMM = dpi / 25.4;
+  if (widthPx > MAX_RENDER_DIMENSION_PX || heightPx > MAX_RENDER_DIMENSION_PX) {
+    throw new Error(
+      `renderDesignZoneMockup: zone "${options.zone.id}" would render at ${widthPx}x${heightPx}px ` +
+        `(dpi=${dpi}), exceeding the ${MAX_RENDER_DIMENSION_PX}px maximum per side. ` +
+        `Check the product's baseImageWidthMM/baseImageHeightMM.`,
+    );
+  }
+  const pxPerMM = dpi / MM_PER_INCH;
 
   // Pre-register all fonts BEFORE creating the Stage (same constraint as render-zone.ts).
   if (options.resolveFont) {
@@ -115,18 +87,17 @@ export async function renderDesignZoneMockup(
       const baseBuffer = await options.resolveImage(options.zone.baseImageUrl);
       const baseImage = await loadImage(baseBuffer);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let imageSource: any = baseImage;
+      let imageSource: KonvaImageSource = baseImage;
 
-      if (options.productColor && options.productColor !== '#ffffff' && options.productColor !== '#FFFFFF') {
-        // Apply the same tint algorithm as the editor so admin mockup matches
-        // what the customer saw when they picked their product color.
+      if (options.productColor && !isWhiteTintColor(options.productColor)) {
+        // Apply the same tint algorithm as the editor (packages/core's
+        // tintImagePixels) so the admin mockup matches what the customer saw
+        // when they picked their product color.
         const offscreen = createCanvas(baseImage.width, baseImage.height);
         const ctx = offscreen.getContext('2d');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ctx.drawImage(baseImage as any, 0, 0);
+        ctx.drawImage(baseImage, 0, 0);
         const imageData = ctx.getImageData(0, 0, offscreen.width, offscreen.height);
-        tintImage(imageData, options.productColor);
+        tintImagePixels(imageData, options.productColor);
         ctx.putImageData(imageData, 0, 0);
         imageSource = offscreen;
       }

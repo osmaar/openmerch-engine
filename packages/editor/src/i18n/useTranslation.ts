@@ -10,6 +10,10 @@ interface I18nState {
   setLang: (code: string) => void;
 }
 
+/**
+ * i18n state store (current language, loaded translations). Call `loadLanguages(apiBase)` once on
+ * mount to populate translations before rendering strings with {@link useT}.
+ */
 export const useI18nStore = create<I18nState>((set) => ({
   currentLang: 'en',
   availableLangs: {},

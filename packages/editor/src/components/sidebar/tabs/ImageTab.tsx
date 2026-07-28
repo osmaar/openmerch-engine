@@ -6,7 +6,10 @@ import { useT } from '../../../i18n/useTranslation.js';
 export function ImageTab() {
   const t = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { addImageLayer, addToGallery, removeFromGallery, gallery } = useEditorStore();
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
+  const addToGallery = useEditorStore((s) => s.addToGallery);
+  const removeFromGallery = useEditorStore((s) => s.removeFromGallery);
+  const gallery = useEditorStore((s) => s.gallery);
 
   const handleUpload = (file: File) => {
     const reader = new FileReader();
@@ -87,7 +90,7 @@ export function ImageTab() {
           borderStyle: 'dashed',
           borderColor: '#ddd',
           borderRadius: 8,
-          color: '#aaa',
+          color: '#595959',
           fontSize: 12,
           cursor: 'pointer',
         }}
@@ -95,7 +98,7 @@ export function ImageTab() {
       >
         <Upload size={20} />
         <span>{t('Drag & drop here')}</span>
-        <span style={{ fontSize: 10, color: '#ccc' }}>{t('PNG, JPG, SVG, WebP')}</span>
+        <span style={{ fontSize: 10, color: '#767676' }}>{t('PNG, JPG, SVG, WebP')}</span>
       </div>
 
       {/* Gallery */}
@@ -157,7 +160,7 @@ export function ImageTab() {
             ))}
           </div>
 
-          <div style={{ fontSize: 10, color: '#ccc', textAlign: 'center' }}>
+          <div style={{ fontSize: 10, color: '#767676', textAlign: 'center' }}>
             {t('Images saved during this session only')}
           </div>
         </>

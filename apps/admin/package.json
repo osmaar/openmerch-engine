@@ -17,12 +17,13 @@
     "@mantine/hooks": "^9.0.0",
     "@mantine/modals": "^9.0.0",
     "@mantine/notifications": "^9.0.0",
+    "dompurify": "^3.4.12",
     "konva": "^9.3.18",
     "react-konva": "^19.0.3",
     "lucide-react": "^0.511.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.6.1",
+    "react-router-dom": "^7.18.1",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

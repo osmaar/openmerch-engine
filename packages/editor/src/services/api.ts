@@ -1,6 +1,6 @@
 const API_BASE = '/api/v1';
 
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   // In development, API runs on a different port
   if (typeof window !== 'undefined' && window.location.port === '3000') {
     return 'http://localhost:3001';

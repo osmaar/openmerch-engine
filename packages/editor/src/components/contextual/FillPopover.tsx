@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useT } from '../../i18n/useTranslation.js';
+import { useDebouncedCallback } from '../../hooks/useDebouncedCallback.js';
 
 interface FillPopoverProps {
   currentColor: string;
@@ -23,10 +24,15 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
   const [opacity, setOpacity] = useState(Math.round(currentOpacity * 100));
   const [hexInput, setHexInput] = useState(currentColor || '#000000');
 
+  // The native color input fires `input` on every drag tick — debounce the
+  // store commit (onApply drives updateLayer, which clones the layer list on
+  // every call) while keeping the swatch/hex UI in sync immediately.
+  const debouncedApply = useDebouncedCallback(onApply, 300);
+
   const handleColorChange = (c: string) => {
     setColor(c);
     setHexInput(c);
-    onApply(c, opacity / 100);
+    debouncedApply(c, opacity / 100);
   };
 
   const handleHexSubmit = () => {
@@ -72,6 +78,7 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
   const swatchStyle = (c: string): React.CSSProperties => ({
     width: 24,
     height: 24,
+    padding: 0,
     borderRadius: 4,
     background: c,
     borderWidth: 2,
@@ -138,7 +145,14 @@ export function FillPopover({ currentColor, currentOpacity, onApply, onClear, on
       {/* Quick colors grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4 }}>
         {QUICK_COLORS.map((c) => (
-          <div key={c} style={swatchStyle(c)} onClick={() => handleColorChange(c)} title={c} />
+          <button
+            key={c}
+            type="button"
+            style={swatchStyle(c)}
+            onClick={() => handleColorChange(c)}
+            title={c}
+            aria-label={c}
+          />
         ))}
       </div>
 

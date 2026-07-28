@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, jsonb, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, jsonb, timestamp, integer, boolean, unique, index } from 'drizzle-orm/pg-core';
 
 // Products table
 export const products = pgTable('products', {
@@ -33,7 +33,9 @@ export const designs = pgTable('designs', {
   productionError: text('production_error'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('designs_product_id_idx').on(table.productId),
+]);
 
 // Assets table (uploaded images)
 export const assets = pgTable('assets', {
@@ -125,7 +127,9 @@ export const orders = pgTable('orders', {
   designFiles: jsonb('design_files'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('orders_design_id_idx').on(table.designId),
+]);
 
 // Languages table
 export const languages = pgTable('languages', {
@@ -143,7 +147,10 @@ export const translations = pgTable('translations', {
   languageCode: varchar('language_code', { length: 10 }).notNull(),
   originalText: text('original_text').notNull(),
   translatedText: text('translated_text').notNull().default(''),
-});
+}, (table) => [
+  unique('translations_language_code_original_text_unique').on(table.languageCode, table.originalText),
+  index('translations_language_code_idx').on(table.languageCode),
+]);
 
 // Production jobs table
 export const productionJobs = pgTable('production_jobs', {

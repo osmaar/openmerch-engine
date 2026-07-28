@@ -26,11 +26,13 @@ const SYSTEM_FONTS = new Set([
 ]);
 
 export class FontResolver {
-  // Family name -> in-flight or resolved Promise of the local path (or null).
-  // Caching the *Promise* (not the value) deduplicates concurrent loads: when
-  // two jobs running in parallel both ask for the same font, the second call
-  // awaits the same in-flight promise instead of racing to writeFile and
-  // hitting EBUSY on Windows.
+  // "<fontId>:<updatedAtMs>" -> in-flight or resolved Promise of the local
+  // path (or null). Caching the *Promise* (not the value) deduplicates
+  // concurrent loads: when two jobs running in parallel both ask for the same
+  // font, the second call awaits the same in-flight promise instead of racing
+  // to writeFile and hitting EBUSY on Windows. Versioning the key by
+  // `updatedAt` means a replaced font (same id, new file) never resolves to
+  // this cache's old entry, without needing an explicit invalidation call.
   private static cache = new Map<string, Promise<string | null>>();
   private static cacheDirReady = false;
 
@@ -38,28 +40,7 @@ export class FontResolver {
    * Resolves by UUID (preferred — exact, no name-matching issues).
    * Returns a local file path or null.
    */
-  resolveById(fontId: string): Promise<string | null> {
-    const cacheKey = `id:${fontId}`;
-    const cached = FontResolver.cache.get(cacheKey);
-    if (cached) return cached;
-    const promise = this.loadById(fontId);
-    FontResolver.cache.set(cacheKey, promise);
-    return promise;
-  }
-
-  /**
-   * Resolves by CSS family name (fallback for Google Fonts and legacy layers
-   * that don't have a fontId stored yet).
-   */
-  resolve(family: string): Promise<string | null> {
-    const cached = FontResolver.cache.get(family);
-    if (cached) return cached;
-    const promise = this.load(family);
-    FontResolver.cache.set(family, promise);
-    return promise;
-  }
-
-  private async loadById(fontId: string): Promise<string | null> {
+  async resolveById(fontId: string): Promise<string | null> {
     await this.ensureCacheDir();
     const [row] = await db.select().from(fonts).where(eq(fonts.id, fontId));
     if (!row || !row.fileUrl) {
@@ -67,10 +48,14 @@ export class FontResolver {
       return null;
     }
     console.log(`[font-resolver] resolving by id "${fontId}" → "${row.name}"`);
-    return this.loadFromMinio({ id: row.id, fileUrl: row.fileUrl });
+    return this.resolveCustomFontRow({ id: row.id, fileUrl: row.fileUrl, updatedAt: row.updatedAt });
   }
 
-  private async load(family: string): Promise<string | null> {
+  /**
+   * Resolves by CSS family name (fallback for Google Fonts and legacy layers
+   * that don't have a fontId stored yet).
+   */
+  async resolve(family: string): Promise<string | null> {
     await this.ensureCacheDir();
 
     // System fonts: already available in OS, no registration needed.
@@ -96,7 +81,7 @@ export class FontResolver {
     if (row) {
       console.log(`[font-resolver] DB hit for "${family}": isGoogle=${row.isGoogle}, fileUrl=${row.fileUrl ?? 'null'}`);
       if (row.fileUrl && !row.isGoogle) {
-        return this.loadFromMinio({ id: row.id, fileUrl: row.fileUrl });
+        return this.resolveCustomFontRow({ id: row.id, fileUrl: row.fileUrl, updatedAt: row.updatedAt });
       }
     } else {
       console.log(`[font-resolver] "${family}" not in DB — trying Google Fonts`);
@@ -106,8 +91,25 @@ export class FontResolver {
     return this.loadGoogleFont(family);
   }
 
+  /**
+   * Looks up (or starts) the in-flight/resolved load for a custom font row,
+   * keyed by id AND `updatedAt`. A merchant replacing the font file updates
+   * `fileUrl`/`updatedAt` on the same row (PUT /api/v1/fonts/:id) — versioning
+   * the cache key this way means the old entry is simply never hit again,
+   * with no explicit invalidation call needed.
+   */
+  private resolveCustomFontRow(row: { id: string; fileUrl: string; updatedAt: Date }): Promise<string | null> {
+    const version = new Date(row.updatedAt).getTime();
+    const cacheKey = `${row.id}:${version}`;
+    const cached = FontResolver.cache.get(cacheKey);
+    if (cached) return cached;
+    const promise = this.loadFromMinio({ id: row.id, fileUrl: row.fileUrl, version });
+    FontResolver.cache.set(cacheKey, promise);
+    return promise;
+  }
+
   /** Download a merchant-uploaded font from MinIO. */
-  private async loadFromMinio(row: { id: string; fileUrl: string }): Promise<string | null> {
+  private async loadFromMinio(row: { id: string; fileUrl: string; version: number }): Promise<string | null> {
     const ASSETS_PREFIX = '/api/v1/assets/';
     const idx = row.fileUrl.indexOf(ASSETS_PREFIX);
     if (idx < 0) {
@@ -117,7 +119,9 @@ export class FontResolver {
     const storageKey = row.fileUrl.slice(idx + ASSETS_PREFIX.length);
 
     const ext = path.extname(storageKey) || '.ttf';
-    const localPath = path.join(CACHE_DIR, `${row.id}${ext}`);
+    // Filename includes the version so a replaced font (same id) never
+    // collides with — or gets served from — the previous file's cache entry.
+    const localPath = path.join(CACHE_DIR, `${row.id}-${row.version}${ext}`);
 
     try {
       const stat = await fs.stat(localPath);
@@ -144,10 +148,26 @@ export class FontResolver {
       }
       await this.atomicWrite(localPath, buffer);
       console.log(`[font-resolver] cached custom font "${row.id}" → ${localPath} (${buffer.length} bytes, magic: ${magic})`);
+      await this.cleanupStaleVersions(row.id, ext, localPath);
       return localPath;
     } catch (err) {
       console.warn(`[font-resolver] failed to load custom font:`, (err as Error).message);
       return null;
+    }
+  }
+
+  /** Best-effort removal of older cached versions of the same font id. */
+  private async cleanupStaleVersions(id: string, ext: string, keepPath: string): Promise<void> {
+    try {
+      const files = await fs.readdir(CACHE_DIR);
+      const prefix = `${id}-`;
+      await Promise.all(
+        files
+          .filter((f) => f.startsWith(prefix) && f.endsWith(ext) && path.join(CACHE_DIR, f) !== keepPath)
+          .map((f) => fs.unlink(path.join(CACHE_DIR, f)).catch(() => {})),
+      );
+    } catch {
+      // A leftover stale file just wastes disk — not worth failing the resolve over.
     }
   }
 

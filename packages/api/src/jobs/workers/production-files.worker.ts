@@ -2,7 +2,7 @@ import { Worker } from 'bullmq';
 import type { Job } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import { renderDesignZone, renderDesignZoneMockup } from '@openmerch/renderer';
-import type { Design, DesignLayer, DesignZone, ProductZone } from '@openmerch/core';
+import type { Design, DesignLayer, DesignZone, ProductVariant, ProductZone } from '@openmerch/core';
 import { db } from '../../db/index.js';
 import { designs, products } from '../../db/schema.js';
 import { minioClient, ensureBucket } from '../../storage/minio.js';
@@ -14,7 +14,9 @@ import {
   PRODUCTION_FILES_QUEUE,
   type ProductionFilesJobData,
   type ProductionFilesJobResult,
+  type ProductionZoneFiles,
 } from '../queues.js';
+import { decideProductionOutcome, resolveRenderZone } from './production-files.logic.js';
 
 async function processJob(
   job: Job<ProductionFilesJobData>,
@@ -56,8 +58,9 @@ async function processJob(
   // If "front" succeeds and "back" fails, we still ship the front files and
   // report the back error. Mockup failures don't fail the zone — the print
   // file is the contractual output, the mockup is "nice to have".
-  const files: Record<string, { print: string; mockup?: string }> = {};
+  const files: Record<string, ProductionZoneFiles> = {};
   const zoneErrors: string[] = [];
+  const variants = (product.variants as ProductVariant[]) ?? [];
 
   for (const productZone of productZones) {
     const designZone: DesignZone | undefined = designZones[productZone.id];
@@ -69,31 +72,9 @@ async function processJob(
       continue;
     }
 
-    // If the design was created with a variant that has different print area
-    // dimensions, use those instead of the product's default zones.
-    // The design zone stores canvasWidthMM/HeightMM matching the variant's
-    // printAreaWidthMM/HeightMM at the time of design creation.
-    const renderZone: ProductZone = { ...productZone };
-    if (designZone && designZone.canvasWidthMM && designZone.canvasHeightMM) {
-      if (Math.abs(designZone.canvasWidthMM - productZone.printAreaWidthMM) > 1 ||
-          Math.abs(designZone.canvasHeightMM - productZone.printAreaHeightMM) > 1) {
-        // Design was made with a different variant — find matching variant zones
-        const variants = (product.variants as { id: string; zones?: ProductZone[] }[]) ?? [];
-        const matchingVariant = variants.find((v) =>
-          v.zones?.some((vz) =>
-            Math.abs(vz.printAreaWidthMM - designZone.canvasWidthMM) < 2 &&
-            Math.abs(vz.printAreaHeightMM - designZone.canvasHeightMM) < 2 &&
-            vz.id === productZone.id
-          )
-        );
-        if (matchingVariant?.zones) {
-          const matchingZone = matchingVariant.zones.find((vz) => vz.id === productZone.id);
-          if (matchingZone) {
-            Object.assign(renderZone, matchingZone);
-            job.log(`Using variant "${matchingVariant.id}" zones for "${productZone.id}"`);
-          }
-        }
-      }
+    const { zone: renderZone, matchedVariantId } = resolveRenderZone(productZone, designZone, variants);
+    if (matchedVariantId) {
+      job.log(`Using variant "${matchedVariantId}" zones for "${productZone.id}"`);
     }
 
     job.log(`Rendering zone "${productZone.id}" (${layers.length} layer(s))`);
@@ -118,7 +99,7 @@ async function processJob(
         { 'Content-Type': 'image/png' },
       );
 
-      const zoneFiles: { print: string; mockup?: string } = {
+      const zoneFiles: ProductionZoneFiles = {
         print: `/api/v1/assets/${printKey}`,
       };
 
@@ -159,16 +140,17 @@ async function processJob(
   //   - all zones succeeded → completed
   //   - some succeeded, some failed → completed with productionError describing the partial failures
   //   - all zones failed → throw, BullMQ will retry then mark failed
-  if (Object.keys(files).length === 0) {
-    throw new Error(`All zones failed: ${zoneErrors.join('; ')}`);
+  const outcome = decideProductionOutcome(files, zoneErrors);
+  if (outcome.status === 'failed') {
+    throw new Error(outcome.productionError ?? 'All zones failed');
   }
 
   await db
     .update(designs)
     .set({
-      productionStatus: 'completed',
+      productionStatus: outcome.status,
       productionFiles: files,
-      productionError: zoneErrors.length > 0 ? zoneErrors.join('; ') : null,
+      productionError: outcome.productionError,
       updatedAt: new Date(),
     })
     .where(eq(designs.id, designId));

@@ -23,8 +23,15 @@ interface ProductEditorProps {
   height?: number;
 }
 
+/**
+ * Full product design editor: canvas, sidebar, toolbars and footer in a single component.
+ * Fills the viewport (100vw/100vh) — mount as the whole page; `width`/`height` props are currently unused.
+ * Wrap with `ErrorBoundary` to catch render errors instead of a blank screen.
+ */
 export function ProductEditor({ product: initialProduct }: ProductEditorProps) {
-  const { setProduct, activeZoneId, addImageLayer } = useEditorStore();
+  const setProduct = useEditorStore((s) => s.setProduct);
+  const activeZoneId = useEditorStore((s) => s.activeZoneId);
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
   const product = useEditorStore((s) => s.product) ?? initialProduct;
   const loadLanguages = useI18nStore((s) => s.loadLanguages);
   const t = useT();
@@ -398,7 +405,6 @@ function CanvasView({ zone }: CanvasViewProps) {
                     layer={layer}
                     pxPerMM={layout.pxPerMM}
                     isSelected={selectedLayerId === layer.id}
-                    hideTransformer
                   />
                 ))}
             </Group>

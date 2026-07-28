@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 2 complete — Product overlay/mask system closed with MVP coverage (21 overlays across 7 product types, 7 PSD sources versioned), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. Next: rembg AI background removal, displacement maps, CMS integration.
+> **Status:** Phase 2 complete — Product overlay/mask system closed with MVP coverage (21 overlays across 7 product types, 7 PSD sources versioned), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. A full internal audit (security, frontend, backend, test coverage, code quality — 54 findings) has been closed end-to-end, plus interactive API docs (Swagger/OpenAPI) and a full architecture/roadmap writeup — see [Documentation](#documentation) below. Next: rembg AI background removal, then displacement maps (fabric-realistic mockups). WooCommerce/Shopify plugins, embroidery/per-technique validation, native checkout, and 3D preview are explicitly Post-MVP — see [Roadmap](#roadmap).
 
 ---
 
@@ -74,8 +74,11 @@ cd openmerch-engine
 cp .env.example .env
 docker compose up -d
 pnpm install
+pnpm --filter @openmerch/api db:seed
 pnpm dev
 ```
+
+`db:seed` loads the default translations (English/Spanish/French) and the 13-product starter catalog — skip it and you'll get a running app with an empty database (no products to design). It's idempotent, safe to re-run.
 
 Editor demo will be available at `http://localhost:3000`
 Admin panel will be available at `http://localhost:5173`
@@ -114,7 +117,23 @@ openmerch-engine/
 
 ---
 
+## Documentation
+
+| Doc | What's in it |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagram, database schema, production pipeline, overlay system — with real mermaid diagrams |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | All 12 REST resources, request/response shapes, curl examples |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Detailed, phase-by-phase backlog (including the "Future — Advanced AI" track) |
+| [docs/integrations/shopify.md](docs/integrations/shopify.md) | Generic pattern for embedding the editor in a Shopify storefront (headless or classic) |
+| `/api/v1/docs` | Live interactive API explorer (Swagger UI, generated from the Fastify schemas — run the API and open it locally) |
+
+Every doc above ships in English (source of truth) with a `.es.md` Spanish counterpart alongside it.
+
+---
+
 ## WooCommerce Integration
+
+> **Not built yet — pattern only.** This plugin isn't on the maintainer's active roadmap right now (see [Roadmap](#roadmap) below). The flow described here is the intended integration pattern for whoever picks it up — `plugins/plugin-woocommerce` is currently an empty placeholder. Contributions welcome.
 
 1. Deploy OpenMerch Engine on your server
 2. Install the WooCommerce plugin from `/plugins/plugin-woocommerce`
@@ -183,13 +202,18 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Settings API (AES-256 encryption, proxy endpoints, dynamic branding/favicon/store name)
   - [x] Product overlay/mask system (designs clip to print area, overlays for camera/edges/shapes)
   - [x] Interactive Konva zone editor in admin (drag & resize print areas visually)
-  - [ ] Checkout flow (payment → production files generation)
+  - [x] Interactive API documentation (Swagger/OpenAPI UI at `/api/v1/docs`, spec generated from Fastify schemas across all 30 endpoints)
   - [ ] rembg AI-powered background removal (Python)
-- [ ] 2D preview with displacement maps (Phase 2)
-- [ ] Per-technique validation and embroidery files (Phase 3)
-- [ ] WooCommerce integration (Phase 4)
-- [ ] Shopify integration (Post-MVP)
-- [ ] 3D preview (Post-MVP)
+- [ ] 2D preview with displacement maps (Phase 2) — fabric-realistic mockups (design follows garment wrinkles/folds), **confirmed in scope for v1**
+
+**Post-MVP — explicitly not planned right now** (large, open-ended scopes that would delay a polished v1; contributions welcome, just not on the maintainer's roadmap — see [docs/ROADMAP.md](docs/ROADMAP.md#post-mvp--explicitly-out-of-scope-for-now) for the reasoning behind each):
+- [ ] Per-technique validation and embroidery files (previously Phase 3)
+- [ ] WooCommerce integration (previously Phase 4)
+- [ ] Shopify integration
+- [ ] Native checkout / payment flow — the existing `POST /api/v1/designs/:id/generate-files` endpoint is the real integration point; no plan to build payment processing into OpenMerch itself
+- [ ] 3D preview
+
+> This checklist tracks features. For the detailed, prioritized backlog (including the security/reliability findings from the internal audit), see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 

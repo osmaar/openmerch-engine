@@ -16,7 +16,7 @@ const EFFECT_TYPES: { type: TextEffect['type']; label: string; image: string }[]
 ];
 
 export function TextEffectsPopover({ layer, onClose }: TextEffectsPopoverProps) {
-  const { updateLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
   const t = useT();
   const currentEffect = layer.textEffect ?? { type: 'none' as const, radius: 150, spacing: 0, curve: 0, height: 0, offset: 0 };
   const [effect, setEffect] = useState<TextEffect>(currentEffect);

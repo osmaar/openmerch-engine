@@ -8,7 +8,9 @@ interface StageNavigatorProps {
 }
 
 export function StageNavigator({ product }: StageNavigatorProps) {
-  const { activeZoneId, setActiveZone, productColor } = useEditorStore();
+  const activeZoneId = useEditorStore((s) => s.activeZoneId);
+  const setActiveZone = useEditorStore((s) => s.setActiveZone);
+  const productColor = useEditorStore((s) => s.productColor);
   const t = useT();
 
   const zones = product.zones;
@@ -44,6 +46,7 @@ export function StageNavigator({ product }: StageNavigatorProps) {
     flexDirection: 'column',
     alignItems: 'center',
     gap: 2,
+    width: '100%',
     padding: 4,
     borderWidth: 2,
     borderStyle: 'solid',
@@ -87,8 +90,9 @@ export function StageNavigator({ product }: StageNavigatorProps) {
       {zones.map((zone, idx) => {
         const isActive = zone.id === activeZoneId;
         return (
-          <div
+          <button
             key={zone.id}
+            type="button"
             style={thumbStyle(isActive)}
             onClick={() => setActiveZone(zone.id)}
             title={`${t(zone.name)} (${idx + 1}/${total})`}
@@ -119,7 +123,7 @@ export function StageNavigator({ product }: StageNavigatorProps) {
             }}>
               {t(zone.name)} ({idx + 1}/{total})
             </span>
-          </div>
+          </button>
         );
       })}
 

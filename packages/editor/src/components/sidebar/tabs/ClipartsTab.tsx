@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Search, Loader } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
+import { getBaseUrl } from '../../../services/api.js';
 
 interface IconifyIcon {
   prefix: string;
@@ -14,7 +15,7 @@ interface AdminClipart {
   fileUrl: string | null;
 }
 
-const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+const API_BASE = getBaseUrl();
 
 const ICON_SETS = [
   { prefix: 'lucide', label: 'Basic', defaultQuery: 'star' },
@@ -31,7 +32,7 @@ const ICON_SETS = [
 
 export function ClipartsTab() {
   const t = useT();
-  const { addImageLayer } = useEditorStore();
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<IconifyIcon[]>([]);
   const [loading, setLoading] = useState(false);
@@ -220,11 +221,11 @@ export function ClipartsTab() {
       )}
 
       {!loading && results.length === 0 && (
-        <div style={{ textAlign: 'center', color: '#aaa', fontSize: 12, padding: 12 }}>No icons found</div>
+        <div style={{ textAlign: 'center', color: '#595959', fontSize: 12, padding: 12 }}>No icons found</div>
       )}
 
-      <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center' }}>
-        200,000+ icons · Powered by <a href="https://iconify.design" target="_blank" rel="noopener noreferrer" style={{ color: '#999' }}>Iconify</a>
+      <div style={{ fontSize: 9, color: '#767676', textAlign: 'center' }}>
+        200,000+ icons · Powered by <a href="https://iconify.design" target="_blank" rel="noopener noreferrer" style={{ color: '#595959' }}>Iconify</a>
       </div>
     </div>
   );

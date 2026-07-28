@@ -9,7 +9,12 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { assertEncryptionKeyConfigured } from './utils/crypto.js';
 import { startProductionFilesWorker } from './jobs/workers/production-files.worker.js';
+
+// This worker decrypts settings (API keys, secrets) with the same key as the
+// API — refuse to run in production against the insecure dev default.
+assertEncryptionKeyConfigured();
 
 // Wipe the font file cache. Stale or invalid files (e.g. WOFF/EOT from a prior
 // run that were deleted) leave orphan entries in fontconfig's disk cache.

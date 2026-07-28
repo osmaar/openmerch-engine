@@ -147,6 +147,14 @@ curl http://localhost:3001/api/v1/health
 # → {"status":"ok","timestamp":"...","version":"0.0.1"}
 ```
 
+## Interactive API Docs
+
+Once the server is running, the full interactive API documentation (Swagger UI, generated from the Fastify route schemas) is available at:
+
+**http://localhost:3001/api/v1/docs**
+
+The raw OpenAPI 3.0 document is served at `/api/v1/docs/json`.
+
 ## API Endpoints
 
 ### Health
@@ -290,7 +298,8 @@ All errors follow the same format:
 | `MINIO_ACCESS_KEY` | `openmerch` | MinIO access key |
 | `MINIO_SECRET_KEY` | `openmerch123` | MinIO secret key |
 | `MINIO_BUCKET` | `openmerch` | MinIO bucket name |
-| `CORS_ORIGIN` | `*` | Allowed CORS origin |
+| `CORS_ORIGIN` | `http://localhost:3000,http://localhost:3002` | Comma-separated list of allowed CORS origins. No auth on the API, so avoid `*` outside local experimentation |
+| `ENCRYPTION_KEY` | dev-only fallback (insecure) | AES-256 key for encrypted settings. Required when `NODE_ENV=production` — the API/worker refuse to start without it |
 
 ## Development
 

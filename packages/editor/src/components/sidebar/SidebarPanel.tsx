@@ -41,6 +41,11 @@ const TABS: TabDef[] = [
   { id: 'layers', label: 'Layers', icon: Layers },
 ];
 
+/**
+ * Left-hand tabbed sidebar (Product, Image, Text, Layers, etc.) for the editor.
+ * Takes no props — reads/writes editor state directly via `useEditorStore`, so it must be rendered
+ * alongside `ProductEditor`/backed by the same store to have any effect.
+ */
 export function SidebarPanel() {
   const [activeTab, setActiveTab] = useState<TabId>('product');
   const t = useT();

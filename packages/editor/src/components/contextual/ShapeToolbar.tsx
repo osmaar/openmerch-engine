@@ -29,7 +29,10 @@ const COLORS = [
 ];
 
 export function ShapeToolbar({ layer }: ShapeToolbarProps) {
-  const { updateLayer, removeLayer, duplicateLayer, resetLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
+  const removeLayer = useEditorStore((s) => s.removeLayer);
+  const duplicateLayer = useEditorStore((s) => s.duplicateLayer);
+  const resetLayer = useEditorStore((s) => s.resetLayer);
   const designZone = useEditorStore((s) => s.design?.zones[s.activeZoneId]);
   const [activePopover, setActivePopover] = useState<string | null>(null);
   const t = useT();

@@ -14,7 +14,7 @@ interface AlignPopoverProps {
 }
 
 export function AlignPopover({ layer, onClose }: AlignPopoverProps) {
-  const { updateLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
   const t = useT();
 
   const btnStyle = (active: boolean): React.CSSProperties => ({

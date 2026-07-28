@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
+import { getBaseUrl } from '../../../services/api.js';
 
 const TEXT_EFFECTS = [
   { type: 'none' as const, label: 'Normal', image: '/assets/text-effects/normal.svg' },
@@ -69,11 +70,13 @@ interface AdminFont {
   isGoogle: boolean;
 }
 
-const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+const API_BASE = getBaseUrl();
 
 export function TextTab() {
   const t = useT();
-  const { addTextLayer, updateLayer, selectLayer } = useEditorStore();
+  const addTextLayer = useEditorStore((s) => s.addTextLayer);
+  const updateLayer = useEditorStore((s) => s.updateLayer);
+  const selectLayer = useEditorStore((s) => s.selectLayer);
   // Track selectedLayerId directly so Zustand re-renders on selection changes.
   const hasTextSelected = useEditorStore((s) => {
     if (!s.selectedLayerId || !s.design) return false;
@@ -233,7 +236,7 @@ export function TextTab() {
       {/* Merchant fonts library */}
       {adminFonts.length > 0 && filteredFonts.length === 0 && (
         <>
-          <div style={{ fontSize: 10, color: '#bbb', fontWeight: 600 }}>{t('COLLECTION')} ({adminFonts.length})</div>
+          <div style={{ fontSize: 10, color: '#767676', fontWeight: 600 }}>{t('COLLECTION')} ({adminFonts.length})</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
             {adminFonts.map((font) => (
               <button
@@ -257,7 +260,7 @@ export function TextTab() {
       {/* Default fonts grid */}
       {filteredFonts.length === 0 && (
         <>
-          <div style={{ fontSize: 10, color: '#bbb' }}>{t('Popular for t-shirt design')}</div>
+          <div style={{ fontSize: 10, color: '#767676' }}>{t('Popular for t-shirt design')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
             {FEATURED_FONTS.map((font) => (
               <button

@@ -14,7 +14,7 @@ interface CasePopoverProps {
 }
 
 export function CasePopover({ layer, onClose }: CasePopoverProps) {
-  const { updateLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
   const t = useT();
 
   const btnStyle: React.CSSProperties = {

@@ -973,5 +973,8 @@
   "Upload Overlay Image": "Télécharger Image Overlay",
   "Change Overlay": "Changer Overlay",
   "Remove Overlay": "Supprimer Overlay",
-  "Select quantity in the Product tab before adding to cart.": "Sélectionnez la quantité dans l'onglet Produit avant d'ajouter au panier."
+  "Select quantity in the Product tab before adding to cart.": "Sélectionnez la quantité dans l'onglet Produit avant d'ajouter au panier.",
+  "Something went wrong": "Une erreur est survenue",
+  "An unexpected error occurred. Please reload the page.": "Une erreur inattendue s'est produite. Veuillez recharger la page.",
+  "Reload Page": "Recharger la Page"
 }

@@ -16,6 +16,7 @@ interface HistoryEntry {
   layers: DesignLayer[];
 }
 
+/** A single saved design queued for checkout, with its chosen sizes/quantities, color and price. */
 export interface CartItem {
   designId: string;
   productId: string;
@@ -94,7 +95,7 @@ function pushHistory(state: EditorState): Pick<EditorState, 'history' | 'history
 
   const entry: HistoryEntry = {
     zoneId: state.activeZoneId,
-    layers: JSON.parse(JSON.stringify(zone.layers)),
+    layers: structuredClone(zone.layers),
   };
 
   // Trim future entries if we undid some steps
@@ -107,6 +108,11 @@ function pushHistory(state: EditorState): Pick<EditorState, 'history' | 'history
   };
 }
 
+/**
+ * Global editor state store (product, design layers, undo history, cart, etc.) built with zustand.
+ * Prefer selector usage, e.g. `useEditorStore((s) => s.selectedLayerId)`, over destructuring the whole
+ * store — subscribing to the full state re-renders on every change since it holds most editor state.
+ */
 export const useEditorStore = create<EditorState>((set, get) => ({
   product: null,
   activeZoneId: 'front',
@@ -812,8 +818,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!zone) return;
 
     // Save current state as a redo point (append after current index if not already there)
-    const currentLayers = JSON.parse(JSON.stringify(zone.layers)) as DesignLayer[];
-    const redoEntry = { zoneId: activeZoneId, layers: currentLayers };
+    const currentLayers = structuredClone(zone.layers);
+    const redoEntry: HistoryEntry = { zoneId: activeZoneId, layers: currentLayers };
     const newHistory = [...history];
 
     // Insert redo entry after current index if it doesn't exist

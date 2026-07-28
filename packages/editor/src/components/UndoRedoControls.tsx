@@ -3,7 +3,11 @@ import { useEditorStore } from '../store/editorStore.js';
 import { useT } from '../i18n/useTranslation.js';
 
 export function UndoRedoControls() {
-  const { undo, redo, historyIndex, history, showPrintZone } = useEditorStore();
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
+  const historyIndex = useEditorStore((s) => s.historyIndex);
+  const history = useEditorStore((s) => s.history);
+  const showPrintZone = useEditorStore((s) => s.showPrintZone);
   const t = useT();
 
   const canUndo = historyIndex >= 0;

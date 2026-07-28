@@ -15,7 +15,8 @@
     "build": "tsc --project tsconfig.json",
     "dev": "tsc --watch --project tsconfig.json",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "test": "vitest run"
   },
   "dependencies": {
     "@openmerch/core": "workspace:*",

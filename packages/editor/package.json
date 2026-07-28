@@ -15,7 +15,8 @@
     "build": "vite build && tsc --emitDeclarationOnly",
     "dev": "vite build --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "test": "vitest run"
   },
   "dependencies": {
     "@openmerch/core": "workspace:*",
