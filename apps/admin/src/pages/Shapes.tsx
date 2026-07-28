@@ -9,6 +9,7 @@ import { useConfirm } from '../hooks/useConfirm.js';
 import { listShapes, createShape, updateShape, deleteShape } from '../services/api.js';
 import type { Shape } from '../services/api.js';
 import { useT } from '../i18n/useTranslation.js';
+import { sanitizeSvgMarkup } from '../utils/sanitizeSvg.js';
 
 export function Shapes() {
   const t = useT();
@@ -88,7 +89,7 @@ export function Shapes() {
           <Textarea label={t('SVG Content')} description={t('Paste your SVG content here for preview')} placeholder="<svg>...</svg>" value={newSvg} onChange={(e) => setNewSvg(e.target.value)} minRows={4} required />
           {newSvg && (
             <Paper p="lg" radius="md" withBorder style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <div style={{ width: 100, height: 100 }} dangerouslySetInnerHTML={{ __html: (() => { let svg = newSvg; const wm = svg.match(/width="(\d+)"/); const hm = svg.match(/height="(\d+)"/); if (wm && hm && !svg.includes('viewBox')) svg = svg.replace(/<svg/, `<svg viewBox="0 0 ${wm[1]} ${hm[1]}"`); return svg.replace(/<svg([^>]*)>/, (_, a) => `<svg${a.replace(/width="[^"]*"/g, '').replace(/height="[^"]*"/g, '')} width="100" height="100" style="display:block">`); })() }} />
+              <div style={{ width: 100, height: 100 }} dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup((() => { let svg = newSvg; const wm = svg.match(/width="(\d+)"/); const hm = svg.match(/height="(\d+)"/); if (wm && hm && !svg.includes('viewBox')) svg = svg.replace(/<svg/, `<svg viewBox="0 0 ${wm[1]} ${hm[1]}"`); return svg.replace(/<svg([^>]*)>/, (_, a) => `<svg${a.replace(/width="[^"]*"/g, '').replace(/height="[^"]*"/g, '')} width="100" height="100" style="display:block">`); })()) }} />
             </Paper>
           )}
           <NumberInput label={t('Order')} description={t('Controls the position of this shape in the editor list. Lower numbers appear first.')} value={newOrder} onChange={(v) => setNewOrder(Number(v) || 0)} min={0} />
@@ -127,7 +128,7 @@ export function Shapes() {
               {filtered.map((s) => (
                 <Table.Tr key={s.id}>
                   <Table.Td>
-                    <div style={{ width: 32, height: 32 }} dangerouslySetInnerHTML={{ __html: (() => { let svg = s.svgContent; const wm = svg.match(/width="(\d+)"/); const hm = svg.match(/height="(\d+)"/); if (wm && hm && !svg.includes('viewBox')) svg = svg.replace(/<svg/, `<svg viewBox="0 0 ${wm[1]} ${hm[1]}"`); return svg.replace(/<svg([^>]*)>/, (_, a) => `<svg${a.replace(/width="[^"]*"/g, '').replace(/height="[^"]*"/g, '')} width="32" height="32" style="display:block">`); })() }} />
+                    <div style={{ width: 32, height: 32 }} dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup((() => { let svg = s.svgContent; const wm = svg.match(/width="(\d+)"/); const hm = svg.match(/height="(\d+)"/); if (wm && hm && !svg.includes('viewBox')) svg = svg.replace(/<svg/, `<svg viewBox="0 0 ${wm[1]} ${hm[1]}"`); return svg.replace(/<svg([^>]*)>/, (_, a) => `<svg${a.replace(/width="[^"]*"/g, '').replace(/height="[^"]*"/g, '')} width="32" height="32" style="display:block">`); })()) }} />
                   </Table.Td>
                   <Table.Td><Text size="sm" fw={500}>{s.name}</Text></Table.Td>
                   <Table.Td><Text size="xs" c="dimmed">{s.sortOrder}</Text></Table.Td>

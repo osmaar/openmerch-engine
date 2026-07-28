@@ -7,7 +7,7 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 2 nearly complete — 13 product bases with variants (T-shirts, Hoodies, Caps, Mugs, Phone Cases, Posters, Desk Mats, Mousepads, Pillows), Settings API with encryption, BullMQ production jobs, full i18n (EN/ES/FR). Next: product masks/overlays, rembg AI background removal, CMS integration.
+> **Status:** Phase 2 complete — Product overlay/mask system closed with MVP coverage (21 overlays across 7 product types, 7 PSD sources versioned), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. A full internal audit (security, frontend, backend, test coverage, code quality — 54 findings) has been closed end-to-end, plus interactive API docs (Swagger/OpenAPI) and a full architecture/roadmap writeup — see [Documentation](#documentation) below. Next: rembg AI background removal, then displacement maps (fabric-realistic mockups). WooCommerce/Shopify plugins, embroidery/per-technique validation, native checkout, and 3D preview are explicitly Post-MVP — see [Roadmap](#roadmap).
 
 ---
 
@@ -33,9 +33,20 @@ OpenMerch Engine lets any ecommerce store offer visual product customization dir
 
 ## Supported Products (MVP)
 
-- T-shirts
+13 base products with calibrated print zones, variants, and overlay masks where applicable:
 
-> More products (hoodies, mugs, caps, phone cases, posters, mousepads) coming in future releases.
+| Product | Variants | Overlay |
+|---|---|---|
+| Classic / Oversized / Box T-Shirt | S/M/L/XL × 12 colors | — |
+| Premium Hoodie | sizes × colors | — |
+| Dad Hat / Trucker Hat | one size × colors | — |
+| Glossy Mug | 11 oz / 15 oz / 20 oz | ✅ |
+| iPhone Case | 31 models (iPhone 7 → 17 Pro Max) | ⚠️ 1/31 (17 Pro Max only) |
+| Wall Art Poster | 5×7 → 24×36 in (6 sizes) | ✅ |
+| Flag Poster | one size | ✅ |
+| Desk Mat | 12×18 / 12×22 / 16×32 in | ✅ |
+| Mousepad | one size | ✅ |
+| Throw Pillow | 18×18 / 20×12 / 22×22 in (front + back) | ✅ |
 
 ## Decoration Techniques (MVP)
 
@@ -63,8 +74,11 @@ cd openmerch-engine
 cp .env.example .env
 docker compose up -d
 pnpm install
+pnpm --filter @openmerch/api db:seed
 pnpm dev
 ```
+
+`db:seed` loads the default translations (English/Spanish/French) and the 13-product starter catalog — skip it and you'll get a running app with an empty database (no products to design). It's idempotent, safe to re-run.
 
 Editor demo will be available at `http://localhost:3000`
 Admin panel will be available at `http://localhost:5173`
@@ -86,15 +100,40 @@ openmerch-engine/
 │   └── admin/        # Merchant admin panel (Mantine UI)
 ├── plugins/
 │   └── plugin-woocommerce/   # WooCommerce PHP plugin
-└── products/
-    └── tshirt/       # Product assets and zone definitions
+├── products/                  # Product mockups + overlays consumed by the worker
+│   ├── tshirt/
+│   ├── mug/
+│   ├── phone-case/
+│   │   ├── variants/          # Per-model base mockups (iphone-17-pro-max.png, …)
+│   │   └── overlays/          # Per-model overlay PNGs (camera cutouts, edges)
+│   └── …                      # one folder per product slug
+└── overlays-products-base/    # PSD sources for overlays (artist working files)
+    ├── case iphone/
+    ├── mug/
+    └── …                      # one folder per product, with the .psd + exported PNGs
 ```
 
 **Stack:** React 19 · TypeScript · Konva.js · Zustand · Fastify · BullMQ · Sharp · PostgreSQL · Redis · MinIO · Python + pyembroidery
 
 ---
 
+## Documentation
+
+| Doc | What's in it |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagram, database schema, production pipeline, overlay system — with real mermaid diagrams |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | All 12 REST resources, request/response shapes, curl examples |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Detailed, phase-by-phase backlog (including the "Future — Advanced AI" track) |
+| [docs/integrations/shopify.md](docs/integrations/shopify.md) | Generic pattern for embedding the editor in a Shopify storefront (headless or classic) |
+| `/api/v1/docs` | Live interactive API explorer (Swagger UI, generated from the Fastify schemas — run the API and open it locally) |
+
+Every doc above ships in English (source of truth) with a `.es.md` Spanish counterpart alongside it.
+
+---
+
 ## WooCommerce Integration
+
+> **Not built yet — pattern only.** This plugin isn't on the maintainer's active roadmap right now (see [Roadmap](#roadmap) below). The flow described here is the intended integration pattern for whoever picks it up — `plugins/plugin-woocommerce` is currently an empty placeholder. Contributions welcome.
 
 1. Deploy OpenMerch Engine on your server
 2. Install the WooCommerce plugin from `/plugins/plugin-woocommerce`
@@ -161,13 +200,20 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Admin panel i18n (separate translation system for merchant dashboard)
   - [x] BullMQ production job queue (Docker worker, 300 DPI print + 96 DPI mockup, custom fonts + Google Fonts)
   - [x] Settings API (AES-256 encryption, proxy endpoints, dynamic branding/favicon/store name)
-  - [ ] Checkout flow (payment → production files generation)
+  - [x] Product overlay/mask system (designs clip to print area, overlays for camera/edges/shapes)
+  - [x] Interactive Konva zone editor in admin (drag & resize print areas visually)
+  - [x] Interactive API documentation (Swagger/OpenAPI UI at `/api/v1/docs`, spec generated from Fastify schemas across all 30 endpoints)
   - [ ] rembg AI-powered background removal (Python)
-- [ ] 2D preview with displacement maps (Phase 2)
-- [ ] Per-technique validation and embroidery files (Phase 3)
-- [ ] WooCommerce integration (Phase 4)
-- [ ] Shopify integration (Post-MVP)
-- [ ] 3D preview (Post-MVP)
+- [ ] 2D preview with displacement maps (Phase 2) — fabric-realistic mockups (design follows garment wrinkles/folds), **confirmed in scope for v1**
+
+**Post-MVP — explicitly not planned right now** (large, open-ended scopes that would delay a polished v1; contributions welcome, just not on the maintainer's roadmap — see [docs/ROADMAP.md](docs/ROADMAP.md#post-mvp--explicitly-out-of-scope-for-now) for the reasoning behind each):
+- [ ] Per-technique validation and embroidery files (previously Phase 3)
+- [ ] WooCommerce integration (previously Phase 4)
+- [ ] Shopify integration
+- [ ] Native checkout / payment flow — the existing `POST /api/v1/designs/:id/generate-files` endpoint is the real integration point; no plan to build payment processing into OpenMerch itself
+- [ ] 3D preview
+
+> This checklist tracks features. For the detailed, prioritized backlog (including the security/reliability findings from the internal audit), see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
@@ -224,6 +270,72 @@ This loads all translations from `packages/api/seeds/translations/*.json` into t
 The editor uses ~337 unique strings organized in 25 sections (NavBar, Cart, Toolbars, Tabs, Popovers, Filters, AI prompts, etc.). All strings are visible in the admin panel under **Languages → Translations → OpenMerch Editor tab**, with section headers for easy navigation.
 
 Both the editor and the admin panel are fully translated.
+
+---
+
+## Product Overlays
+
+Overlays are PNGs with transparency that render **on top** of the customer's design — they reproduce features of the physical product that the design cannot cover: phone-camera cutouts, rounded corners, rim of a mug, edges of a poster, etc. They make the preview (and the production-file export) look like the real product.
+
+### Where overlays live
+
+```
+overlays-products-base/         ← PSD sources (artist working files, versioned)
+  case iphone/iphone-17-pro-max.psd
+  mug/mug.psd
+  …
+
+products/<slug>/overlays/        ← PNGs consumed by the Docker worker (production files)
+  mug/overlays/11oz-overlay.png
+  phone-case/overlays/iphone-17-pro-max-overlay.png
+  …
+
+apps/demo/public/products/<slug>/overlays/   ← Same PNGs, served by Vite to the browser editor
+```
+
+The two PNG copies are intentional and must stay in sync: the worker reads from `products/` (mounted into the Docker image), while the browser-side editor fetches from `apps/demo/public/products/` over HTTP.
+
+### How they get applied at runtime
+
+Each zone (or variant zone) in `packages/api/seeds/products/catalog.json` may carry an `overlayImageUrl`:
+
+```json
+{
+  "id": "iphone-17-pro-max",
+  "name": "iPhone 17 Pro Max",
+  "zones": [{
+    "id": "back",
+    "baseImageUrl": "/products/phone-case/variants/iphone-17-pro-max.png",
+    "overlayImageUrl": "/products/phone-case/overlays/iphone-17-pro-max-overlay.png",
+    ...
+  }]
+}
+```
+
+When the seed runs (`pnpm --filter @openmerch/api db:seed`), the path is stored in the `products.zones` / `products.variants` JSONB column. Both the editor (compositing layer above the design) and the renderer (3-pass export: base → clipped design → overlay) honor that field automatically.
+
+### Adding overlays for a new product
+
+1. **Create the PSD** in `overlays-products-base/<product>/`, working from the base mockup as a reference layer.
+2. **Cut out the printable area** (delete it to transparent). Everything else stays opaque — the parts of the product that should sit on top of the design.
+3. **Export each variant** as `<variant>-overlay.png` (or `<zone>-overlay.png` for single-zone products) into the same folder.
+4. **Copy the exported PNGs** to both:
+   - `products/<slug>/overlays/<variant>-overlay.png`
+   - `apps/demo/public/products/<slug>/overlays/<variant>-overlay.png`
+5. **Add the path** to the corresponding zone in `packages/api/seeds/products/catalog.json`:
+   ```json
+   "overlayImageUrl": "/products/<slug>/overlays/<variant>-overlay.png"
+   ```
+6. **Re-run the product seed:**
+   ```bash
+   pnpm --filter @openmerch/api db:seed
+   ```
+
+Alternatively, a merchant who already has the platform running can upload overlays via **Admin → Products → Edit → Zone → Upload Overlay Image** without touching the seed. That path stores the overlay against the running database only and is the right choice for store-specific products that won't ship with the open-source project.
+
+### Current coverage
+
+21 overlays across 7 product types are versioned and load automatically with `db:seed:products`. T-shirts, hoodies, and caps don't ship with overlays — they have no cutouts that warrant one. The iPhone Case ships with the iPhone 17 Pro Max overlay only as a reference; the pending models (30/31) are listed in `overlays-products-base/case iphone/TODO.txt` with the full step-by-step process.
 
 ---
 

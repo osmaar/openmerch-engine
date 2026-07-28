@@ -9,6 +9,7 @@ import { useConfirm } from '../hooks/useConfirm.js';
 import { listCliparts, createClipart, updateClipart, deleteClipart, bulkCreateCliparts, uploadAsset } from '../services/api.js';
 import type { Clipart } from '../services/api.js';
 import { useT } from '../i18n/useTranslation.js';
+import { sanitizeSvgMarkup } from '../utils/sanitizeSvg.js';
 
 const CLIPART_CATEGORIES = [
   'Animals', 'Sports', 'Music', 'Food', 'Nature', 'Abstract',
@@ -211,7 +212,7 @@ export function Cliparts() {
     }, [fullUrl, isSvg]);
 
     if (isSvg && svgContent) {
-      return <div style={{ width: '100%', height: '100%', display: 'flex' }} dangerouslySetInnerHTML={{ __html: svgContent.replace(/<svg([^>]*)>/, '<svg$1 width="36" height="36" style="display:block;margin:auto">') }} />;
+      return <div style={{ width: '100%', height: '100%', display: 'flex' }} dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup(svgContent.replace(/<svg([^>]*)>/, '<svg$1 width="36" height="36" style="display:block;margin:auto">')) }} />;
     }
     return <img src={fullUrl} alt={alt} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />;
   };

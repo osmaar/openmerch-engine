@@ -5,6 +5,7 @@ import {
   ChevronsUp,
   ChevronsDown,
 } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useEditorStore } from '../../store/editorStore.js';
 import { useT } from '../../i18n/useTranslation.js';
 
@@ -14,7 +15,14 @@ interface ArrangePopoverProps {
 }
 
 export function ArrangePopover({ layerId, onClose }: ArrangePopoverProps) {
-  const { moveLayerUp, moveLayerDown, design, activeZoneId } = useEditorStore();
+  const { moveLayerUp, moveLayerDown, design, activeZoneId } = useEditorStore(
+    useShallow((s) => ({
+      moveLayerUp: s.moveLayerUp,
+      moveLayerDown: s.moveLayerDown,
+      design: s.design,
+      activeZoneId: s.activeZoneId,
+    })),
+  );
   const t = useT();
 
   const zone = design?.zones[activeZoneId];

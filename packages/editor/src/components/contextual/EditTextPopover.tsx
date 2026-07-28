@@ -10,7 +10,7 @@ interface EditTextPopoverProps {
 }
 
 export function EditTextPopover({ layer, onClose }: EditTextPopoverProps) {
-  const { updateLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
   const t = useT();
   const [text, setText] = useState(layer.text);
   const [fontSize, setFontSize] = useState(layer.fontSize);

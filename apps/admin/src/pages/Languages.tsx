@@ -206,6 +206,10 @@ const EDITOR_TEXTS_BY_SECTION = {
     'Astronaut floating in space with flowers',
     'Graffiti style text art, urban street art',
   ],
+  'Error Boundary': [
+    'Something went wrong', 'An unexpected error occurred. Please reload the page.',
+    'Reload Page',
+  ],
 };
 
 // Flat list used everywhere else (for state, validation, downloads)
@@ -479,6 +483,10 @@ const ADMIN_TEXTS_BY_SECTION = {
     // Printing techniques
     'Sublimation', 'Screen Printing', 'Embroidery',
     'DTG (Direct to Garment)', 'Heat Transfer', 'Vinyl', 'DTF (Direct to Film)',
+  ],
+  'Error Boundary': [
+    'Something went wrong', 'An unexpected error occurred. Please reload the page.',
+    'Reload Page',
   ],
 };
 

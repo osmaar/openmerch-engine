@@ -1,4 +1,4 @@
-import { mmToPx } from '@openmerch/core';
+import { mmToPx, MAX_RENDER_DIMENSION_PX, MM_PER_INCH } from '@openmerch/core';
 import type { DesignLayer, ImageLayer, ProductZone, ShapeLayer, TextLayer } from '@openmerch/core';
 import { addShapeLayer } from './layers/shape.js';
 import { addImageLayer } from './layers/image.js';
@@ -61,7 +61,14 @@ export async function renderDesignZone(options: RenderZoneOptions): Promise<Rend
 
   const widthPx = Math.round(mmToPx(options.zone.printAreaWidthMM, dpi));
   const heightPx = Math.round(mmToPx(options.zone.printAreaHeightMM, dpi));
-  const pxPerMM = dpi / 25.4;
+  if (widthPx > MAX_RENDER_DIMENSION_PX || heightPx > MAX_RENDER_DIMENSION_PX) {
+    throw new Error(
+      `renderDesignZone: zone "${options.zone.id}" would render at ${widthPx}x${heightPx}px ` +
+        `(dpi=${dpi}), exceeding the ${MAX_RENDER_DIMENSION_PX}px maximum per side. ` +
+        `Check the product's printAreaWidthMM/printAreaHeightMM.`,
+    );
+  }
+  const pxPerMM = dpi / MM_PER_INCH;
 
   // Pre-register all fonts BEFORE creating the Stage. node-canvas requires
   // registerFont() to be called before any canvas is instantiated — calling

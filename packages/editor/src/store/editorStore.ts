@@ -16,6 +16,7 @@ interface HistoryEntry {
   layers: DesignLayer[];
 }
 
+/** A single saved design queued for checkout, with its chosen sizes/quantities, color and price. */
 export interface CartItem {
   designId: string;
   productId: string;
@@ -94,7 +95,7 @@ function pushHistory(state: EditorState): Pick<EditorState, 'history' | 'history
 
   const entry: HistoryEntry = {
     zoneId: state.activeZoneId,
-    layers: JSON.parse(JSON.stringify(zone.layers)),
+    layers: structuredClone(zone.layers),
   };
 
   // Trim future entries if we undid some steps
@@ -107,6 +108,11 @@ function pushHistory(state: EditorState): Pick<EditorState, 'history' | 'history
   };
 }
 
+/**
+ * Global editor state store (product, design layers, undo history, cart, etc.) built with zustand.
+ * Prefer selector usage, e.g. `useEditorStore((s) => s.selectedLayerId)`, over destructuring the whole
+ * store — subscribing to the full state re-renders on every change since it holds most editor state.
+ */
 export const useEditorStore = create<EditorState>((set, get) => ({
   product: null,
   activeZoneId: 'front',
@@ -155,10 +161,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       ),
     };
 
+    // Reset sizes and color based on product category
+    const cats = product.categories ?? [];
+    const hasSizes = cats.some((c) => ['T-Shirts', 'Hoodies'].includes(c));
+    const hasColor = cats.some((c) => ['T-Shirts', 'Hoodies', 'Caps'].includes(c));
+    const sizes: Record<string, number> = hasSizes
+      ? { S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
+      : { QTY: 1 };
+
     set({
       product: initialProduct,
       activeZoneId: initialZones[0]?.id ?? 'front',
       design,
+      sizes,
+      productColor: hasColor ? get().productColor : '#FFFFFF',
       selectedLayerId: null,
       selectedVariantId: firstVariant?.id ?? null,
       history: [],
@@ -175,16 +191,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     // If variant has its own zones, swap them on the product
     if (variant.zones) {
       const updatedProduct = { ...product, zones: variant.zones };
-      // Re-initialize design zones for the new dimensions
+      // Preserve existing design layers — just update zone dimensions
+      const currentDesign = get().design;
       const design = {
-        id: crypto.randomUUID(),
+        id: currentDesign?.id ?? crypto.randomUUID(),
         productId: product.id,
         activeZone: variant.zones[0]?.id ?? 'front',
         zones: Object.fromEntries(
-          variant.zones.map((zone) => [
-            zone.id,
-            { zoneId: zone.id, canvasWidthMM: zone.printAreaWidthMM, canvasHeightMM: zone.printAreaHeightMM, layers: [] },
-          ]),
+          variant.zones.map((zone) => {
+            // Keep existing layers if this zone already has them
+            const existing = currentDesign?.zones[zone.id];
+            return [
+              zone.id,
+              {
+                zoneId: zone.id,
+                canvasWidthMM: zone.printAreaWidthMM,
+                canvasHeightMM: zone.printAreaHeightMM,
+                layers: existing?.layers ?? [],
+              },
+            ];
+          }),
         ),
       };
       set({
@@ -792,8 +818,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!zone) return;
 
     // Save current state as a redo point (append after current index if not already there)
-    const currentLayers = JSON.parse(JSON.stringify(zone.layers)) as DesignLayer[];
-    const redoEntry = { zoneId: activeZoneId, layers: currentLayers };
+    const currentLayers = structuredClone(zone.layers);
+    const redoEntry: HistoryEntry = { zoneId: activeZoneId, layers: currentLayers };
     const newHistory = [...history];
 
     // Insert redo entry after current index if it doesn't exist

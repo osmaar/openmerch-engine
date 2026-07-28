@@ -9,7 +9,8 @@ interface TransformPopoverProps {
 }
 
 export function TransformPopover({ layer, onClose }: TransformPopoverProps) {
-  const { updateLayer, resetLayer } = useEditorStore();
+  const updateLayer = useEditorStore((s) => s.updateLayer);
+  const resetLayer = useEditorStore((s) => s.resetLayer);
   const t = useT();
 
   const isFlippedX = layer.scaleX < 0;

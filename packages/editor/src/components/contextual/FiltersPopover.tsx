@@ -176,6 +176,7 @@ export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClos
   const thumbStyle = (idx: number): React.CSSProperties => ({
     width: 80,
     height: 60,
+    padding: 0,
     borderWidth: 2,
     borderStyle: 'solid',
     borderColor: activePreset === idx ? '#4A90D9' : '#e0e0e0',
@@ -187,6 +188,7 @@ export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClos
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    background: '#fff',
   });
 
   const applyBtn: React.CSSProperties = {
@@ -221,7 +223,7 @@ export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClos
       {/* Preset grid: 3 columns, scrollable */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, maxHeight: 240, overflowY: 'auto', paddingRight: 4 }}>
         {PRESETS.map((preset, idx) => (
-          <div key={preset.name} style={thumbStyle(idx)} onClick={() => applyPreset(idx)}>
+          <button key={preset.name} type="button" style={thumbStyle(idx)} onClick={() => applyPreset(idx)}>
             <PresetThumb imageSrc={originalSrc} filter={preset} />
             <span style={{
               fontSize: 9,
@@ -234,7 +236,7 @@ export function FiltersPopover({ originalSrc, activeFilterIndex, onApply, onClos
             }}>
               {t(preset.name)}
             </span>
-          </div>
+          </button>
         ))}
       </div>
 

@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Sparkles, Loader, AlertCircle } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
+import { getBaseUrl } from '../../../services/api.js';
 
-const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+const API_BASE = getBaseUrl();
 
 const MODELS = [
   { id: 'flux', label: 'Flux (Default)' },
@@ -47,7 +48,9 @@ const styleModifiers: Record<string, string> = {
 
 export function AiImageTab() {
   const t = useT();
-  const { addImageLayer, addToGallery, replaceImage } = useEditorStore();
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
+  const addToGallery = useEditorStore((s) => s.addToGallery);
+  const replaceImage = useEditorStore((s) => s.replaceImage);
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
   const isImageSelected = selectedLayer?.type === 'image';
   const [prompt, setPrompt] = useState('');
@@ -240,7 +243,7 @@ export function AiImageTab() {
       )}
 
       {/* Info */}
-      <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', lineHeight: 1.4 }}>
+      <div style={{ fontSize: 9, color: '#767676', textAlign: 'center', lineHeight: 1.4 }}>
         {t('Powered by Pollinations.ai · Generation may take 10-30s')}
         <br />
         {t('Get your key at enter.pollinations.ai')}

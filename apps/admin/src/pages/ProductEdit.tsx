@@ -8,6 +8,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { ArrowLeft, Save, Plus, Trash2, Upload } from 'lucide-react';
 import { getProduct, createProduct, updateProduct } from '../services/api.js';
+import { ZoneEditor } from '../components/ZoneEditor.js';
 
 const API_BASE = (typeof window !== 'undefined' && window.location.port !== '3001') ? 'http://localhost:3001' : '';
 /** Resolve asset URLs — relative paths need the API base */
@@ -30,6 +31,7 @@ interface Stage {
   exportIncludeBase: boolean;
   cropMarks: boolean;
   useMaskLayer: boolean;
+  overlayImageUrl: string;
 }
 
 interface Attribute {
@@ -99,7 +101,7 @@ export function ProductEdit() {
       baseImageWidthMM: 500, baseImageHeightMM: 500,
       printAreaWidthMM: 200, printAreaHeightMM: 300,
       printAreaXMM: 150, printAreaYMM: 105,
-      exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
+      exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
     },
   ]);
 
@@ -136,7 +138,7 @@ export function ProductEdit() {
               baseImageWidthMM: z.baseImageWidthMM ?? 500, baseImageHeightMM: z.baseImageHeightMM ?? 500,
               printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
               printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
-              exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
+              exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false, overlayImageUrl: z.overlayImageUrl ?? '',
             })) : undefined,
           })));
         }
@@ -148,7 +150,7 @@ export function ProductEdit() {
             baseImageWidthMM: z.baseImageWidthMM ?? 500, baseImageHeightMM: z.baseImageHeightMM ?? 500,
             printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
             printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
-            exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false,
+            exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false, overlayImageUrl: z.overlayImageUrl ?? '',
           })));
         }
       }).catch(() => {
@@ -191,6 +193,7 @@ export function ProductEdit() {
           baseImageWidthMM: s.baseImageWidthMM, baseImageHeightMM: s.baseImageHeightMM,
           printAreaWidthMM: s.printAreaWidthMM, printAreaHeightMM: s.printAreaHeightMM,
           printAreaXMM: s.printAreaXMM, printAreaYMM: s.printAreaYMM,
+          overlayImageUrl: s.overlayImageUrl || undefined,
         })),
         variants: variants.map((v) => ({
           id: v.id, name: v.name,
@@ -199,6 +202,7 @@ export function ProductEdit() {
             baseImageWidthMM: z.baseImageWidthMM, baseImageHeightMM: z.baseImageHeightMM,
             printAreaWidthMM: z.printAreaWidthMM, printAreaHeightMM: z.printAreaHeightMM,
             printAreaXMM: z.printAreaXMM, printAreaYMM: z.printAreaYMM,
+            overlayImageUrl: z.overlayImageUrl || undefined,
           })),
         })),
         variantLabel: variantLabel || null,
@@ -228,7 +232,7 @@ export function ProductEdit() {
       baseImageWidthMM: 500, baseImageHeightMM: 500,
       printAreaWidthMM: 200, printAreaHeightMM: 300,
       printAreaXMM: 150, printAreaYMM: 105,
-      exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
+      exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
     }]);
   };
 
@@ -463,74 +467,58 @@ export function ProductEdit() {
                       {t('Drag to set the design area. The dashed rectangle shows where customers can place their design.')}
                     </Text>
 
-                    {/* Mockup preview */}
+                    {/* Interactive zone editor — drag & resize print area */}
                     <Paper p="md" radius="md" bg="var(--mantine-color-gray-1)" mb="md">
-                      <div style={{
-                        position: 'relative',
-                        width: '100%',
-                        maxWidth: 300,
-                        margin: '0 auto',
-                        aspectRatio: '1',
-                        background: '#e8e8e8',
-                        borderRadius: 8,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        {stage.baseImageUrl ? (
-                          <img src={resolveUrl(stage.baseImageUrl)} alt={stage.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                        ) : (
-                          <Stack
-                            align="center"
-                            gap={4}
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => {
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = 'image/png,image/jpeg,image/svg+xml';
-                              input.onchange = () => {
-                                const file = input.files?.[0];
-                                if (!file) return;
-                                const reader = new FileReader();
-                                reader.onload = () => updateStage(idx, { baseImageUrl: reader.result as string });
-                                reader.readAsDataURL(file);
-                              };
-                              input.click();
-                            }}
-                          >
-                            <Upload size={24} color="#aaa" />
-                            <Text size="xs" c="dimmed">{t('Click to upload image')}</Text>
-                            <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>PNG, JPG, SVG</Text>
-                          </Stack>
-                        )}
-
-                        {/* Design area overlay */}
-                        <div style={{
-                          position: 'absolute',
-                          left: `${(stage.printAreaXMM / stage.baseImageWidthMM) * 100}%`,
-                          top: `${(stage.printAreaYMM / stage.baseImageHeightMM) * 100}%`,
-                          width: `${(stage.printAreaWidthMM / stage.baseImageWidthMM) * 100}%`,
-                          height: `${(stage.printAreaHeightMM / stage.baseImageHeightMM) * 100}%`,
-                          border: '2px dashed #4A90D9',
-                          borderRadius: 4,
-                          background: 'rgba(74,144,217,0.08)',
-                          pointerEvents: 'none',
-                        }} />
-                      </div>
-
-                      <Group justify="center" mt="sm">
-                        <Button
-                          variant="subtle"
-                          size="xs"
-                          onClick={() => updateStage(idx, {
-                            printAreaXMM: Math.round((stage.baseImageWidthMM - stage.printAreaWidthMM) / 2),
-                            printAreaYMM: Math.round((stage.baseImageHeightMM - stage.printAreaHeightMM) / 2),
-                          })}
+                      {stage.baseImageUrl ? (
+                        <>
+                          <ZoneEditor
+                            baseImageUrl={resolveUrl(stage.baseImageUrl)}
+                            baseImageWidthMM={stage.baseImageWidthMM}
+                            baseImageHeightMM={stage.baseImageHeightMM}
+                            printAreaWidthMM={stage.printAreaWidthMM}
+                            printAreaHeightMM={stage.printAreaHeightMM}
+                            printAreaXMM={stage.printAreaXMM}
+                            printAreaYMM={stage.printAreaYMM}
+                            overlayImageUrl={stage.overlayImageUrl ? resolveUrl(stage.overlayImageUrl) : undefined}
+                            onChange={(updates) => updateStage(idx, updates)}
+                          />
+                          <Group justify="center" mt="sm">
+                            <Button
+                              variant="subtle"
+                              size="xs"
+                              onClick={() => updateStage(idx, {
+                                printAreaXMM: Math.round((stage.baseImageWidthMM - stage.printAreaWidthMM) / 2),
+                                printAreaYMM: Math.round((stage.baseImageHeightMM - stage.printAreaHeightMM) / 2),
+                              })}
+                            >
+                              {t('Update Position (Center)')}
+                            </Button>
+                          </Group>
+                        </>
+                      ) : (
+                        <Stack
+                          align="center"
+                          gap={4}
+                          style={{ cursor: 'pointer', padding: 40 }}
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/png,image/jpeg,image/svg+xml';
+                            input.onchange = () => {
+                              const file = input.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = () => updateStage(idx, { baseImageUrl: reader.result as string });
+                              reader.readAsDataURL(file);
+                            };
+                            input.click();
+                          }}
                         >
-                          {t('Update Position (Center)')}
-                        </Button>
-                      </Group>
+                          <Upload size={24} color="#aaa" />
+                          <Text size="xs" c="dimmed">{t('Click to upload image')}</Text>
+                          <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>PNG, JPG, SVG</Text>
+                        </Stack>
+                      )}
                     </Paper>
                   </div>
 
@@ -604,6 +592,59 @@ export function ProductEdit() {
 
                   <Divider />
 
+                  {/* Product Overlay Image */}
+                  <div>
+                    <Text size="sm" fw={500} mb={4}>{t('Product Overlay')}</Text>
+                    <Text size="xs" c="dimmed" mb={8}>
+                      {t('PNG with transparency. Opaque areas render ON TOP of the design (camera cutouts, product edges). Transparent areas let the design show through.')}
+                    </Text>
+                    {stage.overlayImageUrl ? (
+                      <Group gap="sm" align="center">
+                        <div style={{ width: 80, height: 80, borderRadius: 6, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #ddd' }}>
+                          <img src={resolveUrl(stage.overlayImageUrl)} alt="Overlay" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        </div>
+                        <Stack gap={4}>
+                          <Button variant="light" size="xs" leftSection={<Upload size={14} />} onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/png';
+                            input.onchange = () => {
+                              const file = input.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = () => updateStage(idx, { overlayImageUrl: reader.result as string });
+                              reader.readAsDataURL(file);
+                            };
+                            input.click();
+                          }}>
+                            {t('Change Overlay')}
+                          </Button>
+                          <Button variant="subtle" size="xs" color="red" onClick={() => updateStage(idx, { overlayImageUrl: '' })}>
+                            {t('Remove Overlay')}
+                          </Button>
+                        </Stack>
+                      </Group>
+                    ) : (
+                      <Button variant="light" size="xs" leftSection={<Upload size={14} />} onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/png';
+                        input.onchange = () => {
+                          const file = input.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => updateStage(idx, { overlayImageUrl: reader.result as string });
+                          reader.readAsDataURL(file);
+                        };
+                        input.click();
+                      }}>
+                        {t('Upload Overlay Image')}
+                      </Button>
+                    )}
+                  </div>
+
+                  <Divider />
+
                   {/* Image upload + Reset */}
                   <Group>
                     {stage.baseImageUrl ? (
@@ -644,7 +685,7 @@ export function ProductEdit() {
                     <Button variant="subtle" size="xs" color="gray" onClick={() => updateStage(idx, {
                       printAreaWidthMM: 200, printAreaHeightMM: 300,
                       printAreaXMM: 150, printAreaYMM: 105,
-                      exportIncludeBase: false, cropMarks: false, useMaskLayer: false,
+                      exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
                     })}>
                       {t('Reset All')}
                     </Button>

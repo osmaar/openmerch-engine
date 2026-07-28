@@ -1,10 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { promises as fs } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { registerFont } from 'canvas';
+import { MM_PER_INCH } from '@openmerch/core';
 import type { TextLayer } from '@openmerch/core';
 import { computeEffectPositions } from './text-effects.js';
+import type { KonvaContainer, KonvaModule } from '../konva-types.js';
 
-// Track which font families have been registered to avoid duplicate calls.
+// Tracks which (family, style, font-file-content-hash) combos have already
+// been passed to registerFont(), to avoid re-registering unchanged fonts on
+// every render. Keying on the file's content hash — not just family/style —
+// means a merchant replacing a custom font's file (same fontId, new bytes)
+// is picked up on the very next render: the hash differs, so it's treated as
+// a new entry, with no explicit cache-invalidation call and no process
+// restart needed.
 const registeredFonts = new Set<string>();
 
 // Maps layer.fontFamily → internal font family name as stored in the font file.
@@ -96,9 +104,11 @@ export async function registerFontsForTextLayers(
   }
 
   for (const [key, { family, fontId }] of variants) {
-    if (registeredFonts.has(key)) continue;
-
-    // Prefer UUID lookup — direct, no name-matching ambiguity.
+    // Prefer UUID lookup — direct, no name-matching ambiguity. This resolves
+    // through the DB/storage on every call (a merchant may have replaced the
+    // file since we last saw this family) — the resolver itself is expected
+    // to cache the heavy work (download, disk write) and only return a
+    // different path/content once the underlying font actually changed.
     const fontPath = (fontId && resolveFontById)
       ? await resolveFontById(fontId)
       : await resolveFont(family);
@@ -107,22 +117,31 @@ export async function registerFontsForTextLayers(
       continue;
     }
 
+    let buf: Buffer;
+    try {
+      buf = await fs.readFile(fontPath);
+    } catch (err) {
+      console.warn(`[renderer] could not read font file for "${family}" at ${fontPath}:`, (err as Error).message);
+      continue;
+    }
+
+    // Version the registration cache by the file's own bytes so a font
+    // replacement (same fontPath key, different content) is detected here
+    // even if some resolver ever reused a path across versions.
+    const contentHash = createHash('sha1').update(buf).digest('hex');
+    const registrationKey = `${key}::${contentHash}`;
+    if (registeredFonts.has(registrationKey)) continue;
+
     // Read the font file's internal family name so we can register AND use
     // it by the exact name that fontconfig will store. fontconfig reads the
     // internal name via FreeType when FcConfigAppFontAddFile is called — our
     // custom name parameter is only a JS-side alias. If we then pass a
     // different name to Pango, it won't find the font in fontconfig.
-    let internalFamily: string;
-    try {
-      const buf = await fs.readFile(fontPath);
-      internalFamily = readFontFamilyName(buf) ?? family;
-    } catch {
-      internalFamily = family;
-    }
+    const internalFamily = readFontFamilyName(buf) ?? family;
 
     try {
       registerFont(fontPath, { family: internalFamily, style: 'normal' });
-      registeredFonts.add(key);
+      registeredFonts.add(registrationKey);
       fontInternalNameMap.set(family, internalFamily);
       console.log(`[renderer] registered "${family}" → internal: "${internalFamily}" (${fontPath})`);
     } catch (err) {
@@ -139,24 +158,25 @@ export async function registerFontsForTextLayers(
  * `Konva.Text` per character inside a transformed Group.
  */
 export function addTextLayer(
-  konvaLayer: any,
+  konvaLayer: KonvaContainer,
   layer: TextLayer,
   fontPath: string | null,
   pxPerMM: number,
-  Konva: any,
+  Konva: KonvaModule,
 ): void {
   // Use the internal family name that fontconfig knows. If the layer's
   // fontFamily wasn't pre-registered (shouldn't happen normally), fall back.
   const internalFamily = fontInternalNameMap.get(layer.fontFamily) ?? layer.fontFamily;
 
-  // Safety: inline-register if somehow not pre-registered.
-  const fontKey = `${layer.fontFamily}::${layer.fontStyle ?? 'normal'}`;
-  if (fontPath && !registeredFonts.has(fontKey)) {
+  // Safety: inline-register if somehow not pre-registered. `fontInternalNameMap`
+  // (not `registeredFonts`, which is now versioned by file content hash and
+  // keyed for the pre-registration path only) is the right signal here for
+  // "did registerFontsForTextLayers already handle this family".
+  if (fontPath && !fontInternalNameMap.has(layer.fontFamily)) {
     // Synchronous read not possible here — best effort with family name as-is.
     // Pre-registration via registerFontsForTextLayers() should cover all cases.
     try {
       registerFont(fontPath, { family: layer.fontFamily, style: 'normal' });
-      registeredFonts.add(fontKey);
       fontInternalNameMap.set(layer.fontFamily, layer.fontFamily);
       console.warn(`[renderer] inline-registered "${layer.fontFamily}" without internal name lookup — pre-register is preferred`);
     } catch (err) {
@@ -169,7 +189,7 @@ export function addTextLayer(
   const fontSizePx = layer.fontSize * pxPerMM;
   const hasEffect = layer.textEffect && layer.textEffect.type !== 'none';
 
-  const EDITOR_PX_PER_MM = 96 / 25.4;
+  const EDITOR_PX_PER_MM = 96 / MM_PER_INCH;
   const spacingScale = pxPerMM / EDITOR_PX_PER_MM;
 
   if (!hasEffect) {

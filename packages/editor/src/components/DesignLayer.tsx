@@ -1,5 +1,5 @@
-import { useRef, useEffect, useMemo } from 'react';
-import { Image, Text, Rect as KRect, Circle, RegularPolygon, Star, Line, Group, Transformer } from 'react-konva';
+import { useRef, useMemo } from 'react';
+import { Image, Text, Rect as KRect, Circle, RegularPolygon, Star, Line, Group } from 'react-konva';
 import type { DesignLayer as DesignLayerType } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 import { useImage } from '../hooks/useImage.js';
@@ -18,6 +18,8 @@ interface DesignLayerProps {
 // in ProductEditor wraps these in a Konva Group anchored at (printX, printY),
 // so layer.x === 0 lands the layer at the top-left of the print area, and
 // Konva drag events give us positions already relative to the Group origin.
+// The Transformer itself is rendered once, externally, by ProductEditor's
+// SharedTransformer — layers here only render their shape.
 export function DesignLayer({ layer, pxPerMM, isSelected }: DesignLayerProps) {
   if (layer.type === 'image') {
     return <ImageLayerView layer={layer} pxPerMM={pxPerMM} isSelected={isSelected} />;
@@ -31,34 +33,6 @@ export function DesignLayer({ layer, pxPerMM, isSelected }: DesignLayerProps) {
   return null;
 }
 
-// Shared transformer config
-const TRANSFORMER_CONFIG = {
-  rotateEnabled: true,
-  rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315],
-  rotationSnapTolerance: 8,
-  anchorSize: 8,
-  borderStroke: '#4A90D9',
-  anchorStroke: '#4A90D9',
-  anchorFill: '#fff',
-  anchorCornerRadius: 2,
-  rotateAnchorOffset: 25,
-  rotateAnchorCursor: 'grab',
-  anchorStyleFunc: (anchor: Konva.Shape) => {
-    if (anchor.hasName('rotater')) {
-      anchor.setAttrs({
-        width: 16,
-        height: 16,
-        offsetX: 8,
-        offsetY: 8,
-        fill: '#4A90D9',
-        stroke: '#fff',
-        strokeWidth: 2,
-        cornerRadius: 8,
-      });
-    }
-  },
-};
-
 interface ImageLayerViewProps {
   layer: DesignLayerType & { type: 'image' };
   pxPerMM: number;
@@ -69,21 +43,8 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
   const [baseImage] = useImage(layer.src);
   const image = useTintedImage(baseImage ?? undefined, layer.tint, layer.tintOpacity);
   const shapeRef = useRef<Konva.Image>(null);
-  const trRef = useRef<Konva.Transformer>(null);
-  const { selectLayer, updateLayer } = useEditorStore();
-
-  useEffect(() => {
-    const attach = () => {
-      if (isSelected && trRef.current && shapeRef.current) {
-        trRef.current.nodes([shapeRef.current]);
-        trRef.current.getLayer()?.batchDraw();
-      }
-    };
-    attach();
-    // Retry after a frame in case the node wasn't mounted yet
-    const raf = requestAnimationFrame(attach);
-    return () => cancelAnimationFrame(raf);
-  }, [isSelected]);
+  const selectLayer = useEditorStore((state) => state.selectLayer);
+  const updateLayer = useEditorStore((state) => state.updateLayer);
 
   if (!image) return null;
 
@@ -119,6 +80,8 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
     <>
       <Image
         ref={shapeRef}
+        id={layer.id}
+        name="design-element"
         image={image}
         x={x}
         y={y}
@@ -130,7 +93,7 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
         skewY={layer.skewY ?? 0}
         rotation={layer.rotation}
         opacity={layer.opacity}
-        draggable={!layer.locked}
+        draggable={isSelected && !layer.locked}
         onMouseEnter={(e) => { e.target.getStage()!.container().style.cursor = 'pointer'; }}
         onMouseLeave={(e) => { e.target.getStage()!.container().style.cursor = 'default'; }}
         onDragStart={(e) => { e.target.getStage()!.container().style.cursor = 'grabbing'; }}
@@ -139,13 +102,6 @@ function ImageLayerView({ layer, pxPerMM, isSelected }: ImageLayerViewProps) {
         onDragEnd={handleDragEnd}
         onTransformEnd={handleTransformEnd}
       />
-      {isSelected && (
-        <Transformer
-          ref={trRef}
-          keepRatio={true}
-          {...TRANSFORMER_CONFIG}
-        />
-      )}
     </>
   );
 }
@@ -158,21 +114,8 @@ interface TextLayerViewProps {
 
 function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
   const shapeRef = useRef<Konva.Text>(null);
-  const trRef = useRef<Konva.Transformer>(null);
-  const { selectLayer, updateLayer } = useEditorStore();
-
-  useEffect(() => {
-    const attach = () => {
-      if (isSelected && trRef.current && shapeRef.current) {
-        trRef.current.nodes([shapeRef.current]);
-        trRef.current.getLayer()?.batchDraw();
-      }
-    };
-    attach();
-    // Retry after a frame in case the node wasn't mounted yet
-    const raf = requestAnimationFrame(attach);
-    return () => cancelAnimationFrame(raf);
-  }, [isSelected]);
+  const selectLayer = useEditorStore((state) => state.selectLayer);
+  const updateLayer = useEditorStore((state) => state.updateLayer);
 
   const x = layer.x * pxPerMM;
   const y = layer.y * pxPerMM;
@@ -258,7 +201,7 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
   const hasEffect = effect && effect.type !== 'none';
 
   const interactionProps = {
-    draggable: !layer.locked,
+    draggable: isSelected && !layer.locked,
     onMouseEnter: (e: Konva.KonvaEventObject<MouseEvent>) => { e.target.getStage()!.container().style.cursor = 'pointer'; },
     onMouseLeave: (e: Konva.KonvaEventObject<MouseEvent>) => { e.target.getStage()!.container().style.cursor = 'default'; },
     onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => { e.target.getStage()!.container().style.cursor = 'grabbing'; },
@@ -283,6 +226,8 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
       {hasEffect ? (
         <Group
           ref={shapeRef as unknown as React.RefObject<Konva.Group>}
+          id={layer.id}
+          name="design-element"
           x={x}
           y={y}
           scaleX={layer.scaleX}
@@ -325,6 +270,7 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
       ) : (
         <Text
           ref={shapeRef}
+          id={layer.id}
           text={layer.text}
           x={x}
           y={y}
@@ -346,14 +292,6 @@ function TextLayerView({ layer, pxPerMM, isSelected }: TextLayerViewProps) {
           {...interactionProps}
         />
       )}
-      {isSelected && (
-        <Transformer
-          ref={trRef}
-          keepRatio={false}
-          enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
-          {...TRANSFORMER_CONFIG}
-        />
-      )}
     </>
   );
 }
@@ -367,21 +305,8 @@ interface ShapeLayerViewProps {
 
 function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
   const shapeRef = useRef<Konva.Shape>(null);
-  const trRef = useRef<Konva.Transformer>(null);
-  const { selectLayer, updateLayer } = useEditorStore();
-
-  useEffect(() => {
-    const attach = () => {
-      if (isSelected && trRef.current && shapeRef.current) {
-        trRef.current.nodes([shapeRef.current]);
-        trRef.current.getLayer()?.batchDraw();
-      }
-    };
-    attach();
-    // Retry after a frame in case the node wasn't mounted yet
-    const raf = requestAnimationFrame(attach);
-    return () => cancelAnimationFrame(raf);
-  }, [isSelected]);
+  const selectLayer = useEditorStore((state) => state.selectLayer);
+  const updateLayer = useEditorStore((state) => state.updateLayer);
 
   const x = layer.x * pxPerMM;
   const y = layer.y * pxPerMM;
@@ -408,6 +333,8 @@ function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
   };
 
   const commonProps = {
+    id: layer.id,
+    name: 'design-element',
     x, y,
     fill: layer.fill,
     stroke: layer.stroke,
@@ -416,7 +343,7 @@ function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
     scaleY: layer.scaleY,
     rotation: layer.rotation,
     opacity: layer.opacity,
-    draggable: !layer.locked,
+    draggable: isSelected && !layer.locked,
     onClick: () => selectLayer(layer.id),
     onTap: () => selectLayer(layer.id),
     onDragEnd: handleDragEnd,
@@ -463,16 +390,5 @@ function ShapeLayerView({ layer, pxPerMM, isSelected }: ShapeLayerViewProps) {
     }
   };
 
-  return (
-    <>
-      {renderShape()}
-      {isSelected && (
-        <Transformer
-          ref={trRef}
-          keepRatio={false}
-          {...TRANSFORMER_CONFIG}
-        />
-      )}
-    </>
-  );
+  return <>{renderShape()}</>;
 }

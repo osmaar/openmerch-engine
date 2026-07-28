@@ -34,6 +34,11 @@ const BTN_DELETE: React.CSSProperties = {
   borderColor: '#e53935',
 };
 
+/**
+ * Standalone action bar (upload image, add text, duplicate/reset/delete layer, undo).
+ * Reads/writes state via `useEditorStore` directly; the `pxPerMM` prop is currently unused.
+ * Not used internally by `ProductEditor` (which renders `TopToolbar` instead) — kept for custom layouts.
+ */
 export function Toolbar(_props: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const {

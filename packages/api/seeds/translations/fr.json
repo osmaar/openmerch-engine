@@ -967,5 +967,14 @@
   "uses default": "utilise par défaut",
   "Editing default zones — used when no variant is selected": "Modification des zones par défaut — utilisées quand aucune variante n'est sélectionnée",
   "Editing zones for": "Modification des zones pour",
-  "Variants": "Variantes"
+  "Variants": "Variantes",
+  "Product Overlay": "Overlay du Produit",
+  "PNG with transparency. Opaque areas render ON TOP of the design (camera cutouts, product edges). Transparent areas let the design show through.": "PNG avec transparence. Les zones opaques se rendent AU-DESSUS du design (découpes caméra, bords du produit). Les zones transparentes laissent voir le design.",
+  "Upload Overlay Image": "Télécharger Image Overlay",
+  "Change Overlay": "Changer Overlay",
+  "Remove Overlay": "Supprimer Overlay",
+  "Select quantity in the Product tab before adding to cart.": "Sélectionnez la quantité dans l'onglet Produit avant d'ajouter au panier.",
+  "Something went wrong": "Une erreur est survenue",
+  "An unexpected error occurred. Please reload the page.": "Une erreur inattendue s'est produite. Veuillez recharger la page.",
+  "Reload Page": "Recharger la Page"
 }

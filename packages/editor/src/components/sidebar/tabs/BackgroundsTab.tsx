@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Loader } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
+import { getBaseUrl } from '../../../services/api.js';
 
 interface UnsplashPhoto {
   id: string;
@@ -11,7 +12,7 @@ interface UnsplashPhoto {
   links: { download_location: string };
 }
 
-const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+const API_BASE = getBaseUrl();
 
 const CATEGORIES = [
   { label: 'Gradients', query: 'gradient background' },
@@ -28,7 +29,7 @@ const CATEGORIES = [
 
 export function BackgroundsTab() {
   const t = useT();
-  const { addImageLayer } = useEditorStore();
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
   const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('Gradients');
@@ -127,8 +128,8 @@ export function BackgroundsTab() {
       )}
 
       {photos.length > 0 && (
-        <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center' }}>
-          {t('Photos by')} <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style={{ color: '#999' }}>Unsplash</a>
+        <div style={{ fontSize: 9, color: '#767676', textAlign: 'center' }}>
+          {t('Photos by')} <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style={{ color: '#595959' }}>Unsplash</a>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import { Worker } from 'bullmq';
 import type { Job } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import { renderDesignZone, renderDesignZoneMockup } from '@openmerch/renderer';
-import type { Design, DesignLayer, DesignZone, ProductZone } from '@openmerch/core';
+import type { Design, DesignLayer, DesignZone, ProductVariant, ProductZone } from '@openmerch/core';
 import { db } from '../../db/index.js';
 import { designs, products } from '../../db/schema.js';
 import { minioClient, ensureBucket } from '../../storage/minio.js';
@@ -14,7 +14,9 @@ import {
   PRODUCTION_FILES_QUEUE,
   type ProductionFilesJobData,
   type ProductionFilesJobResult,
+  type ProductionZoneFiles,
 } from '../queues.js';
+import { decideProductionOutcome, resolveRenderZone } from './production-files.logic.js';
 
 async function processJob(
   job: Job<ProductionFilesJobData>,
@@ -56,19 +58,23 @@ async function processJob(
   // If "front" succeeds and "back" fails, we still ship the front files and
   // report the back error. Mockup failures don't fail the zone — the print
   // file is the contractual output, the mockup is "nice to have".
-  const files: Record<string, { print: string; mockup?: string }> = {};
+  const files: Record<string, ProductionZoneFiles> = {};
   const zoneErrors: string[] = [];
+  const variants = (product.variants as ProductVariant[]) ?? [];
 
   for (const productZone of productZones) {
     const designZone: DesignZone | undefined = designZones[productZone.id];
     const layers: DesignLayer[] = designZone?.layers ?? [];
 
     // Skip zones with no design — no layers means nothing to render or print.
-    // Showing an empty production file entry for a zone the client never touched
-    // just confuses the merchant in the admin view.
     if (layers.length === 0) {
       job.log(`Skipping zone "${productZone.id}" — no layers`);
       continue;
+    }
+
+    const { zone: renderZone, matchedVariantId } = resolveRenderZone(productZone, designZone, variants);
+    if (matchedVariantId) {
+      job.log(`Using variant "${matchedVariantId}" zones for "${productZone.id}"`);
     }
 
     job.log(`Rendering zone "${productZone.id}" (${layers.length} layer(s))`);
@@ -76,7 +82,7 @@ async function processJob(
     try {
       // 1. Print file (the contract): bare design at 300 DPI.
       const printResult = await renderDesignZone({
-        zone: productZone,
+        zone: renderZone,
         layers,
         dpi: 300,
         resolveImage: (src) => imageResolver.resolve(src),
@@ -93,7 +99,7 @@ async function processJob(
         { 'Content-Type': 'image/png' },
       );
 
-      const zoneFiles: { print: string; mockup?: string } = {
+      const zoneFiles: ProductionZoneFiles = {
         print: `/api/v1/assets/${printKey}`,
       };
 
@@ -101,7 +107,7 @@ async function processJob(
       //    Best-effort — if it fails we still keep the print file.
       try {
         const mockupResult = await renderDesignZoneMockup({
-          zone: productZone,
+          zone: renderZone,
           layers,
           dpi: 96,
           resolveImage: (src) => imageResolver.resolve(src),
@@ -134,16 +140,17 @@ async function processJob(
   //   - all zones succeeded → completed
   //   - some succeeded, some failed → completed with productionError describing the partial failures
   //   - all zones failed → throw, BullMQ will retry then mark failed
-  if (Object.keys(files).length === 0) {
-    throw new Error(`All zones failed: ${zoneErrors.join('; ')}`);
+  const outcome = decideProductionOutcome(files, zoneErrors);
+  if (outcome.status === 'failed') {
+    throw new Error(outcome.productionError ?? 'All zones failed');
   }
 
   await db
     .update(designs)
     .set({
-      productionStatus: 'completed',
+      productionStatus: outcome.status,
       productionFiles: files,
-      productionError: zoneErrors.length > 0 ? zoneErrors.join('; ') : null,
+      productionError: outcome.productionError,
       updatedAt: new Date(),
     })
     .where(eq(designs.id, designId));

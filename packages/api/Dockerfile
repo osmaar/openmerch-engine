@@ -38,6 +38,7 @@ RUN pnpm install --frozen-lockfile
 COPY packages/core packages/core
 COPY packages/renderer packages/renderer
 COPY packages/api packages/api
+COPY products products
 
 # Build dependency packages first, then the API.
 RUN pnpm --filter @openmerch/core build \
@@ -67,10 +68,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY --from=builder /deploy /app
+COPY --from=builder --chown=node:node /deploy /app
+# Product mockup images — needed by the worker for mockup rendering
+COPY --from=builder --chown=node:node /repo/products /app/products
 
 ENV NODE_ENV=production
 EXPOSE 3001
+
+# node:20-bookworm-slim ships a preexisting `node` user (uid 1000) — run as
+# that instead of root. Both processes only write under os.tmpdir() (world-
+# writable /tmp), so no extra chown is needed for /app itself.
+USER node
+
+# Only meaningful for the api service (the worker has no HTTP server and
+# disables this check in docker-compose.yml). Uses Node's built-in fetch
+# instead of curl/wget to avoid adding packages to the runtime image.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Default command runs the HTTP API. The worker service overrides this with
 # `node dist/worker.js` in docker-compose.

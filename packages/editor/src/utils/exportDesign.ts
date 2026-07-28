@@ -101,6 +101,28 @@ export async function exportDesign(options: ExportOptions): Promise<void> {
   }
 }
 
+/**
+ * Computes the print-zone clip rectangle (in the composited canvas's own
+ * pixel space) that the design layer gets clipped to when compositing the
+ * mockup export. `crop{X,Y}` is the mockup image's own crop origin (from
+ * `stage.toCanvas({ x: cropX, y: cropY, ... })`), so the print zone's
+ * position has to be re-expressed relative to that crop before scaling up
+ * by `pixelRatio` — otherwise the clip rect would be offset by the crop.
+ */
+export function computePrintZoneCropRect(
+  layout: Pick<CanvasLayout, 'printX' | 'printY' | 'printW' | 'printH'>,
+  cropX: number,
+  cropY: number,
+  pixelRatio: number,
+): { pzX: number; pzY: number; pzW: number; pzH: number } {
+  return {
+    pzX: (layout.printX - cropX) * pixelRatio,
+    pzY: (layout.printY - cropY) * pixelRatio,
+    pzW: layout.printW * pixelRatio,
+    pzH: layout.printH * pixelRatio,
+  };
+}
+
 // Export full mockup: complete t-shirt with design clipped to print zone
 async function exportMockupPreview(
   stage: KonvaStage,
@@ -207,21 +229,18 @@ async function exportMockupPreview(
   hiddenNodes.forEach((n) => n.visible(true));
   stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
 
-  // Composite: mockup + design clipped to print zone
+  // Composite: mockup + design clipped to print zone + overlay on top
   const finalCanvas = document.createElement('canvas');
   finalCanvas.width = mockupCanvas.width;
   finalCanvas.height = mockupCanvas.height;
   const ctx = finalCanvas.getContext('2d');
   if (!ctx) throw new Error('No canvas context');
 
-  // Draw mockup
+  // Draw mockup (base product image)
   ctx.drawImage(mockupCanvas, 0, 0);
 
   // Clip design to print zone area
-  const pzX = (layout.printX - cropX) * pixelRatio;
-  const pzY = (layout.printY - cropY) * pixelRatio;
-  const pzW = layout.printW * pixelRatio;
-  const pzH = layout.printH * pixelRatio;
+  const { pzX, pzY, pzW, pzH } = computePrintZoneCropRect(layout, cropX, cropY, pixelRatio);
 
   ctx.save();
   ctx.beginPath();
@@ -229,6 +248,40 @@ async function exportMockupPreview(
   ctx.clip();
   ctx.drawImage(designCanvas, 0, 0);
   ctx.restore();
+
+  // Pass 3: Draw overlay on top (product mask — camera cutouts, edges, shapes)
+  // The overlay sits in the non-listening layers. We capture just those layers
+  // with design hidden, then composite on top.
+  designLayers.forEach((layer) => { (layer as unknown as KonvaNode).visible(false); });
+  // Also hide the base image layer (layer 0) — we only want overlay from layer 2+
+  let firstLayer: KonvaLayer | undefined;
+  let layerIdx = 0;
+  stage.getLayers().forEach((l: KonvaLayer) => { if (layerIdx === 0) firstLayer = l; layerIdx++; });
+  if (firstLayer) firstLayer.getChildren().forEach((n: KonvaNode) => n.visible(false));
+  // Hide print zone guide and snap guides (keep only overlay images)
+  const guideNodes: KonvaNode[] = [];
+  stage.getLayers().forEach((layer: KonvaLayer) => {
+    if (!layer.listening()) {
+      layer.getChildren().forEach((node: KonvaNode & { getClassName?: () => string }) => {
+        if (node.getClassName?.() !== 'Image') {
+          node.visible(false);
+          guideNodes.push(node);
+        }
+      });
+    }
+  });
+  stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
+  await new Promise((r) => setTimeout(r, 50));
+
+  const overlayCanvas = stage.toCanvas({ x: cropX, y: cropY, width: cropW, height: cropH, pixelRatio });
+  ctx.drawImage(overlayCanvas, 0, 0);
+
+  // Restore everything
+  designLayers.forEach((layer) => { (layer as unknown as KonvaNode).visible(true); });
+  if (firstLayer) firstLayer.getChildren().forEach((n: KonvaNode) => n.visible(true));
+  guideNodes.forEach((n) => n.visible(true));
+  hiddenNodes.forEach((n) => n.visible(true));
+  stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
 
   if (options.format === 'png') {
     downloadCanvas(finalCanvas, `${filename}.png`);

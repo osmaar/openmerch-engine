@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { loadImage, createCanvas } from 'canvas';
 import type { ImageLayer } from '@openmerch/core';
+import type { KonvaContainer, KonvaImageSource, KonvaModule } from '../konva-types.js';
+import { mmToPx } from './geometry.js';
 
 /**
  * Adds an image layer to a Konva node-side layer.
@@ -15,16 +16,16 @@ import type { ImageLayer } from '@openmerch/core';
  * source-atop fill at the requested opacity.
  */
 export async function addImageLayer(
-  konvaLayer: any,
+  konvaLayer: KonvaContainer,
   layer: ImageLayer,
   buffer: Buffer,
   pxPerMM: number,
-  Konva: any,
+  Konva: KonvaModule,
 ): Promise<void> {
   const baseImage = await loadImage(buffer);
 
   // Apply tint if present (replicates packages/editor/src/hooks/useTintedImage.ts).
-  let image: any = baseImage;
+  let image: KonvaImageSource = baseImage;
   if (layer.tint && layer.tintOpacity && layer.tintOpacity > 0) {
     const tintCanvas = createCanvas(baseImage.width, baseImage.height);
     const ctx = tintCanvas.getContext('2d');
@@ -36,13 +37,13 @@ export async function addImageLayer(
     image = tintCanvas;
   }
 
-  const w = layer.originalWidthMM * pxPerMM;
-  const h = layer.originalHeightMM * pxPerMM;
+  const w = mmToPx(layer.originalWidthMM, pxPerMM);
+  const h = mmToPx(layer.originalHeightMM, pxPerMM);
 
   const node = new Konva.Image({
     image,
-    x: layer.x * pxPerMM,
-    y: layer.y * pxPerMM,
+    x: mmToPx(layer.x, pxPerMM),
+    y: mmToPx(layer.y, pxPerMM),
     width: w,
     height: h,
     rotation: layer.rotation,

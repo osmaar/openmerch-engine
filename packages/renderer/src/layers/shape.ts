@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ShapeLayer } from '@openmerch/core';
+import type { KonvaContainer, KonvaModule, KonvaNode } from '../konva-types.js';
+import { mmToPx, roundedRectCornerRadius, radiusFromWidth, starRadii, arrowPointerDims, crossPoints } from './geometry.js';
 
 /**
  * Adds a shape layer to a Konva node-side layer.
@@ -11,18 +12,18 @@ import type { ShapeLayer } from '@openmerch/core';
  * print area. We convert to pixels using `pxPerMM` (which encodes the target DPI).
  */
 export function addShapeLayer(
-  konvaLayer: any,
+  konvaLayer: KonvaContainer,
   layer: ShapeLayer,
   pxPerMM: number,
-  Konva: any,
+  Konva: KonvaModule,
 ): void {
-  const w = layer.widthMM * pxPerMM;
-  const h = layer.heightMM * pxPerMM;
+  const w = mmToPx(layer.widthMM, pxPerMM);
+  const h = mmToPx(layer.heightMM, pxPerMM);
 
   // Common transform props applied to every shape primitive.
   const common = {
-    x: layer.x * pxPerMM,
-    y: layer.y * pxPerMM,
+    x: mmToPx(layer.x, pxPerMM),
+    y: mmToPx(layer.y, pxPerMM),
     rotation: layer.rotation,
     scaleX: layer.scaleX,
     scaleY: layer.scaleY,
@@ -34,35 +35,34 @@ export function addShapeLayer(
     strokeWidth: layer.strokeWidth,
   };
 
-  let node: any;
+  let node: KonvaNode;
   switch (layer.shapeType) {
     case 'rect':
       node = new Konva.Rect({ ...common, width: w, height: h });
       break;
     case 'rounded-rect':
-      node = new Konva.Rect({ ...common, width: w, height: h, cornerRadius: w * 0.15 });
+      node = new Konva.Rect({ ...common, width: w, height: h, cornerRadius: roundedRectCornerRadius(w) });
       break;
     case 'circle':
-      node = new Konva.Circle({ ...common, radius: w / 2 });
+      node = new Konva.Circle({ ...common, radius: radiusFromWidth(w) });
       break;
     case 'triangle':
-      node = new Konva.RegularPolygon({ ...common, sides: 3, radius: w / 2 });
+      node = new Konva.RegularPolygon({ ...common, sides: 3, radius: radiusFromWidth(w) });
       break;
     case 'pentagon':
-      node = new Konva.RegularPolygon({ ...common, sides: 5, radius: w / 2 });
+      node = new Konva.RegularPolygon({ ...common, sides: 5, radius: radiusFromWidth(w) });
       break;
     case 'hexagon':
-      node = new Konva.RegularPolygon({ ...common, sides: 6, radius: w / 2 });
+      node = new Konva.RegularPolygon({ ...common, sides: 6, radius: radiusFromWidth(w) });
       break;
     case 'diamond':
-      node = new Konva.RegularPolygon({ ...common, sides: 4, radius: w / 2 });
+      node = new Konva.RegularPolygon({ ...common, sides: 4, radius: radiusFromWidth(w) });
       break;
     case 'star':
       node = new Konva.Star({
         ...common,
         numPoints: 5,
-        innerRadius: w * 0.38,
-        outerRadius: w / 2,
+        ...starRadii(w),
       });
       break;
     case 'line':
@@ -72,28 +72,16 @@ export function addShapeLayer(
       node = new Konva.Arrow({
         ...common,
         points: [0, 0, w, 0],
-        pointerLength: w * 0.2,
-        pointerWidth: w * 0.15,
+        ...arrowPointerDims(w),
       });
       break;
-    case 'cross': {
-      const t = w * 0.3;
-      const cx = w / 2;
-      const cy = h / 2;
+    case 'cross':
       node = new Konva.Line({
         ...common,
-        points: [
-          cx - t / 2, 0, cx + t / 2, 0,
-          cx + t / 2, cy - t / 2, w, cy - t / 2,
-          w, cy + t / 2, cx + t / 2, cy + t / 2,
-          cx + t / 2, h, cx - t / 2, h,
-          cx - t / 2, cy + t / 2, 0, cy + t / 2,
-          0, cy - t / 2, cx - t / 2, cy - t / 2,
-        ],
+        points: crossPoints(w, h),
         closed: true,
       });
       break;
-    }
     default:
       return; // unknown shape type, skip
   }

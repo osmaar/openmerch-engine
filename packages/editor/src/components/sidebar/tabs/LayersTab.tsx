@@ -53,7 +53,11 @@ export function LayersTab() {
   const design = useEditorStore((s) => s.design);
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
-  const { selectLayer, updateLayer, removeLayer, moveLayerUp, moveLayerDown } = useEditorStore();
+  const selectLayer = useEditorStore((s) => s.selectLayer);
+  const updateLayer = useEditorStore((s) => s.updateLayer);
+  const removeLayer = useEditorStore((s) => s.removeLayer);
+  const moveLayerUp = useEditorStore((s) => s.moveLayerUp);
+  const moveLayerDown = useEditorStore((s) => s.moveLayerDown);
 
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -119,10 +123,10 @@ export function LayersTab() {
         <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t('Layers')}</div>
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', height: 120, color: '#aaa', fontSize: 12, gap: 8,
+          justifyContent: 'center', height: 120, color: '#595959', fontSize: 12, gap: 8,
         }}>
           <span>{t('No layers yet')}</span>
-          <span style={{ fontSize: 11, color: '#ccc' }}>{t('Add an image or text to start')}</span>
+          <span style={{ fontSize: 11, color: '#767676' }}>{t('Add an image or text to start')}</span>
         </div>
       </div>
     );
@@ -258,7 +262,7 @@ export function LayersTab() {
         })}
       </div>
 
-      <div style={{ fontSize: 10, color: '#ccc', textAlign: 'center', marginTop: 4 }}>
+      <div style={{ fontSize: 10, color: '#767676', textAlign: 'center', marginTop: 4 }}>
         {t('Drag to reorder · Double-click to rename')}
       </div>
     </div>

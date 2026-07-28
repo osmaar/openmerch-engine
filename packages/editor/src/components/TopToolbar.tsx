@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { Info, QrCode } from 'lucide-react';
-import QRCode from 'qrcode';
 import { useEditorStore } from '../store/editorStore.js';
 import { ImageToolbar } from './contextual/ImageToolbar.js';
 import { TextToolbar } from './contextual/TextToolbar.js';
@@ -10,7 +9,7 @@ import { useT } from '../i18n/useTranslation.js';
 
 export function TopToolbar() {
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
-  const { addImageLayer } = useEditorStore();
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
   const [showQrInput, setShowQrInput] = useState(false);
   const [qrText, setQrText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -20,6 +19,7 @@ export function TopToolbar() {
     if (!qrText.trim()) return;
 
     try {
+      const { default: QRCode } = await import('qrcode');
       const dataUrl = await QRCode.toDataURL(qrText.trim(), {
         errorCorrectionLevel: 'H',
         type: 'image/png',

@@ -6,6 +6,7 @@ import {
 import type { ShapeLayer } from '@openmerch/core';
 import { useEditorStore } from '../../../store/editorStore.js';
 import { useT } from '../../../i18n/useTranslation.js';
+import { getBaseUrl } from '../../../services/api.js';
 
 const SHAPES: { type: ShapeLayer['shapeType']; label: string; icon: typeof Square }[] = [
   { type: 'rect', label: 'Rectangle', icon: Square },
@@ -25,11 +26,12 @@ interface AdminShape {
   svgContent: string;
 }
 
-const API_BASE = (typeof window !== 'undefined' && window.location.port === '3000') ? 'http://localhost:3001' : '';
+const API_BASE = getBaseUrl();
 
 export function ShapesTab() {
   const t = useT();
-  const { addShapeLayer, addImageLayer } = useEditorStore();
+  const addShapeLayer = useEditorStore((s) => s.addShapeLayer);
+  const addImageLayer = useEditorStore((s) => s.addImageLayer);
   const [adminShapes, setAdminShapes] = useState<AdminShape[]>([]);
 
   useEffect(() => {
@@ -117,7 +119,7 @@ export function ShapesTab() {
         })}
       </div>
 
-      <div style={{ fontSize: 10, color: '#ccc', textAlign: 'center' }}>
+      <div style={{ fontSize: 10, color: '#767676', textAlign: 'center' }}>
         {t('Click to add shape to canvas')}
       </div>
     </div>
