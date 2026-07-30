@@ -8,6 +8,10 @@ export function getBaseUrl(): string {
   return '';
 }
 
+export interface ApiError extends Error {
+  code?: string;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${getBaseUrl()}${API_BASE}${path}`;
   const res = await fetch(url, {
@@ -17,7 +21,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? `Request failed: ${res.status}`);
+    const error: ApiError = new Error(err.error ?? `Request failed: ${res.status}`);
+    if (err.code) error.code = err.code;
+    throw error;
   }
 
   return res.json();
@@ -122,4 +128,15 @@ export async function uploadAsset(file: File): Promise<UploadedAsset> {
 
 export function getAssetUrl(path: string): string {
   return `${getBaseUrl()}${path}`;
+}
+
+// AI-powered background removal (services/rembg via POST /api/v1/assets/remove-background).
+// Throws an ApiError whose `code` is one of REMBG_NOT_CONFIGURED, REMBG_UNAVAILABLE,
+// REMBG_TIMEOUT, REMBG_FAILED, or INVALID_IMAGE_SOURCE — callers should branch on it to
+// show a friendly message.
+export async function removeBackgroundAI(src: string): Promise<UploadedAsset> {
+  return request('/assets/remove-background', {
+    method: 'POST',
+    body: JSON.stringify({ src }),
+  });
 }

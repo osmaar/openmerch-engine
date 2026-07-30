@@ -6,14 +6,6 @@ import { getBaseUrl } from '../../../services/api.js';
 
 const API_BASE = getBaseUrl();
 
-const MODELS = [
-  { id: 'flux', label: 'Flux (Default)' },
-  { id: 'gptimage', label: 'GPT Image' },
-  { id: 'flux-realism', label: 'Flux Realism' },
-  { id: 'flux-anime', label: 'Flux Anime' },
-  { id: 'flux-3d', label: 'Flux 3D' },
-];
-
 const STYLES = [
   { id: 'auto', label: 'Auto' },
   { id: 'photo', label: 'Photo' },
@@ -54,7 +46,6 @@ export function AiImageTab() {
   const selectedLayer = useEditorStore((s) => s.getSelectedLayer());
   const isImageSelected = selectedLayer?.type === 'image';
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState('flux');
   const [style, setStyle] = useState('auto');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,8 +68,7 @@ export function AiImageTab() {
     setError(null);
 
     try {
-      const seed = Math.floor(Math.random() * 999999);
-      const imageUrl = `${API_BASE}/api/v1/proxy/pollinations/image?prompt=${encodeURIComponent(fullPrompt)}&model=${model}&width=1024&height=1024&seed=${seed}`;
+      const imageUrl = `${API_BASE}/api/v1/proxy/ai-image?prompt=${encodeURIComponent(fullPrompt)}&width=1024&height=1024`;
 
       // Load image
       const img = new window.Image();
@@ -108,7 +98,7 @@ export function AiImageTab() {
         addImageLayer(dataUrl, img.width, img.height);
       }
     } catch {
-      setError(t('Image generation failed. Try a different prompt or model.'));
+      setError(t('Image generation failed. Try a different prompt.'));
     }
 
     setLoading(false);
@@ -126,25 +116,6 @@ export function AiImageTab() {
           {t('Image selected — generation will replace it')}
         </div>
       )}
-
-      {/* Pollinations is a public API — key is optional (higher rate limits) */}
-
-      {/* Model */}
-      <div>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{t('Model')}</div>
-        <select
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          style={{
-            width: '100%', padding: '6px 8px', borderWidth: 1, borderStyle: 'solid',
-            borderColor: '#ddd', borderRadius: 6, fontSize: 12, background: '#fff', cursor: 'pointer',
-          }}
-        >
-          {MODELS.map((m) => (
-            <option key={m.id} value={m.id}>{t(m.label)}</option>
-          ))}
-        </select>
-      </div>
 
       {/* Prompt */}
       <div>
@@ -244,9 +215,7 @@ export function AiImageTab() {
 
       {/* Info */}
       <div style={{ fontSize: 9, color: '#767676', textAlign: 'center', lineHeight: 1.4 }}>
-        {t('Powered by Pollinations.ai · Generation may take 10-30s')}
-        <br />
-        {t('Get your key at enter.pollinations.ai')}
+        {t('Powered by Hugging Face · Stable Diffusion 3 Medium · Generation may take 10-30s')}
       </div>
     </div>
   );

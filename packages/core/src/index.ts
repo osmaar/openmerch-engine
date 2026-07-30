@@ -13,7 +13,9 @@ export * from './types/index.js';
  * because "pixels" only have a physical size once you fix a resolution — the
  * editor uses the screen's reference DPI, the renderer uses the print DPI.
  */
-export { mmToPx, pxToMm, MAX_RENDER_DIMENSION_PX, MM_PER_INCH } from './utils/units.js';
+export { mmToPx, pxToMm, MAX_RENDER_DIMENSION_PX, MIN_SAFE_DPI, resolvePrintDpi, MM_PER_INCH } from './utils/units.js';
+/** Return type of {@link resolvePrintDpi}. */
+export type { ResolvedPrintDpi } from './utils/units.js';
 
 /**
  * Per-character layout math for curved/bridge/wave text effects. Prefer
@@ -55,3 +57,13 @@ export { applyDisplacementMap } from './utils/displacement-map.js';
  * same duck-typing rationale as {@link TintableImage}.
  */
 export type { DisplaceableImage } from './utils/displacement-map.js';
+
+/**
+ * Reverses premultiplied-alpha PNG encoding (e.g. rembg's output) so
+ * semi-transparent edge pixels composite correctly everywhere — without this,
+ * soft/furry background-removal cutouts show a dark fringe wherever the alpha
+ * channel isn't fully opaque or fully transparent.
+ */
+export { unpremultiplyAlpha } from './utils/unpremultiply-alpha.js';
+/** Minimal `ImageData`-like shape accepted by {@link unpremultiplyAlpha}. */
+export type { UnpremultipliableImage } from './utils/unpremultiply-alpha.js';

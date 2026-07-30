@@ -34,6 +34,7 @@ interface Stage {
   overlayImageUrl: string;
   displacementMapUrl: string;
   displacementStrengthMM?: number;
+  printDPI?: number;
 }
 
 interface Attribute {
@@ -106,7 +107,7 @@ export function ProductEdit() {
       printAreaWidthMM: 200, printAreaHeightMM: 300,
       printAreaXMM: 150, printAreaYMM: 105,
       exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
-      displacementMapUrl: '', displacementStrengthMM: undefined,
+      displacementMapUrl: '', displacementStrengthMM: undefined, printDPI: undefined,
     },
   ]);
 
@@ -144,7 +145,7 @@ export function ProductEdit() {
               printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
               printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
               exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false, overlayImageUrl: z.overlayImageUrl ?? '',
-              displacementMapUrl: z.displacementMapUrl ?? '', displacementStrengthMM: z.displacementStrengthMM,
+              displacementMapUrl: z.displacementMapUrl ?? '', displacementStrengthMM: z.displacementStrengthMM, printDPI: z.printDPI,
             })) : undefined,
           })));
         }
@@ -157,7 +158,7 @@ export function ProductEdit() {
             printAreaWidthMM: z.printAreaWidthMM ?? 200, printAreaHeightMM: z.printAreaHeightMM ?? 300,
             printAreaXMM: z.printAreaXMM ?? 150, printAreaYMM: z.printAreaYMM ?? 105,
             exportIncludeBase: z.exportIncludeBase ?? false, cropMarks: z.cropMarks ?? false, useMaskLayer: z.useMaskLayer ?? false, overlayImageUrl: z.overlayImageUrl ?? '',
-            displacementMapUrl: z.displacementMapUrl ?? '', displacementStrengthMM: z.displacementStrengthMM,
+            displacementMapUrl: z.displacementMapUrl ?? '', displacementStrengthMM: z.displacementStrengthMM, printDPI: z.printDPI,
           })));
         }
       }).catch(() => {
@@ -203,6 +204,7 @@ export function ProductEdit() {
           overlayImageUrl: s.overlayImageUrl || undefined,
           displacementMapUrl: s.displacementMapUrl || undefined,
           displacementStrengthMM: s.displacementStrengthMM,
+          printDPI: s.printDPI,
         })),
         variants: variants.map((v) => ({
           id: v.id, name: v.name,
@@ -214,6 +216,7 @@ export function ProductEdit() {
             overlayImageUrl: z.overlayImageUrl || undefined,
             displacementMapUrl: z.displacementMapUrl || undefined,
             displacementStrengthMM: z.displacementStrengthMM,
+            printDPI: z.printDPI,
           })),
         })),
         variantLabel: variantLabel || null,
@@ -244,7 +247,7 @@ export function ProductEdit() {
       printAreaWidthMM: 200, printAreaHeightMM: 300,
       printAreaXMM: 150, printAreaYMM: 105,
       exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
-      displacementMapUrl: '', displacementStrengthMM: undefined,
+      displacementMapUrl: '', displacementStrengthMM: undefined, printDPI: undefined,
     }]);
   };
 
@@ -583,6 +586,18 @@ export function ProductEdit() {
                     />
                   </Group>
 
+                  <NumberInput
+                    label={t('Print DPI (optional)')}
+                    description={t('Leave empty for automatic — 300 DPI, or lower only if the physical size requires it (e.g. desk mats, posters). Set a fixed value only if your print vendor requires an exact DPI; production fails loudly if that value does not fit the zone size, instead of being silently changed.')}
+                    value={stage.printDPI ?? ''}
+                    onChange={(v) => updateStage(idx, { printDPI: typeof v === 'number' ? v : undefined })}
+                    placeholder={t('Auto')}
+                    size="sm"
+                    min={72}
+                    max={300}
+                    step={10}
+                  />
+
                   <Divider />
 
                   {/* Toggles */}
@@ -766,7 +781,7 @@ export function ProductEdit() {
                       printAreaWidthMM: 200, printAreaHeightMM: 300,
                       printAreaXMM: 150, printAreaYMM: 105,
                       exportIncludeBase: false, cropMarks: false, useMaskLayer: false, overlayImageUrl: '',
-                      displacementMapUrl: '', displacementStrengthMM: undefined,
+                      displacementMapUrl: '', displacementStrengthMM: undefined, printDPI: undefined,
                     })}>
                       {t('Reset All')}
                     </Button>

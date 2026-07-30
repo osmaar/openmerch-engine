@@ -7,14 +7,15 @@
 
 OpenMerch Engine lets any ecommerce store offer visual product customization directly on their website — no third-party SaaS required. Customers design products before buying; merchants get print-ready production files automatically.
 
-> **Status:** Phase 2 complete — Product overlay/mask system closed with MVP coverage (21 overlays across 7 product types, 7 PSD sources versioned), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. A full internal audit (security, frontend, backend, test coverage, code quality — 54 findings) has been closed end-to-end, plus interactive API docs (Swagger/OpenAPI) and a full architecture/roadmap writeup — see [Documentation](#documentation) below. Next: rembg AI background removal, then displacement maps (fabric-realistic mockups). WooCommerce/Shopify plugins, embroidery/per-technique validation, native checkout, and 3D preview are explicitly Post-MVP — see [Roadmap](#roadmap).
+> **Status:** Phase 2 complete — Product overlay/mask system closed with MVP coverage (21 overlays across 7 product types, 7 PSD sources versioned), Konva zone editor in admin, 13 products with variants, Settings API, BullMQ production jobs, full i18n. A full internal audit (security, frontend, backend, test coverage, code quality — 54 findings) has been closed end-to-end, plus interactive API docs (Swagger/OpenAPI) and a full architecture/roadmap writeup — see [Documentation](#documentation) below. Displacement maps (fabric-realistic mockups) and rembg AI background removal (optional, self-hosted Python microservice — see [Roadmap](#roadmap)) have both shipped, closing out Phase 2. WooCommerce/Shopify plugins, embroidery/per-technique validation, native checkout, and 3D preview are explicitly Post-MVP — see [Roadmap](#roadmap).
 
 ---
 
 ## Features
 
 - **Visual canvas editor** — upload images, add text, shapes, cliparts. Move, scale, rotate with snap guides
-- **AI image generation** — powered by Pollinations.ai with 5 models and 8 styles (1024x1024)
+- **AI image generation** — powered by Hugging Face Inference Providers (Stable Diffusion 3 Medium, 1024x1024) with 8 style presets
+- **AI background removal** — self-hosted `rembg` microservice (optional, `docker compose --profile ai up`), plus a threshold-based "Basic" mode that always works with no network call
 - **200,000+ cliparts** — Iconify API integration with 10+ icon collections
 - **Photos & backgrounds** — Unsplash API with search and category browsing
 - **120+ Google Fonts** — instant search, dynamic loading
@@ -147,7 +148,7 @@ The editor embeds via iframe on the product page. When a customer finishes their
 ## Roadmap
 
 - [x] Monorepo setup (pnpm + Turborepo + ESLint + Prettier + Vitest + CI)
-- [ ] Canvas editor core (Phase 1)
+- [x] Canvas editor core (Phase 1)
   - [x] T-shirt mockup with front/back zone selector
   - [x] Image upload (button + drag & drop) and text layers
   - [x] Move, scale, rotate with snap guides and rotation snap
@@ -167,16 +168,16 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Shapes (9 shapes with contextual toolbar: fill, stroke, opacity)
   - [x] Photos (Unsplash API integration with search)
   - [x] Backgrounds (Unsplash API with 10 texture/pattern categories)
-  - [x] AI Image generation (Pollinations.ai — 5 models, 8 styles, 1024x1024)
+  - [x] AI Image generation (Hugging Face Inference Providers — Stable Diffusion 3 Medium, 8 styles, 1024x1024)
   - [x] Google Fonts (120+ fonts with instant search)
   - [x] Toggle print zone visibility (preview mode)
   - [x] Compositing multiply effect (fabric texture blending)
   - [x] PNG/SVG export (600 DPI, include base, include back, zoom-safe)
   - [x] Full keyboard shortcuts (20+ shortcuts including arrow key movement)
   - [x] Out-of-zone transparency feedback (elements fade when outside print area)
-  - [x] Remove background modal (threshold-based, AI-powered coming in Phase 2)
+  - [x] Remove background modal (threshold-based "Basic" mode, plus an "AI" mode via the self-hosted rembg microservice)
   - [x] Undo/redo full support
-- [ ] Backend API and admin panel (Phase 2)
+- [x] Backend API and admin panel (Phase 2)
   - [x] Fastify server with REST endpoints (/api/v1/)
   - [x] PostgreSQL database with Drizzle ORM (products, designs, assets, jobs, settings)
   - [x] MinIO storage integration (S3-compatible, self-hosted)
@@ -203,8 +204,8 @@ The editor embeds via iframe on the product page. When a customer finishes their
   - [x] Product overlay/mask system (designs clip to print area, overlays for camera/edges/shapes)
   - [x] Interactive Konva zone editor in admin (drag & resize print areas visually)
   - [x] Interactive API documentation (Swagger/OpenAPI UI at `/api/v1/docs`, spec generated from Fastify schemas across all 30 endpoints)
-  - [ ] rembg AI-powered background removal (Python)
-- [ ] 2D preview with displacement maps (Phase 2) — fabric-realistic mockups (design follows garment wrinkles/folds), **confirmed in scope for v1**
+  - [x] rembg AI-powered background removal — optional self-hosted Python microservice (`services/rembg`, `docker compose --profile ai up`), gracefully degrades to the Basic threshold tool when not configured
+- [x] 2D preview with displacement maps (Phase 2) — fabric-realistic mockups (design follows garment wrinkles/folds), wired for t-shirt/oversized-tee/box-tee/hoodie/desk-mat/pillow
 
 **Post-MVP — explicitly not planned right now** (large, open-ended scopes that would delay a polished v1; contributions welcome, just not on the maintainer's roadmap — see [docs/ROADMAP.md](docs/ROADMAP.md#post-mvp--explicitly-out-of-scope-for-now) for the reasoning behind each):
 - [ ] Per-technique validation and embroidery files (previously Phase 3)

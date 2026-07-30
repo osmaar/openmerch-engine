@@ -231,8 +231,38 @@ curl -X POST "http://localhost:3001/api/v1/assets/upload?category=clipart" \
 curl http://localhost:3001/api/v1/assets/assets/cliparts/<uuid>.svg -o star.svg
 ```
 
-No Fastify schema defined on either route (and file uploads use `@fastify/multipart`, which isn't
-schema-validated here either).
+(File uploads use `@fastify/multipart`, so the multipart body itself isn't schema-validated the way
+a JSON body would be — but the response shape is.)
+
+### `POST /api/v1/assets/remove-background`
+AI-powered background removal — resolves `src` to an image (any format `ImageResolver` accepts:
+`data:` URL, external `http(s)` URL, or an internal `/api/v1/assets/...`/`/products/...` path),
+sends it to the `services/rembg` microservice (self-hosted, optional — see `docker-compose.yml`'s
+`ai` profile), then stores the resulting transparent PNG as a new asset the same way
+`POST /api/v1/assets/upload` does.
+
+**Body** (JSON): `{ "src": "<image source>" }`.
+
+- `config.rembg.url` unset (microservice not configured): `503 { error: "...", code:
+  "REMBG_NOT_CONFIGURED" }`.
+- `src` can't be resolved: `400 { error: "...", code: "INVALID_IMAGE_SOURCE" }`.
+- Microservice unreachable: `503 { error: "...", code: "REMBG_UNAVAILABLE" }`.
+- Microservice times out (30s): `504 { error: "...", code: "REMBG_TIMEOUT" }`.
+- Microservice responds with an error status: `502 { error: "...", code: "REMBG_FAILED" }`.
+- Microservice responds `200` with bytes that don't decode as an image: `502 { error: "...", code:
+  "REMBG_INVALID_IMAGE" }`.
+- On success: `200` with the same asset shape as the upload endpoint above.
+
+rembg's PNG output is premultiplied-alpha (non-standard — every normal PNG consumer renders a
+dark/muddy fringe on semi-transparent edges, most visible on soft/furry cutouts, unless corrected).
+This route un-premultiplies it (`unpremultiplyAlpha` from `@openmerch/core`) before storing the
+asset, so every consumer gets a clean result with no special-casing needed.
+
+```bash
+curl -X POST http://localhost:3001/api/v1/assets/remove-background \
+  -H "Content-Type: application/json" \
+  -d '{ "src": "/api/v1/assets/uploads/photo.png" }'
+```
 
 ---
 
@@ -624,18 +654,34 @@ resolved from the `settings` table (decrypted) and, if not set there, falls back
 If no key is configured: `503 { error: "Unsplash API key not configured" }`. On success, returns
 whatever JSON the Unsplash search endpoint returns (passed through unmodified).
 
-### `GET /api/v1/proxy/pollinations/image`
-Server-side proxy that streams an AI-generated image from Pollinations, avoiding CORS/exposing the
-`pollinations_key`.
+### `GET /api/v1/proxy/ai-image`
+Server-side proxy that generates an image via Hugging Face Inference Providers (model
+`stabilityai/stable-diffusion-3-medium-diffusers`, the `hf-inference` provider — the one model
+confirmed to work on Hugging Face's free tier without billing enabled; see the "Why Hugging Face"
+note below), avoiding CORS and keeping `HF_TOKEN` server-side. Replaces the former Pollinations.ai
+proxy (`/api/v1/proxy/pollinations/image`), retired after its free tier proved unreliable in real
+use (intermittent 401s with no change on our end — looked like Cloudflare-edge-level rate limiting
+rather than a real auth rejection).
 
-**Query params**: `prompt` (**required**), `model`, `width`, `height`, `seed` (all optional and
-forwarded as-is to Pollinations if present).
+**Query params**: `prompt` (**required**), `width`, `height` (optional, forwarded as HF's
+`parameters.width`/`parameters.height`).
 
+- `HF_TOKEN` unset: `503 { error: "AI image generation service not configured" }`.
 - Missing `prompt`: `400 { error: "prompt is required" }`.
-- Request to Pollinations times out after 2 minutes: `502 { error: "Pollinations timeout (>2min)" }`.
-- Upstream non-OK response: `502 { error: "Pollinations returned <status>" }`.
+- Retries once (1s backoff) on a non-OK response or thrown error before giving up.
+- Request times out after 2 minutes: `502 { error: "Hugging Face timeout (>2min)" }`.
+- Upstream non-OK response after retry: `502 { error: "Hugging Face returned <status>" }`.
 - On success: streams the image bytes back with the upstream `Content-Type` (default
-  `image/jpeg`) and `Cache-Control: public, max-age=86400`.
+  `image/jpeg`) and `Cache-Control: no-store` (unlike the old Pollinations proxy, there's no `seed`
+  param to make a repeat request intentionally reproducible/cacheable — every generation is fresh).
+
+**Why Hugging Face, and why only one model:** Hugging Face's older free `api-inference.huggingface.co`
+endpoint has been retired. Its replacement, the "Inference Providers" router
+(`router.huggingface.co`), mostly routes text-to-image models to third-party compute providers
+(fal-ai, together, replicate, nscale) that require a payment method on the HF account even for
+otherwise-free-tier usage. `stabilityai/stable-diffusion-3-medium-diffusers` is (as of this
+writing) the one model confirmed to run on HF's own first-party `hf-inference` provider with zero
+billing required — verified directly against the API rather than assumed.
 
 ```bash
 curl http://localhost:3001/api/v1/settings/public
@@ -646,11 +692,9 @@ curl -X PUT http://localhost:3001/api/v1/settings \
 
 curl "http://localhost:3001/api/v1/proxy/unsplash/search?query=mountains&page=1"
 
-curl "http://localhost:3001/api/v1/proxy/pollinations/image?prompt=a%20red%20fox&width=512&height=512" \
+curl "http://localhost:3001/api/v1/proxy/ai-image?prompt=a%20red%20fox&width=512&height=512" \
   -o fox.jpg
 ```
-
-No Fastify schema defined on any of these routes.
 
 ---
 

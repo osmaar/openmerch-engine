@@ -49,7 +49,6 @@ interface EditorState {
   isSaving: boolean;
   lastSavedAt: string | null;
   unsplashKey: string;
-  pollinationsKey: string;
   storeName: string;
   selectedVariantId: string | null;
   cartItems: CartItem[];
@@ -60,7 +59,6 @@ interface EditorState {
   removeFromCart: (designId: string) => void;
   clearCart: () => void;
   setUnsplashKey: (key: string) => void;
-  setPollinationsKey: (key: string) => void;
   setActiveZone: (zoneId: string) => void;
   setProductColor: (color: string) => void;
   setSizeQuantity: (size: string, qty: number) => void;
@@ -131,7 +129,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   isSaving: false,
   lastSavedAt: null,
   unsplashKey: '',
-  pollinationsKey: '',
   storeName: '',
   selectedVariantId: null,
   cartItems: [],
@@ -253,10 +250,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   setUnsplashKey: (key: string) => {
     set({ unsplashKey: key });
-  },
-
-  setPollinationsKey: (key: string) => {
-    set({ pollinationsKey: key });
   },
 
   addToGallery: (src: string, name: string) => {

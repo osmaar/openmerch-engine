@@ -24,16 +24,14 @@ async function fetchProducts(): Promise<ProductListItem[]> {
 }
 
 export function App() {
-  const { setUnsplashKey, setPollinationsKey } = useEditorStore();
+  const { setUnsplashKey } = useEditorStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsplash = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
     if (unsplash) setUnsplashKey(unsplash);
-    const pollinations = import.meta.env.VITE_POLLINATIONS_KEY;
-    if (pollinations) setPollinationsKey(pollinations);
-  }, [setUnsplashKey, setPollinationsKey]);
+  }, [setUnsplashKey]);
 
   // Listen for product changes from the editor's product selector modal
   useEffect(() => {

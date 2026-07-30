@@ -239,8 +239,39 @@ curl -X POST "http://localhost:3001/api/v1/assets/upload?category=clipart" \
 curl http://localhost:3001/api/v1/assets/assets/cliparts/<uuid>.svg -o star.svg
 ```
 
-Sin schema de Fastify definido en ninguna de las dos rutas (y las subidas de archivos usan
-`@fastify/multipart`, que tampoco está validado por schema aquí).
+(Las subidas de archivos usan `@fastify/multipart`, así que el body multipart en sí no está
+validado por schema como lo estaría un body JSON — pero la forma de la respuesta sí.)
+
+### `POST /api/v1/assets/remove-background`
+Remoción de fondo con IA — resuelve `src` a una imagen (cualquier formato que acepte
+`ImageResolver`: URL `data:`, URL externa `http(s)`, o una ruta interna
+`/api/v1/assets/...`/`/products/...`), la envía al microservicio `services/rembg` (self-hosted,
+opcional — ver el perfil `ai` de `docker-compose.yml`), y guarda el PNG transparente resultante
+como un asset nuevo de la misma forma que `POST /api/v1/assets/upload`.
+
+**Body** (JSON): `{ "src": "<fuente de imagen>" }`.
+
+- `config.rembg.url` sin definir (microservicio no configurado): `503 { error: "...", code:
+  "REMBG_NOT_CONFIGURED" }`.
+- `src` no se puede resolver: `400 { error: "...", code: "INVALID_IMAGE_SOURCE" }`.
+- Microservicio inalcanzable: `503 { error: "...", code: "REMBG_UNAVAILABLE" }`.
+- Microservicio hace timeout (30s): `504 { error: "...", code: "REMBG_TIMEOUT" }`.
+- Microservicio responde con status de error: `502 { error: "...", code: "REMBG_FAILED" }`.
+- Microservicio responde `200` con bytes que no decodifican como imagen: `502 { error: "...", code:
+  "REMBG_INVALID_IMAGE" }`.
+- Éxito: `200` con el mismo shape de asset que el endpoint de upload de arriba.
+
+El PNG que devuelve rembg viene con alpha premultiplicado (no estándar — cualquier consumidor
+normal de PNG muestra un borde oscuro/turbio en bordes semi-transparentes, muy visible en recortes
+suaves/con pelo, si no se corrige). Esta ruta lo des-premultiplica (`unpremultiplyAlpha` de
+`@openmerch/core`) antes de guardar el asset, así que todo consumidor recibe un resultado limpio
+sin tener que lidiar con esto por su cuenta.
+
+```bash
+curl -X POST http://localhost:3001/api/v1/assets/remove-background \
+  -H "Content-Type: application/json" \
+  -d '{ "src": "/api/v1/assets/uploads/photo.png" }'
+```
 
 ---
 
@@ -637,19 +668,36 @@ Si no hay ninguna key configurada: `503 { error: "Unsplash API key not configure
 éxito, devuelve el JSON que sea que devuelva el endpoint de búsqueda de Unsplash (pasado sin
 modificar).
 
-### `GET /api/v1/proxy/pollinations/image`
-Proxy del lado del servidor que transmite una imagen generada por IA desde Pollinations, evitando
-CORS/exponer la `pollinations_key`.
+### `GET /api/v1/proxy/ai-image`
+Proxy del lado del servidor que genera una imagen vía Hugging Face Inference Providers (modelo
+`stabilityai/stable-diffusion-3-medium-diffusers`, proveedor `hf-inference` — el único modelo
+confirmado que funciona en el tier gratuito de Hugging Face sin facturación habilitada; ver la nota
+"Por qué Hugging Face" más abajo), evitando CORS y manteniendo `HF_TOKEN` del lado del servidor.
+Reemplaza al antiguo proxy de Pollinations.ai (`/api/v1/proxy/pollinations/image`), retirado
+después de que su tier gratuito resultó poco confiable en uso real (401 intermitentes sin ningún
+cambio de nuestro lado — parecía rate-limiting a nivel de borde de Cloudflare, no un rechazo real
+de autenticación).
 
-**Query params**: `prompt` (**requerido**), `model`, `width`, `height`, `seed` (todos opcionales y
-se reenvían tal cual a Pollinations si están presentes).
+**Query params**: `prompt` (**requerido**), `width`, `height` (opcionales, se reenvían como
+`parameters.width`/`parameters.height` de HF).
 
+- `HF_TOKEN` sin definir: `503 { error: "AI image generation service not configured" }`.
 - Falta `prompt`: `400 { error: "prompt is required" }`.
-- El request a Pollinations expira después de 2 minutos: `502 { error: "Pollinations timeout
-  (>2min)" }`.
-- Response no-OK del upstream: `502 { error: "Pollinations returned <status>" }`.
+- Reintenta una vez (backoff de 1s) ante una respuesta no-OK o un error lanzado, antes de rendirse.
+- El request expira después de 2 minutos: `502 { error: "Hugging Face timeout (>2min)" }`.
+- Response no-OK del upstream tras el reintento: `502 { error: "Hugging Face returned <status>" }`.
 - En caso de éxito: transmite los bytes de la imagen de vuelta con el `Content-Type` del upstream
-  (default `image/jpeg`) y `Cache-Control: public, max-age=86400`.
+  (default `image/jpeg`) y `Cache-Control: no-store` (a diferencia del proxy viejo de Pollinations,
+  no hay parámetro `seed` que haga un request repetido intencionalmente reproducible/cacheable —
+  cada generación es nueva).
+
+**Por qué Hugging Face, y por qué solo un modelo:** el endpoint gratuito viejo de Hugging Face
+(`api-inference.huggingface.co`) fue retirado. Su reemplazo, el router "Inference Providers"
+(`router.huggingface.co`), en su mayoría enruta modelos de texto-a-imagen a proveedores de cómputo
+de terceros (fal-ai, together, replicate, nscale) que requieren un método de pago en la cuenta de
+HF incluso para uso supuestamente gratuito. `stabilityai/stable-diffusion-3-medium-diffusers` es
+(al momento de escribir esto) el único modelo confirmado que corre en el proveedor propio
+`hf-inference` de HF sin necesitar facturación — verificado directo contra la API, no asumido.
 
 ```bash
 curl http://localhost:3001/api/v1/settings/public
@@ -660,11 +708,9 @@ curl -X PUT http://localhost:3001/api/v1/settings \
 
 curl "http://localhost:3001/api/v1/proxy/unsplash/search?query=mountains&page=1"
 
-curl "http://localhost:3001/api/v1/proxy/pollinations/image?prompt=a%20red%20fox&width=512&height=512" \
+curl "http://localhost:3001/api/v1/proxy/ai-image?prompt=a%20red%20fox&width=512&height=512" \
   -o fox.jpg
 ```
-
-Sin schema de Fastify definido en ninguna de estas rutas.
 
 ---
 

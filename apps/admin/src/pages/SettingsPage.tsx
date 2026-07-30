@@ -12,9 +12,9 @@ const API_BASE = (typeof window !== 'undefined' && window.location.port !== '300
 export function SettingsPage() {
   const t = useT();
   const [unsplashKey, setUnsplashKey] = useState('');
-  const [pollinationsKey, setPollinationsKey] = useState('');
+  const [hfToken, setHfToken] = useState('');
   const [unsplashConfigured, setUnsplashConfigured] = useState(false);
-  const [pollinationsConfigured, setPollinationsConfigured] = useState(false);
+  const [hfConfigured, setHfConfigured] = useState(false);
   const [storeName, setStoreName] = useState('');
   const [storageMode, setStorageMode] = useState('database');
   const [showBranding, setShowBranding] = useState(true);
@@ -33,8 +33,8 @@ export function SettingsPage() {
         if (s.key === 'unsplash_key') {
           setUnsplashConfigured(!!s.value);
         }
-        if (s.key === 'pollinations_key') {
-          setPollinationsConfigured(!!s.value);
+        if (s.key === 'hf_token') {
+          setHfConfigured(!!s.value);
         }
         if (s.key === 'storage_mode') setStorageMode(s.value);
         if (s.key === 'show_branding') setShowBranding(s.value !== 'false');
@@ -67,10 +67,10 @@ export function SettingsPage() {
         setUnsplashConfigured(true);
         setUnsplashKey('');
       }
-      if (pollinationsKey) {
-        entries.push({ key: 'pollinations_key', value: pollinationsKey, isSecret: true });
-        setPollinationsConfigured(true);
-        setPollinationsKey('');
+      if (hfToken) {
+        entries.push({ key: 'hf_token', value: hfToken, isSecret: true });
+        setHfConfigured(true);
+        setHfToken('');
       }
       await updateSettings(entries);
       // Apply changes immediately to browser
@@ -193,10 +193,10 @@ export function SettingsPage() {
                 onChange={(e) => setUnsplashKey(e.target.value)}
               />
               <PasswordInput
-                label={<Group gap={6}><span>{t('Pollinations Key')}</span>{pollinationsConfigured && <Badge size="xs" color="green" variant="light">{t('Configured')}</Badge>}</Group>}
-                placeholder={pollinationsConfigured ? t('Leave empty to keep current key') : 'pollinations.ai'}
-                value={pollinationsKey}
-                onChange={(e) => setPollinationsKey(e.target.value)}
+                label={<Group gap={6}><span>{t('Hugging Face Token')}</span>{hfConfigured && <Badge size="xs" color="green" variant="light">{t('Configured')}</Badge>}</Group>}
+                placeholder={hfConfigured ? t('Leave empty to keep current key') : 'huggingface.co/settings/tokens'}
+                value={hfToken}
+                onChange={(e) => setHfToken(e.target.value)}
               />
             </SimpleGrid>
           </Paper>

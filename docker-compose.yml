@@ -79,6 +79,15 @@ services:
       # Required in production — the API refuses to start without it. Generate with:
       # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
       ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+      # Base URL of the optional AI background-removal microservice (see the
+      # `rembg` service below). Left pointing at it even though that service
+      # is opt-in: if `rembg` isn't running, the route just gets connection
+      # refused and returns 503 — nothing else breaks.
+      REMBG_URL: http://rembg:7000
+      # Hugging Face token for the AI image generation proxy (POST /api/v1/proxy/ai-image).
+      # Optional — get a free one at https://huggingface.co/settings/tokens ("Make calls
+      # to Inference Providers" permission). Without it the route returns 503.
+      HF_TOKEN: "${HF_TOKEN}"
     depends_on:
       - postgres
       - redis
@@ -121,7 +130,37 @@ services:
       - redis
       - minio
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # AI background removal (services/rembg) — a small Python microservice that
+  # wraps rembg/u2net to strip image backgrounds for the editor's "remove
+  # background" tool. It's gated behind its own `ai` profile — separate from
+  # `app`/`worker` — and does NOT start with `docker compose up`, nor with
+  # `--profile app` or `--profile worker`. You must opt in explicitly:
+  #
+  #   docker compose --profile ai up --build rembg
+  #
+  # Why opt-in: the image bundles Python plus the u2net ONNX model
+  # (~176MB), which is a meaningful download/disk cost a minimalist
+  # self-hoster who doesn't need AI background removal shouldn't be forced
+  # to pay. The named volume below caches the downloaded model under
+  # /root/.u2net so it isn't re-fetched on every container restart.
+  #
+  # If this container isn't running, the API's REMBG_URL simply fails to
+  # connect and POST /api/v1/assets/remove-background responds 503 — the
+  # rest of the API is unaffected.
+  # ─────────────────────────────────────────────────────────────────────────
+  rembg:
+    profiles: ["ai"]
+    build:
+      context: ./services/rembg
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7000:7000"
+    volumes:
+      - rembg-models:/root/.u2net
+
 volumes:
   postgres-data:
   redis-data:
   minio-data:
+  rembg-models:

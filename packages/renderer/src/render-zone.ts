@@ -1,4 +1,4 @@
-import { mmToPx, MAX_RENDER_DIMENSION_PX, MM_PER_INCH } from '@openmerch/core';
+import { mmToPx, resolvePrintDpi, MM_PER_INCH } from '@openmerch/core';
 import type { DesignLayer, ImageLayer, ProductZone, ShapeLayer, TextLayer } from '@openmerch/core';
 import { addShapeLayer } from './layers/shape.js';
 import { addImageLayer } from './layers/image.js';
@@ -56,18 +56,32 @@ export interface RenderZoneResult {
  * Step 4 (this PR) adds ImageLayer. Step 5 will add TextLayer.
  */
 export async function renderDesignZone(options: RenderZoneOptions): Promise<RenderZoneResult> {
-  const dpi = options.dpi ?? 300;
-  const Konva = await getKonvaNode();
+  // zone.printDPI (merchant-configured, e.g. a specific print vendor's requirement)
+  // wins over the caller's default; if it doesn't fit the zone's physical size, that's
+  // a hard error — an explicit request should never be silently changed. Without an
+  // explicit printDPI, an oversized zone (desk mats, mousepads, posters) is
+  // automatically rendered at the highest DPI that still fits, rather than rejected.
+  const explicitDpi = options.zone.printDPI;
+  const requestedDpi = explicitDpi ?? options.dpi ?? 300;
+  const { dpi, wasClamped } = resolvePrintDpi(
+    options.zone.printAreaWidthMM,
+    options.zone.printAreaHeightMM,
+    requestedDpi,
+  );
 
-  const widthPx = Math.round(mmToPx(options.zone.printAreaWidthMM, dpi));
-  const heightPx = Math.round(mmToPx(options.zone.printAreaHeightMM, dpi));
-  if (widthPx > MAX_RENDER_DIMENSION_PX || heightPx > MAX_RENDER_DIMENSION_PX) {
+  if (wasClamped && explicitDpi != null) {
+    const widthPx = Math.round(mmToPx(options.zone.printAreaWidthMM, explicitDpi));
+    const heightPx = Math.round(mmToPx(options.zone.printAreaHeightMM, explicitDpi));
     throw new Error(
-      `renderDesignZone: zone "${options.zone.id}" would render at ${widthPx}x${heightPx}px ` +
-        `(dpi=${dpi}), exceeding the ${MAX_RENDER_DIMENSION_PX}px maximum per side. ` +
-        `Check the product's printAreaWidthMM/printAreaHeightMM.`,
+      `renderDesignZone: zone "${options.zone.id}" has printDPI=${explicitDpi} explicitly set, but that ` +
+        `would render at ${widthPx}x${heightPx}px, exceeding the safe canvas limit. Lower printDPI for ` +
+        `this zone, or unset it to use the automatic DPI (currently would resolve to ${dpi}).`,
     );
   }
+
+  const Konva = await getKonvaNode();
+  const widthPx = Math.round(mmToPx(options.zone.printAreaWidthMM, dpi));
+  const heightPx = Math.round(mmToPx(options.zone.printAreaHeightMM, dpi));
   const pxPerMM = dpi / MM_PER_INCH;
 
   // Pre-register all fonts BEFORE creating the Stage. node-canvas requires

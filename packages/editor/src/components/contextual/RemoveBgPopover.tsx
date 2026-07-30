@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Sparkles, Loader, AlertCircle } from 'lucide-react';
 import { useT } from '../../i18n/useTranslation.js';
+import { removeBackgroundAI, getAssetUrl, type ApiError } from '../../services/api.js';
 
 interface RemoveBgPopoverProps {
   imageSrc: string;
@@ -8,14 +9,37 @@ interface RemoveBgPopoverProps {
   onClose: () => void;
 }
 
+type Engine = 'basic' | 'ai';
 type BgMode = 'light' | 'dark';
 
 export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverProps) {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    // Must set true on mount too, not just false on cleanup: React StrictMode
+    // (dev only) synthetically mounts, unmounts, and remounts every component
+    // once on initial mount to surface missing-cleanup bugs. Without the
+    // explicit `= true` here, that simulated unmount's cleanup permanently
+    // leaves this ref false — even though the popover is genuinely still
+    // mounted — which silently disabled the `finally { setAiLoading(false) }`
+    // guard below and left the "Processing..." button stuck forever after
+    // the first AI request.
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [threshold, setThreshold] = useState(100);
   const [mode, setMode] = useState<BgMode>('light');
+
+  const [engine, setEngine] = useState<Engine>('basic');
+
+  // AI engine state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const [aiResultImg, setAiResultImg] = useState<HTMLImageElement | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     const img = new window.Image();
@@ -57,10 +81,42 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
     return offscreen;
   }, [imgEl, threshold, mode]);
 
-  // Draw preview at full modal size
+  const handleAiRemove = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const asset = await removeBackgroundAI(imageSrc);
+      const fullUrl = getAssetUrl(asset.url);
+
+      const img = new window.Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to load processed image'));
+        img.src = fullUrl;
+      });
+
+      if (!mountedRef.current) return;
+      setAiResultImg(img);
+      setAiResultUrl(fullUrl);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      const code = (err as ApiError).code;
+      if (code === 'REMBG_NOT_CONFIGURED') {
+        setAiError(t('The AI background removal service is not configured on this server. Use the Basic tab in the meantime.'));
+      } else {
+        setAiError(t('AI background removal failed. Please try again or use the Basic tab.'));
+      }
+    } finally {
+      if (mountedRef.current) setAiLoading(false);
+    }
+  };
+
+  // Draw preview at full modal size — Basic mode re-renders the local threshold cutout,
+  // AI mode shows the uploaded result (or the original image while none has been generated yet).
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !imgEl) return;
+    const sourceImg = engine === 'ai' && aiResultImg ? aiResultImg : imgEl;
+    if (!canvas || !sourceImg) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -68,9 +124,9 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
     // Scale to fit the modal preview area
     const maxW = 500;
     const maxH = 400;
-    const scale = Math.min(1, maxW / imgEl.width, maxH / imgEl.height);
-    const w = imgEl.width * scale;
-    const h = imgEl.height * scale;
+    const scale = Math.min(1, maxW / sourceImg.width, maxH / sourceImg.height);
+    const w = sourceImg.width * scale;
+    const h = sourceImg.height * scale;
     canvas.width = w;
     canvas.height = h;
 
@@ -84,13 +140,21 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
       }
     }
 
-    const processed = processImage();
-    if (processed) {
-      ctx.drawImage(processed, 0, 0, w, h);
+    if (engine === 'ai') {
+      ctx.drawImage(sourceImg, 0, 0, w, h);
+    } else {
+      const processed = processImage();
+      if (processed) ctx.drawImage(processed, 0, 0, w, h);
     }
-  }, [imgEl, threshold, mode, processImage]);
+  }, [imgEl, threshold, mode, processImage, engine, aiResultImg]);
+
+  const canApply = engine === 'basic' || (!!aiResultUrl && !aiLoading);
 
   const handleApply = () => {
+    if (engine === 'ai') {
+      if (aiResultUrl) onApply(aiResultUrl);
+      return;
+    }
     const processed = processImage();
     if (processed) {
       onApply(processed.toDataURL('image/png'));
@@ -159,52 +223,124 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
           flexDirection: 'column',
           gap: 12,
         }}>
-          {/* Info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#FFF8E1', borderRadius: 6, fontSize: 11, color: '#F57F17' }}>
-            <AlertTriangle size={14} />
-            {t('Basic removal — AI-powered removal coming soon with backend integration')}
+          {/* Engine tabs */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(['basic', 'ai'] as const).map((e) => (
+              <button
+                key={e}
+                onClick={() => setEngine(e)}
+                style={{
+                  flex: 1,
+                  padding: '8px 0',
+                  borderWidth: 1,
+                  borderStyle: 'solid',
+                  borderColor: engine === e ? '#4A90D9' : '#ddd',
+                  borderRadius: 6,
+                  background: engine === e ? '#EBF2FA' : '#fff',
+                  color: engine === e ? '#4A90D9' : '#555',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: engine === e ? 600 : 400,
+                }}
+              >
+                {e === 'basic' ? t('Basic') : t('AI')}
+              </button>
+            ))}
           </div>
 
-          {/* Mode */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>{t('Mode')}</span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {(['light', 'dark'] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  style={{
-                    padding: '6px 16px',
-                    borderWidth: 1,
-                    borderStyle: 'solid',
-                    borderColor: mode === m ? '#4A90D9' : '#ddd',
-                    borderRadius: 6,
-                    background: mode === m ? '#EBF2FA' : '#fff',
-                    color: mode === m ? '#4A90D9' : '#555',
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    fontWeight: mode === m ? 600 : 400,
-                  }}
-                >
-                  {m === 'light' ? t('Light Background') : t('Dark Background')}
-                </button>
-              ))}
-            </div>
-          </div>
+          {engine === 'basic' ? (
+            <>
+              {/* Info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#FFF8E1', borderRadius: 6, fontSize: 11, color: '#F57F17' }}>
+                <AlertTriangle size={14} />
+                {t('Basic removal — works locally in your browser, no upload required')}
+              </div>
 
-          {/* Threshold */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>{t('Deep')}</span>
-            <input
-              type="range"
-              min={0}
-              max={200}
-              value={threshold}
-              onChange={(e) => setThreshold(Number(e.target.value))}
-              style={{ flex: 1, cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: 12, color: '#888', minWidth: 30, textAlign: 'right' }}>{threshold}</span>
-          </div>
+              {/* Mode */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>{t('Mode')}</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {(['light', 'dark'] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setMode(m)}
+                      style={{
+                        padding: '6px 16px',
+                        borderWidth: 1,
+                        borderStyle: 'solid',
+                        borderColor: mode === m ? '#4A90D9' : '#ddd',
+                        borderRadius: 6,
+                        background: mode === m ? '#EBF2FA' : '#fff',
+                        color: mode === m ? '#4A90D9' : '#555',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: mode === m ? 600 : 400,
+                      }}
+                    >
+                      {m === 'light' ? t('Light Background') : t('Dark Background')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Threshold */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 13, color: '#555', minWidth: 50 }}>{t('Deep')}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={200}
+                  value={threshold}
+                  onChange={(e) => setThreshold(Number(e.target.value))}
+                  style={{ flex: 1, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 12, color: '#888', minWidth: 30, textAlign: 'right' }}>{threshold}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#EDF6EE', borderRadius: 6, fontSize: 11, color: '#2E7D32' }}>
+                <Sparkles size={14} />
+                {t('AI-powered background removal — sends the image to your self-hosted AI service')}
+              </div>
+
+              <button
+                onClick={handleAiRemove}
+                disabled={aiLoading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '10px 16px',
+                  borderWidth: 0,
+                  borderRadius: 6,
+                  background: aiLoading ? '#9DBEDD' : '#4A90D9',
+                  color: '#fff',
+                  cursor: aiLoading ? 'default' : 'pointer',
+                  fontSize: 13,
+                  fontWeight: 500,
+                }}
+              >
+                {aiLoading ? (
+                  <>
+                    <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    {t('Processing...')}
+                  </>
+                ) : (
+                  t('Remove Background')
+                )}
+              </button>
+
+              {aiError && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '6px 10px', background: '#FFF3E0', borderRadius: 6, fontSize: 11, color: '#E65100' }}>
+                  <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span>{aiError}</span>
+                </div>
+              )}
+            </>
+          )}
 
           {/* Actions */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -226,13 +362,14 @@ export function RemoveBgPopover({ imageSrc, onApply, onClose }: RemoveBgPopoverP
             </button>
             <button
               onClick={handleApply}
+              disabled={!canApply}
               style={{
                 padding: '8px 18px',
                 borderWidth: 0,
                 borderRadius: 6,
-                background: '#4A90D9',
+                background: canApply ? '#4A90D9' : '#B7CEE8',
                 color: '#fff',
-                cursor: 'pointer',
+                cursor: canApply ? 'pointer' : 'default',
                 fontSize: 13,
                 fontWeight: 500,
               }}

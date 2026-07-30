@@ -16,7 +16,18 @@ const designSchema = {
     status: { type: 'string', enum: ['draft', 'cart', 'paid', 'cancelled'] },
     sizes: { type: 'object', additionalProperties: { type: 'integer' }, description: 'Size label to quantity map, e.g. { "S": 2, "M": 1 }' },
     productColor: { type: ['string', 'null'] },
-    productionFiles: { type: ['object', 'null'], additionalProperties: { type: 'string' }, description: 'Zone ID to production file URL map' },
+    productionFiles: {
+      type: ['object', 'null'],
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          print: { type: 'string', description: '300 DPI (or lower, for large-format zones) print-ready PNG' },
+          mockup: { type: 'string', description: 'Merchant-facing preview PNG with the design over the product mockup' },
+        },
+        required: ['print'],
+      },
+      description: 'Zone ID to { print, mockup } production file URL map',
+    },
     productionStatus: { type: ['string', 'null'], enum: [null, 'queued', 'processing', 'completed', 'failed'] },
     productionError: { type: ['string', 'null'] },
     createdAt: { type: 'string', format: 'date-time' },

@@ -68,7 +68,7 @@ export async function resolveSettingValue(key: string): Promise<string | null> {
   // Fallback to env vars for known keys
   const envMap: Record<string, string | undefined> = {
     unsplash_key: process.env.VITE_UNSPLASH_ACCESS_KEY,
-    pollinations_key: process.env.VITE_POLLINATIONS_KEY,
+    hf_token: process.env.HF_TOKEN,
   };
   return envMap[key] ?? null;
 }
@@ -227,68 +227,99 @@ export async function settingRoutes(app: FastifyInstance) {
     },
   );
 
-  // Pollinations proxy — streams the image through our server to avoid CORS.
-  app.get<{ Querystring: { prompt: string; model?: string; width?: string; height?: string; seed?: string } }>(
-    '/api/v1/proxy/pollinations/image',
+  // Hugging Face AI image generation proxy — streams the image through our server to
+  // avoid CORS and keep the token server-side. Verified empirically against Hugging
+  // Face's Inference Providers router: most third-party providers (fal-ai, together,
+  // replicate, nscale) reject serverless calls without a paid/billing-enabled HF
+  // account, and HF's own free "hf-inference" provider has deprecated most popular
+  // checkpoints (FLUX.1, SDXL) — stabilityai/stable-diffusion-3-medium-diffusers is the
+  // one confirmed-working, genuinely free (no billing required) text-to-image model.
+  const HF_MODEL = 'stabilityai/stable-diffusion-3-medium-diffusers';
+  const HF_INFERENCE_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
+
+  app.get<{ Querystring: { prompt: string; width?: string; height?: string } }>(
+    '/api/v1/proxy/ai-image',
     {
       schema: {
         tags: ['Settings'],
-        summary: 'Proxy an AI-generated image from Pollinations',
-        description: 'Streams the image through the API server to avoid browser CORS issues. Keeps the optional Pollinations API key server-side.',
+        summary: 'Generate an AI image via Hugging Face Inference Providers',
+        description: `Streams a Stable Diffusion 3 Medium generation (${HF_MODEL}, hf-inference provider) through the API server to avoid browser CORS issues and keep HF_TOKEN server-side. Returns 503 if HF_TOKEN isn't configured.`,
         querystring: {
           type: 'object',
           properties: {
             prompt: { type: 'string' },
-            model: { type: 'string' },
             width: { type: 'string' },
             height: { type: 'string' },
-            seed: { type: 'string' },
           },
           required: ['prompt'],
         },
         response: {
           400: proxyErrorResponseSchema,
           502: proxyErrorResponseSchema,
+          503: proxyErrorResponseSchema,
         },
       },
     },
     async (req, reply) => {
-      const { prompt, model, width, height, seed } = req.query;
+      const { prompt, width, height } = req.query;
       if (!prompt) return reply.code(400).send({ error: 'prompt is required' });
 
-      const params = new URLSearchParams();
-      if (model) params.set('model', model);
-      if (width) params.set('width', width);
-      if (height) params.set('height', height);
-      if (seed) params.set('seed', seed);
-      params.set('nologo', 'true');
-
-      const key = await resolveSettingValue('pollinations_key');
-      if (key) params.set('key', key);
-
-      const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?${params.toString()}`;
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120_000); // 2 min timeout
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
-
-        if (!res.ok) {
-          console.error(`[pollinations-proxy] ${res.status} ${res.statusText} for: ${url}`);
-          return reply.code(502).send({ error: `Pollinations returned ${res.status}` });
-        }
-
-        const contentType = res.headers.get('content-type') ?? 'image/jpeg';
-        reply.header('Content-Type', contentType);
-        reply.header('Cache-Control', 'public, max-age=86400');
-
-        const buffer = Buffer.from(await res.arrayBuffer());
-        return reply.send(buffer);
-      } catch (err) {
-        const msg = (err as Error).name === 'AbortError' ? 'Pollinations timeout (>2min)' : (err as Error).message;
-        return reply.code(502).send({ error: msg });
+      const token = await resolveSettingValue('hf_token');
+      if (!token) {
+        return reply.code(503).send({ error: 'AI image generation service not configured (HF_TOKEN unset)' });
       }
+
+      const parameters: { width?: number; height?: number } = {};
+      if (width) parameters.width = Number(width);
+      if (height) parameters.height = Number(height);
+
+      // No caching: each generation is meant to be a fresh, non-deterministic result —
+      // unlike the old Pollinations flow, there's no seed param here to make a repeat
+      // request intentionally reproducible/cacheable.
+      const MAX_ATTEMPTS = 2;
+      const RETRY_DELAY_MS = 1000;
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 120_000); // 2 min timeout
+          const res = await fetch(HF_INFERENCE_URL, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inputs: prompt, parameters }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+
+          if (!res.ok) {
+            const bodyText = await res.text().catch(() => '');
+            console.error(`[hf-image-proxy] attempt ${attempt}/${MAX_ATTEMPTS}: ${res.status} ${res.statusText} — ${bodyText.slice(0, 300)}`);
+            if (attempt < MAX_ATTEMPTS) {
+              await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+              continue;
+            }
+            return reply.code(502).send({ error: `Hugging Face returned ${res.status}` });
+          }
+
+          reply.header('Content-Type', res.headers.get('content-type') ?? 'image/jpeg');
+          reply.header('Cache-Control', 'no-store');
+
+          const buffer = Buffer.from(await res.arrayBuffer());
+          return reply.send(buffer);
+        } catch (err) {
+          const msg = (err as Error).name === 'AbortError' ? 'Hugging Face timeout (>2min)' : (err as Error).message;
+          if (attempt < MAX_ATTEMPTS) {
+            console.error(`[hf-image-proxy] attempt ${attempt}/${MAX_ATTEMPTS} threw: ${msg}`);
+            await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+            continue;
+          }
+          return reply.code(502).send({ error: msg });
+        }
+      }
+
+      // Unreachable — the loop above always returns by its last iteration — but keeps
+      // TypeScript happy about a guaranteed return type.
+      return reply.code(502).send({ error: 'Hugging Face returned an error' });
     },
   );
 }

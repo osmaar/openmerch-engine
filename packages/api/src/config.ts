@@ -34,6 +34,13 @@ export const config = {
     bucket: process.env.MINIO_BUCKET ?? 'openmerch',
   },
 
+  // AI background removal microservice (services/rembg). Empty string means
+  // the service isn't configured/deployed — routes treat that as disabled
+  // rather than trying to reach it.
+  rembg: {
+    url: process.env.REMBG_URL ?? '',
+  },
+
   // CORS — comma-separated list of allowed origins, or a single origin.
   // Set explicitly to '*' to opt back into wildcard (not recommended).
   corsOrigin: parseCorsOrigin(),

@@ -48,6 +48,14 @@ export interface ProductZone {
    *  independent so editor and server mockup produce the same physical
    *  distortion. Defaults to a small conservative value if unset. */
   displacementStrengthMM?: number;
+  /** Explicit print DPI for this zone's production file. Leave unset for the
+   *  automatic default (300 DPI, or lower when the zone's physical size would
+   *  otherwise exceed the renderer's safe canvas cap — e.g. desk mats,
+   *  mousepads, posters — see `resolvePrintDpi` in @openmerch/core). Set this
+   *  explicitly only when a specific print vendor/technique requires an exact
+   *  DPI; an explicit value that doesn't fit the zone's physical size fails
+   *  loudly instead of being silently lowered. */
+  printDPI?: number;
 }
 
 export type DecorationTechnique = 'sublimation' | 'screenPrinting' | 'embroidery';

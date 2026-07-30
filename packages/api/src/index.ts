@@ -1,5 +1,5 @@
 import { join, dirname } from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import Fastify, { type FastifyError } from 'fastify';
 import cors from '@fastify/cors';
@@ -14,6 +14,7 @@ import { healthRoutes } from './routes/health.js';
 import { productRoutes } from './routes/products.js';
 import { designRoutes } from './routes/designs.js';
 import { assetRoutes } from './routes/assets.js';
+import { removeBackgroundRoutes } from './routes/remove-background.js';
 import { templateRoutes } from './routes/templates.js';
 import { clipartRoutes } from './routes/cliparts.js';
 import { shapeRoutes } from './routes/shapes.js';
@@ -97,8 +98,14 @@ async function main() {
     routePrefix: '/api/v1/docs',
   });
 
-  // Serve product mockup images from the repo's products/ directory
-  const repoRoot = join(packageDir, '..', '..');
+  // Serve product mockup images from the repo's products/ directory.
+  // In dev: packageDir = packages/api → 2 levels up = repo root.
+  // In Docker: packageDir = /app (dist/.. ) → but /app/products exists directly,
+  // so going up further would escape the container filesystem (see the same
+  // dev-vs-Docker split in jobs/resolvers/image-resolver.ts).
+  const repoRootDev = join(packageDir, '..', '..');
+  const repoRootDocker = '/app';
+  const repoRoot = existsSync(join(repoRootDev, 'products')) ? repoRootDev : repoRootDocker;
   await app.register(fastifyStatic, {
     root: join(repoRoot, 'products'),
     prefix: '/products/',
@@ -110,6 +117,7 @@ async function main() {
   await app.register(productRoutes);
   await app.register(designRoutes);
   await app.register(assetRoutes);
+  await app.register(removeBackgroundRoutes);
   await app.register(templateRoutes);
   await app.register(clipartRoutes);
   await app.register(shapeRoutes);
