@@ -21,6 +21,7 @@ import { shapeRoutes } from './routes/shapes.js';
 import { fontRoutes } from './routes/fonts.js';
 import { printingTypeRoutes } from './routes/printing-types.js';
 import { orderRoutes } from './routes/orders.js';
+import { orderWebhookWooCommerceRoutes } from './routes/orders-webhook-woocommerce.js';
 import { languageRoutes } from './routes/languages.js';
 import { settingRoutes } from './routes/settings.js';
 
@@ -124,6 +125,7 @@ async function main() {
   await app.register(fontRoutes);
   await app.register(printingTypeRoutes);
   await app.register(orderRoutes);
+  await app.register(orderWebhookWooCommerceRoutes);
   await app.register(languageRoutes);
   await app.register(settingRoutes);
 

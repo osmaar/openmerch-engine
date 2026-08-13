@@ -32,12 +32,18 @@ vi.mock('../db/index.js', () => ({
   },
 }));
 
-// designs.ts also imports these for the /generate-files route (unused by the
-// tests below); stub them so importing the module doesn't try to open a real
-// BullMQ/Redis connection.
+// designs.ts also imports these for the /generate-files and /cleanup-abandoned routes; stub
+// them so importing the module doesn't try to open a real BullMQ/Redis connection.
+const enqueueAbandonedDesignsCleanupNowMock = vi.fn<() => Promise<string>>();
 vi.mock('../jobs/queues.js', () => ({
   computeProductionJobId: vi.fn(),
   enqueueProductionFiles: vi.fn(),
+  enqueueAbandonedDesignsCleanupNow: () => enqueueAbandonedDesignsCleanupNowMock(),
+}));
+
+const findAbandonedDesignsMock = vi.fn<() => Promise<FakeDesignRow[]>>();
+vi.mock('../jobs/workers/abandoned-designs-cleanup.worker.js', () => ({
+  findAbandonedDesigns: () => findAbandonedDesignsMock(),
 }));
 
 const { designRoutes } = await import('./designs.js');
@@ -137,6 +143,53 @@ describe('POST /api/v1/designs — sequential naming', () => {
     expect(insertValuesMock).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'My Custom Name' }),
     );
+    await app.close();
+  });
+});
+
+describe('GET /api/v1/designs/cleanup-abandoned/preview', () => {
+  beforeEach(() => {
+    findAbandonedDesignsMock.mockReset();
+  });
+
+  it('returns the candidates and their count without deleting anything', async () => {
+    const candidate = fakeInsertedDesign({ status: 'draft' });
+    findAbandonedDesignsMock.mockResolvedValueOnce([candidate]);
+
+    const app = await buildApp();
+    const res = await app.inject({ method: 'GET', url: '/api/v1/designs/cleanup-abandoned/preview' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ count: 1, designs: [candidate] });
+    await app.close();
+  });
+
+  it('returns an empty list when nothing is abandoned', async () => {
+    findAbandonedDesignsMock.mockResolvedValueOnce([]);
+
+    const app = await buildApp();
+    const res = await app.inject({ method: 'GET', url: '/api/v1/designs/cleanup-abandoned/preview' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ count: 0, designs: [] });
+    await app.close();
+  });
+});
+
+describe('POST /api/v1/designs/cleanup-abandoned/run', () => {
+  beforeEach(() => {
+    enqueueAbandonedDesignsCleanupNowMock.mockReset();
+  });
+
+  it('enqueues a manual sweep and returns the jobId', async () => {
+    enqueueAbandonedDesignsCleanupNowMock.mockResolvedValueOnce('sweep-job-1');
+
+    const app = await buildApp();
+    const res = await app.inject({ method: 'POST', url: '/api/v1/designs/cleanup-abandoned/run' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ jobId: 'sweep-job-1' });
+    expect(enqueueAbandonedDesignsCleanupNowMock).toHaveBeenCalledOnce();
     await app.close();
   });
 });

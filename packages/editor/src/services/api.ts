@@ -53,6 +53,7 @@ export interface SavedDesign {
   status: string;
   sizes: Record<string, number>;
   productColor: string | null;
+  source?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,6 +65,7 @@ export async function saveDesign(data: {
   status?: string;
   sizes?: Record<string, number>;
   productColor?: string;
+  source?: string;
 }): Promise<SavedDesign> {
   return request('/designs', {
     method: 'POST',

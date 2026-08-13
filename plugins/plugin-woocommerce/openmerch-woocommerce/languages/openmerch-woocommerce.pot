@@ -1,0 +1,230 @@
+# Copyright (C) 2026 OpenMerch Engine contributors
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenMerch for WooCommerce 1.0.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/openmerch-woocommerce\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-06T17:51:22+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: openmerch-woocommerce\n"
+
+#. Plugin Name of the plugin
+#: openmerch-woocommerce.php
+msgid "OpenMerch for WooCommerce"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: openmerch-woocommerce.php
+msgid "https://github.com/openmerch/openmerch-engine"
+msgstr ""
+
+#. Description of the plugin
+#: openmerch-woocommerce.php
+msgid "Adds a \"Customize\" button next to Add to Cart on WooCommerce product pages, opening the OpenMerch editor in a new tab via a postMessage bridge, and syncs paid orders back to your self-hosted OpenMerch Engine instance."
+msgstr ""
+
+#. Author of the plugin
+#: openmerch-woocommerce.php
+msgid "OpenMerch Engine contributors"
+msgstr ""
+
+#: includes/class-openmerch-cart.php:69
+msgid "Missing product or design information."
+msgstr ""
+
+#: includes/class-openmerch-cart.php:74
+msgid "Unknown product."
+msgstr ""
+
+#: includes/class-openmerch-cart.php:107
+msgid "Could not add this product to the cart."
+msgstr ""
+
+#: includes/class-openmerch-cart.php:161
+msgid "Custom design"
+msgstr ""
+
+#: includes/class-openmerch-cart.php:168
+msgid "Print size"
+msgstr ""
+
+#: includes/class-openmerch-editor-embed.php:88
+msgid "The OpenMerch editor URL is not configured yet. Set it under WooCommerce > OpenMerch."
+msgstr ""
+
+#: includes/class-openmerch-editor-embed.php:127
+msgid "Customize"
+msgstr ""
+
+#: includes/class-openmerch-editor-embed.php:204
+msgid "Adding your design to the cart..."
+msgstr ""
+
+#: includes/class-openmerch-editor-embed.php:205
+msgid "Something went wrong adding your design to the cart. Please try again."
+msgstr ""
+
+#: includes/class-openmerch-editor-embed.php:206
+msgid "Your browser blocked the customizer popup. Please allow popups for this site and try again."
+msgstr ""
+
+#: includes/class-openmerch-product-meta.php:50
+msgid "OpenMerch Customization"
+msgstr ""
+
+#: includes/class-openmerch-product-meta.php:70
+msgid "OpenMerch Product ID"
+msgstr ""
+
+#: includes/class-openmerch-product-meta.php:77
+msgid "UUID or slug, e.g. tshirt-basic"
+msgstr ""
+
+#: includes/class-openmerch-product-meta.php:80
+msgid "ID or slug of the matching product in OpenMerch. Leave empty to keep the default WooCommerce Add to Cart button for this product."
+msgstr ""
+
+#: includes/class-openmerch-product-meta.php:84
+msgid "Zone ID (optional)"
+msgstr ""
+
+#: includes/class-openmerch-product-meta.php:93
+msgid "Reserved for pre-selecting a specific print zone in a future editor version. Stored, but not sent to the embed URL yet."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:165
+#: includes/class-openmerch-settings.php:166
+#: includes/class-openmerch-settings.php:433
+msgid "OpenMerch"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:192
+msgid "OpenMerch Engine connection"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:199
+msgid "Editor URL"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:207
+msgid "API URL"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:255
+#: includes/class-openmerch-settings.php:283
+msgid "You do not have permission to do this."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:313
+msgid "Permission denied."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:320
+msgid "Set the API URL and save your settings first."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:323
+msgid "No webhook secret yet - save your settings once to generate one."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:348
+msgid "Connected - OpenMerch accepted the test webhook."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:350
+msgid "OpenMerch rejected the signature. Make sure this secret matches WOOCOMMERCE_WEBHOOK_SECRET on the OpenMerch API."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:352
+msgid "OpenMerch has no webhook secret configured on its side (WOOCOMMERCE_WEBHOOK_SECRET is unset in the API). Ask whoever runs the OpenMerch API to set it - the plugin cannot fix this from here."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: includes/class-openmerch-settings.php:357
+#, php-format
+msgid "Unexpected response (HTTP %d)."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:441
+msgid "Webhook secret regenerated and pushed to the WooCommerce webhook."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:443
+msgid "Webhook configuration synced with WooCommerce."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:454
+msgid "Save changes"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:460
+msgid "Webhook"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:463
+msgid "Secret"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:471
+msgid "(not generated yet)"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:476
+msgid "Generated automatically the first time you save the API URL. Must match the secret OpenMerch uses to verify this webhook (WOOCOMMERCE_WEBHOOK_SECRET on the API side)."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:481
+msgid "Regenerate secret"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:486
+msgid "WooCommerce webhook"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:493
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:500
+msgid "Recreate / repair webhook"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:503
+msgid "Test connection"
+msgstr ""
+
+#: includes/class-openmerch-settings.php:516
+msgid "Point this store at your self-hosted OpenMerch Engine instance."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:534
+msgid "Base URL of the OpenMerch editor/embed app (apps/demo). The product-page iframe points here."
+msgstr ""
+
+#: includes/class-openmerch-settings.php:554
+msgid "Base URL of the OpenMerch API (packages/api). Used for the order webhook and the connection test."
+msgstr ""
+
+#: includes/class-openmerch-webhook.php:192
+#: includes/class-openmerch-webhook.php:196
+msgid "Not created yet"
+msgstr ""
+
+#. translators: 1: webhook id, 2: webhook status (active/disabled)
+#: includes/class-openmerch-webhook.php:200
+#, php-format
+msgid "#%1$d (%2$s)"
+msgstr ""
+
+#. translators: %s: WooCommerce plugin link
+#: openmerch-woocommerce.php:73
+#, php-format
+msgid "<strong>OpenMerch for WooCommerce</strong> requires %s to be installed and active. The plugin is loaded but stays inactive until WooCommerce is available."
+msgstr ""

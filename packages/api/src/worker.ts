@@ -10,7 +10,11 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { assertEncryptionKeyConfigured } from './utils/crypto.js';
+import { config } from './config.js';
 import { startProductionFilesWorker } from './jobs/workers/production-files.worker.js';
+import { startAbandonedDesignsCleanupWorker } from './jobs/workers/abandoned-designs-cleanup.worker.js';
+import { startWebhookDeliveriesCleanupWorker } from './jobs/workers/webhook-deliveries-cleanup.worker.js';
+import { scheduleAbandonedDesignsCleanup, scheduleWebhookDeliveriesCleanup } from './jobs/queues.js';
 
 // This worker decrypts settings (API keys, secrets) with the same key as the
 // API — refuse to run in production against the insecure dev default.
@@ -39,14 +43,34 @@ for (const dir of FC_CACHE_DIRS) {
 console.log('🛠  OpenMerch worker starting...');
 
 const worker = startProductionFilesWorker();
-
 console.log('  ✓ production-files queue ready');
+
+let cleanupWorker: ReturnType<typeof startAbandonedDesignsCleanupWorker> | undefined;
+if (config.cleanup.enabled) {
+  cleanupWorker = startAbandonedDesignsCleanupWorker();
+  await scheduleAbandonedDesignsCleanup();
+  console.log('  ✓ abandoned-designs-cleanup scheduled (daily)');
+} else {
+  console.log('  ⏭  abandoned-designs-cleanup disabled (ABANDONED_DESIGNS_CLEANUP_ENABLED=false)');
+}
+
+let webhookDeliveriesCleanupWorker: ReturnType<typeof startWebhookDeliveriesCleanupWorker> | undefined;
+if (config.webhookDeliveriesCleanup.enabled) {
+  webhookDeliveriesCleanupWorker = startWebhookDeliveriesCleanupWorker();
+  await scheduleWebhookDeliveriesCleanup();
+  console.log('  ✓ webhook-deliveries-cleanup scheduled (daily)');
+} else {
+  console.log('  ⏭  webhook-deliveries-cleanup disabled (WEBHOOK_DELIVERIES_CLEANUP_ENABLED=false)');
+}
+
 console.log('  Listening for jobs. Press Ctrl+C to stop.\n');
 
 async function shutdown(signal: string) {
   console.log(`\n[worker] received ${signal}, draining...`);
   try {
     await worker.close();
+    await cleanupWorker?.close();
+    await webhookDeliveriesCleanupWorker?.close();
     console.log('[worker] shutdown complete');
     process.exit(0);
   } catch (err) {

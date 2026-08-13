@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenMerch for WooCommerce 1.0.1\n"
+"Report-Msgid-Bugs-To: https://github.com/openmerch/openmerch-engine\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: openmerch-woocommerce\n"
+
+#. Customer-facing: the button next to WooCommerce's native Add to Cart.
+msgid "Customize"
+msgstr "Personalizar"
+
+#. Customer-facing: shown briefly while the design is being handed off to the cart.
+msgid "Adding your design to the cart..."
+msgstr "Agregando tu diseño al carrito..."
+
+#. Customer-facing: shown if the WooCommerce add-to-cart AJAX call fails.
+msgid "Something went wrong adding your design to the cart. Please try again."
+msgstr "Algo salió mal al agregar tu diseño al carrito. Inténtalo de nuevo."
+
+#. Customer-facing: shown if window.open() for the editor tab was blocked.
+msgid "Your browser blocked the customizer popup. Please allow popups for this site and try again."
+msgstr "Tu navegador bloqueó la ventana del personalizador. Permite las ventanas emergentes para este sitio e inténtalo de nuevo."
+
+#. Customer-facing: cart/order line item label for the attached design filename.
+msgid "Custom design"
+msgstr "Diseño personalizado"
+
+#. Customer-facing: cart/order line item label for the design's print dimensions.
+msgid "Print size"
+msgstr "Tamaño de impresión"
+
+#. Customer-facing: shown in place of the button if the merchant hasn't configured the plugin yet.
+msgid "The OpenMerch editor URL is not configured yet. Set it under WooCommerce > OpenMerch."
+msgstr "La URL del editor de OpenMerch aún no está configurada. Configúrala en WooCommerce > OpenMerch."
+
+#. Customer-facing: shown if Customize is clicked before a full variation (size/color/model) is selected.
+msgid "Please select all product options above before customizing."
+msgstr "Selecciona todas las opciones del producto antes de personalizar."

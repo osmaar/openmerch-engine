@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Title, Paper, Table, ActionIcon, Group, Text, Stack, Badge, Checkbox, Select, Menu, Pagination, TextInput, Button,
 } from '@mantine/core';
@@ -19,7 +20,10 @@ export function Designs() {
   const [products, setProducts] = useState<Map<string, Product>>(new Map());
   const [loading, setLoading] = useState(true);
   const confirm = useConfirm();
-  const [search, setSearch] = useState('');
+  // Lets Orders' "View in Designs" link land here pre-filtered to one design (by id) —
+  // read once on mount, same as any other deep-link query param.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get('search') ?? '');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -101,7 +105,7 @@ export function Designs() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const productName = getProductName(d.productId).toLowerCase();
-        if (!d.name.toLowerCase().includes(q) && !d.productId.toLowerCase().includes(q) && !productName.includes(q)) return false;
+        if (!d.name.toLowerCase().includes(q) && !d.id.toLowerCase().includes(q) && !d.productId.toLowerCase().includes(q) && !productName.includes(q)) return false;
       }
       if (dateFrom) {
         if (new Date(d.createdAt) < new Date(dateFrom)) return false;
@@ -197,6 +201,22 @@ export function Designs() {
       case 'queued': return t('Queued');
       case 'failed': return t('Failed');
       default: return t('Not generated');
+    }
+  };
+
+  const sourceLabel = (source: string | null): string => {
+    switch (source) {
+      case 'woocommerce': return 'WooCommerce';
+      case 'shopify': return 'Shopify';
+      default: return t('Standalone');
+    }
+  };
+
+  const sourceColor = (source: string | null): string => {
+    switch (source) {
+      case 'woocommerce': return 'violet';
+      case 'shopify': return 'teal';
+      default: return 'gray';
     }
   };
 
@@ -299,6 +319,7 @@ export function Designs() {
                   </Table.Th>
                   <Table.Th>{t('Name')}</Table.Th>
                   <Table.Th>{t('Product')}</Table.Th>
+                  <Table.Th>{t('Source')}</Table.Th>
                   <Table.Th>{t('Files')}</Table.Th>
                   <Table.Th>{t('Created')}</Table.Th>
                   <Table.Th>{t('Updated')}</Table.Th>
@@ -322,6 +343,11 @@ export function Designs() {
                         onClick={() => copyToClipboard(d.productId, t('Product ID'))}
                       >
                         {getProductName(d.productId)}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td>
+                      <Badge variant="light" color={sourceColor(d.source)} size="sm">
+                        {sourceLabel(d.source)}
                       </Badge>
                     </Table.Td>
                     <Table.Td>

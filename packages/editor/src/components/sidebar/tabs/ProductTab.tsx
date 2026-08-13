@@ -51,12 +51,18 @@ export function ProductTab() {
   const t = useT();
   const product = useEditorStore((s) => s.product);
   const productColor = useEditorStore((s) => s.productColor);
+  const colorLocked = useEditorStore((s) => s.colorLocked);
   const setProductColor = useEditorStore((s) => s.setProductColor);
   const sizes = useEditorStore((s) => s.sizes);
   const setSizeQuantity = useEditorStore((s) => s.setSizeQuantity);
   const setProduct = useEditorStore((s) => s.setProduct);
   const setVariant = useEditorStore((s) => s.setVariant);
   const selectedVariantId = useEditorStore((s) => s.selectedVariantId);
+  // When embedded in a host storefront (WooCommerce/Shopify), the product was
+  // deep-linked from that store's own product page — switching to a different
+  // OpenMerch product here would break the mapping back to it, so the
+  // switcher is hidden entirely, same as Lumise's own WooCommerce editor page.
+  const isLockedToHost = useEditorStore((s) => !!s.onExportCallback);
   const [showModal, setShowModal] = useState(false);
 
   if (!product) return null;
@@ -70,17 +76,19 @@ export function ProductTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{t(product.name)}</div>
 
-      <button
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: '8px 14px', borderWidth: 1, borderStyle: 'solid', borderColor: '#ddd',
-          borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 12, color: '#666',
-        }}
-        onClick={() => setShowModal(true)}
-      >
-        <ShoppingBag size={14} />
-        {t('Change Product')}
-      </button>
+      {!isLockedToHost && (
+        <button
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            padding: '8px 14px', borderWidth: 1, borderStyle: 'solid', borderColor: '#ddd',
+            borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 12, color: '#666',
+          }}
+          onClick={() => setShowModal(true)}
+        >
+          <ShoppingBag size={14} />
+          {t('Change Product')}
+        </button>
+      )}
 
       {showModal && (
         <ProductSelectorModal
@@ -90,53 +98,81 @@ export function ProductTab() {
         />
       )}
 
-      {/* Variant selector — for products with variants (devices, dimensions, etc.) */}
+      {/* Variant selector — for products with variants (devices, dimensions, etc.). Locked
+          (read-only) when embedded: the host storefront already told us which variant via
+          `initialVariantId` (see ProductEditor/App.tsx) - letting the customer switch to a
+          different one here would silently change the print zone dimensions to something
+          that no longer matches what they picked (and paid for) on the storefront. */}
       {hasVariants && (
-        <div>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{variantLabel}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {product.variants!.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => setVariant(v.id)}
-                style={{
-                  padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer',
-                  borderWidth: 2, borderStyle: 'solid',
-                  borderColor: selectedVariantId === v.id ? '#4A90D9' : '#e0e0e0',
-                  background: selectedVariantId === v.id ? '#EBF2FA' : '#fff',
-                  color: selectedVariantId === v.id ? '#4A90D9' : '#555',
-                }}
-              >
-                {t(v.name)}
-              </button>
-            ))}
+        isLockedToHost ? (
+          <div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{variantLabel}</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>
+              {t(product.variants!.find((v) => v.id === selectedVariantId)?.name ?? '')}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{variantLabel}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {product.variants!.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setVariant(v.id)}
+                  style={{
+                    padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer',
+                    borderWidth: 2, borderStyle: 'solid',
+                    borderColor: selectedVariantId === v.id ? '#4A90D9' : '#e0e0e0',
+                    background: selectedVariantId === v.id ? '#EBF2FA' : '#fff',
+                    color: selectedVariantId === v.id ? '#4A90D9' : '#555',
+                  }}
+                >
+                  {t(v.name)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
       )}
 
-      {/* Product color — clothing + caps */}
+      {/* Product color — clothing + caps. Locked (read-only swatch) only when the host
+          storefront actually configured a color for the variation the customer picked
+          (see ProductEditor's `initialProductColor` prop) - if it didn't, the customer
+          keeps full freedom to choose one here, unlike the product/variant locks above. */}
       {showColor && <div>
         <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{t('Product Color')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
-          {PRODUCT_COLORS.map((c) => (
-            <button
-              key={c.value}
-              onClick={() => setProductColor(c.value)}
-              title={t(c.name)}
-              style={{
-                width: 30, height: 30, borderRadius: 6, background: c.value,
-                borderWidth: 2, borderStyle: 'solid',
-                borderColor: productColor === c.value ? '#4A90D9' : '#ddd',
-                cursor: 'pointer',
-                boxShadow: productColor === c.value ? '0 0 0 2px rgba(74,144,217,0.3)' : 'none',
-              }}
-            />
-          ))}
-        </div>
+        {colorLocked ? (
+          <div style={{
+            width: 30, height: 30, borderRadius: 6, background: productColor,
+            borderWidth: 2, borderStyle: 'solid', borderColor: '#4A90D9',
+          }} />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+            {PRODUCT_COLORS.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => setProductColor(c.value)}
+                title={t(c.name)}
+                style={{
+                  width: 30, height: 30, borderRadius: 6, background: c.value,
+                  borderWidth: 2, borderStyle: 'solid',
+                  borderColor: productColor === c.value ? '#4A90D9' : '#ddd',
+                  cursor: 'pointer',
+                  boxShadow: productColor === c.value ? '0 0 0 2px rgba(74,144,217,0.3)' : 'none',
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>}
 
-      {/* Quantity — clothing gets sizes, others get simple quantity */}
-      {showSizes ? (
+      {/* Quantity — clothing gets sizes, others get simple quantity. This is OpenMerch's
+          own checkout model (buy one design across several sizes/quantities at once) -
+          when embedded, the customer already picked one exact size/quantity in the host
+          storefront's own form before ever clicking Customize, so asking again here would
+          be redundant at best and confusing at worst (nothing here is sent anywhere; the
+          host's own quantity is what actually gets ordered). */}
+      {!isLockedToHost && (showSizes ? (
         <div>
           <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{t('Quantity by size')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -156,7 +192,7 @@ export function ProductTab() {
           <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{t('Quantity')}</div>
           <QuantityControl value={sizes['QTY'] ?? 1} onChange={(v) => setSizeQuantity('QTY', v)} />
         </div>
-      )}
+      ))}
 
       <button
         onClick={() => window.dispatchEvent(new CustomEvent('openmerch:add-to-cart'))}

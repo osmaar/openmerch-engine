@@ -88,6 +88,18 @@ services:
       # Optional — get a free one at https://huggingface.co/settings/tokens ("Make calls
       # to Inference Providers" permission). Without it the route returns 503.
       HF_TOKEN: "${HF_TOKEN}"
+      # Server-side fallback for the Unsplash proxy (GET /api/v1/proxy/unsplash/search) when no
+      # key is stored via the Settings API. Without it the route returns 503.
+      VITE_UNSPLASH_ACCESS_KEY: "${VITE_UNSPLASH_ACCESS_KEY}"
+      # Verifies the X-WC-Webhook-Signature header on POST /api/v1/orders/webhook/woocommerce.
+      # Empty by default (route responds 503) — deliberately NOT defaulted to a hardcoded value
+      # here, since that would mean any OpenMerch deployment that forgot to set this could have
+      # its order webhook forged using a secret published in this public repo. Must match the
+      # WooCommerce plugin's own secret (WooCommerce > OpenMerch settings page in wp-admin). To
+      # test against the local `woocommerce-dev` profile below, set
+      # WOOCOMMERCE_WEBHOOK_SECRET=openmerch-dev-secret-change-in-production in your host .env
+      # first (scripts/wordpress-dev-setup.sh writes that exact same value on the WordPress side).
+      WOOCOMMERCE_WEBHOOK_SECRET: "${WOOCOMMERCE_WEBHOOK_SECRET}"
     depends_on:
       - postgres
       - redis
@@ -159,8 +171,131 @@ services:
     volumes:
       - rembg-models:/root/.u2net
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # WordPress + WooCommerce — local test environment for
+  # plugins/plugin-woocommerce/openmerch-woocommerce/. Entirely separate from
+  # everything else here: its own MySQL (WordPress/WooCommerce don't support
+  # Postgres), its own opt-in profile. Never starts with plain
+  # `docker compose up`, nor `--profile app`/`worker`/`ai` — it's dev tooling
+  # for testing that one plugin, not part of running OpenMerch itself:
+  #
+  #   docker compose --profile app --profile woocommerce-dev up --build
+  #
+  # (`--profile app` is needed too so the plugin's webhook/"Test connection"
+  # button has a real `api` container to reach on the same docker network.)
+  #
+  # `wordpress-cli` is a one-shot service — it runs scripts/wordpress-dev-setup.sh
+  # (installs WordPress, installs+activates WooCommerce, activates this
+  # plugin, creates a test product already mapped to the "classic-tshirt"
+  # OpenMerch product) and exits; the store keeps running on `wordpress`.
+  # ─────────────────────────────────────────────────────────────────────────
+  wordpress-mysql:
+    profiles: ["woocommerce-dev"]
+    image: mysql:8.0
+    restart: unless-stopped
+    # MySQL 8 auto-generates a self-signed cert and defaults to offering SSL,
+    # which newer mysql/mariadb client libraries (as used by WP-CLI's
+    # `wp db check` etc.) reject outright ("self-signed certificate in
+    # certificate chain") unless the app explicitly trusts it. Simplest fix
+    # for this local-only, docker-network-internal database: don't offer SSL
+    # at all, so the client never attempts to negotiate/validate it.
+    command: ["--skip-ssl"]
+    environment:
+      MYSQL_ROOT_PASSWORD: openmerch
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - wordpress-mysql-data:/var/lib/mysql
+
+  wordpress:
+    profiles: ["woocommerce-dev"]
+    image: wordpress:php8.2-apache
+    restart: unless-stopped
+    # Bound to 127.0.0.1 — this is dev-only tooling for testing the WooCommerce
+    # plugin locally, same rationale as every other 127.0.0.1 binding above.
+    ports:
+      - "127.0.0.1:8090:80"
+    environment:
+      WORDPRESS_DB_HOST: wordpress-mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - wordpress-data:/var/www/html
+      # Live-mounts the plugin source — edits under plugins/plugin-woocommerce/
+      # take effect on the next page load, no rebuild/restart needed.
+      - ./plugins/plugin-woocommerce/openmerch-woocommerce:/var/www/html/wp-content/plugins/openmerch-woocommerce
+    depends_on:
+      - wordpress-mysql
+
+  wordpress-cli:
+    profiles: ["woocommerce-dev"]
+    image: wordpress:cli-php8.2
+    user: "33:33" # www-data — matches the wordpress service's own file ownership
+    environment:
+      WORDPRESS_DB_HOST: wordpress-mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - wordpress-data:/var/www/html
+      - ./plugins/plugin-woocommerce/openmerch-woocommerce:/var/www/html/wp-content/plugins/openmerch-woocommerce
+      - ./scripts/wordpress-dev-setup.sh:/wordpress-dev-setup.sh:ro
+    entrypoint: ["sh", "/wordpress-dev-setup.sh"]
+    depends_on:
+      - wordpress
+      - wordpress-mysql
+
+  # WordPress's own cron ("pseudo-cron") only fires piggybacked on a real front-end page
+  # request — fine on a live site with steady visitor traffic, useless in this dev
+  # environment where nothing hits the storefront between manual tests. Without this
+  # running, WooCommerce's async webhook delivery (`woocommerce_deliver_webhook_async`,
+  # queued via Action Scheduler — see class-openmerch-webhook.php) and everything else
+  # WordPress schedules just sit queued forever until someone runs
+  # `wp cron event run --due-now` by hand, which is what this loop now does for you.
+  # This is a dev-only stand-in for the real cron job a production deployment needs
+  # instead (a system crontab entry — see plugins/plugin-woocommerce/openmerch-woocommerce/
+  # README.md for the copy-paste snippet). Runs continuously; a persistent Action Scheduler
+  # runner process would be overkill for a low-traffic dev site, so polling every 60s
+  # (roughly matching typical production cron cadence) is enough here.
+  wordpress-cron:
+    profiles: ["woocommerce-dev"]
+    image: wordpress:cli-php8.2
+    user: "33:33" # www-data — matches the wordpress service's own file ownership
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: wordpress-mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - wordpress-data:/var/www/html
+      # Without this, this container doesn't load the plugin at all (the bind mount is
+      # what actually puts openmerch-woocommerce's files at this path — the named volume
+      # above has nothing of its own there), so none of it runs here: no webhook
+      # registration, and critically, none of the http_request_host_is_external /
+      # http_allowed_safe_ports filters class-openmerch-webhook.php registers to let
+      # wp_safe_remote_request() (which WC_Webhook::deliver() uses) through to a private
+      # Docker-network host like `api`. Without them this container's cron silently
+      # can't deliver anything — same failure mode, and same fix, as the original bug.
+      - ./plugins/plugin-woocommerce/openmerch-woocommerce:/var/www/html/wp-content/plugins/openmerch-woocommerce
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          wp cron event run --due-now --path=/var/www/html --allow-root || true
+          sleep 60
+        done
+    depends_on:
+      - wordpress
+      - wordpress-mysql
+
 volumes:
   postgres-data:
   redis-data:
   minio-data:
   rembg-models:
+  wordpress-mysql-data:
+  wordpress-data:

@@ -1,3 +1,4 @@
+import type { DesignExportMeta } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 
 interface ExportOptions {
@@ -6,6 +7,18 @@ interface ExportOptions {
   hideOverflow: boolean;
   includeBack?: boolean;
   dpi?: number;
+  /**
+   * True only for the "Add to Cart" export (see NavBar.tsx) — the one export call that's
+   * actually meant to hand the design off to a host storefront instead of downloading it
+   * to the customer's own device. Every other caller (the Print/Download menu,
+   * Ctrl+Shift+S, Ctrl+P) always downloads locally, even when embedded — without this
+   * flag, ALL of them shared the same `onExportCallback` hand-off unconditionally, so
+   * clicking "Print" while embedded silently uploaded the design and fired the same
+   * postMessage the host's `openmerch:export` listener treats as "add to cart" (see
+   * openmerch-embed.js's addToCart()) — no download ever appeared, and an item could get
+   * added to the WooCommerce cart the customer never asked to add.
+   */
+  forHost?: boolean;
 }
 
 /** Characters that don't survive a filesystem path unescaped, replaced with "-". */
@@ -16,17 +29,72 @@ function slugifyForFilename(value: string): string {
 }
 
 /**
- * `{producto}_{variante}_{uuid}` — lets merchants match a downloaded file
- * back to the exact product/variant/design it came from without opening it.
- * Falls back to "product"/"default" when a product or variant isn't set
- * (e.g. single-variant products never populate `selectedVariantId`).
+ * `{producto}_{variante}_{designKey}` — lets merchants match a downloaded
+ * file back to the exact product/variant/design it came from without opening
+ * it. Falls back to "product"/"default" when a product or variant isn't set
+ * (e.g. single-variant products never populate `selectedVariantId`). Takes
+ * `designKey` as a parameter (rather than resolving it itself) so callers
+ * that also need it for {@link DesignExportMeta} — see `deliverExportBlob` —
+ * use the exact same value instead of each minting their own fallback UUID.
  */
-function buildExportFilename(): string {
-  const { product, selectedVariantId, design } = useEditorStore.getState();
+function buildExportFilename(designKey: string): string {
+  const { product, selectedVariantId } = useEditorStore.getState();
   const productPart = slugifyForFilename(product?.slug ?? 'product');
   const variantPart = slugifyForFilename(selectedVariantId ?? 'default');
-  const uuidPart = design?.id ?? crypto.randomUUID();
-  return `${productPart}_${variantPart}_${uuidPart}`;
+  return `${productPart}_${variantPart}_${designKey}`;
+}
+
+/**
+ * Pure assembly of the {@link DesignExportMeta} handed to `onExport` —
+ * split out from `deliverExportBlob` so it's unit-testable without mocking
+ * `HTMLCanvasElement.toBlob`/jsdom.
+ */
+export function buildExportMeta(
+  layout: CanvasLayout,
+  filename: string,
+  designKey: string,
+  productId: string,
+  variantId: string | null,
+): DesignExportMeta {
+  return {
+    designKey,
+    filename: `${filename}.png`,
+    widthMm: layout.printW / layout.pxPerMM,
+    heightMm: layout.printH / layout.pxPerMM,
+    productId,
+    ...(variantId ? { variantId } : {}),
+  };
+}
+
+/**
+ * If `forHost` is true (the "Add to Cart" export only — see `ExportOptions.forHost`) and
+ * the host embedding the editor supplied an `onExport` callback (wired through
+ * `ProductEditor`'s prop into `onExportCallback` in the store), hand it the final
+ * composited PNG as a `Blob` alongside sizing/identity metadata — the prerequisite for an
+ * external storefront to pick up the finished design without the editor knowing anything
+ * about carts/checkout.
+ *
+ * Returns whether the callback actually ran. Callers use this to skip the browser-download
+ * path when it did — an embedded storefront's customer clicking "Add to Cart" should never
+ * also trigger a random file download; the callback takes full ownership of the export in
+ * that case. Every other export (Print/Download menu, keyboard shortcuts) always downloads
+ * locally instead, even when embedded, since `forHost` is false for those.
+ */
+async function deliverExportBlob(
+  canvas: HTMLCanvasElement,
+  layout: CanvasLayout,
+  filename: string,
+  designKey: string,
+  forHost: boolean,
+): Promise<boolean> {
+  const { onExportCallback, product, selectedVariantId } = useEditorStore.getState();
+  if (!forHost || !onExportCallback) return false;
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) return false;
+
+  await onExportCallback(blob, buildExportMeta(layout, filename, designKey, product?.id ?? '', selectedVariantId));
+  return true;
 }
 
 export async function exportDesign(options: ExportOptions): Promise<void> {
@@ -68,15 +136,19 @@ export async function exportDesign(options: ExportOptions): Promise<void> {
   try {
     // Export current zone
     const currentZone = useEditorStore.getState().activeZoneId;
-    const baseFilename = buildExportFilename();
+    // Shared across front+back so both files' names and (if `onExport` is
+    // wired up) both DesignExportMeta.designKey values agree — otherwise a
+    // saveless design would mint a different random UUID for each side.
+    const designKey = useEditorStore.getState().design?.id ?? crypto.randomUUID();
+    const baseFilename = buildExportFilename(designKey);
     // Only disambiguate with the zone id when both sides are being exported —
     // otherwise front/back would download as two files with the identical name.
     const filename = options.includeBack ? `${baseFilename}_${currentZone}` : baseFilename;
 
     if (options.includeBase) {
-      await exportMockupPreview(stage, canvasLayout, options, filename);
+      await exportMockupPreview(stage, canvasLayout, options, filename, designKey);
     } else {
-      await exportDesignOnly(stage, canvasLayout, options, filename);
+      await exportDesignOnly(stage, canvasLayout, options, filename, designKey);
     }
 
     // Export back zone if requested
@@ -95,9 +167,9 @@ export async function exportDesign(options: ExportOptions): Promise<void> {
           if (newLayout && newStage) {
             const backFilename = `${baseFilename}_${otherZone.id}`;
             if (options.includeBase) {
-              await exportMockupPreview(newStage, newLayout, options, backFilename);
+              await exportMockupPreview(newStage, newLayout, options, backFilename, designKey);
             } else {
-              await exportDesignOnly(newStage, newLayout, options, backFilename);
+              await exportDesignOnly(newStage, newLayout, options, backFilename, designKey);
             }
           }
 
@@ -149,6 +221,7 @@ async function exportMockupPreview(
   layout: CanvasLayout,
   options: ExportOptions,
   filename: string,
+  designKey: string,
 ): Promise<void> {
   const pixelRatio = (options.dpi ?? 600) / 96;
 
@@ -312,7 +385,9 @@ async function exportMockupPreview(
   stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
 
   if (options.format === 'png') {
-    downloadCanvas(finalCanvas, `${filename}.png`);
+    if (!(await deliverExportBlob(finalCanvas, layout, filename, designKey, !!options.forHost))) {
+      downloadCanvas(finalCanvas, `${filename}.png`);
+    }
   } else {
     downloadAsSVG(finalCanvas, layout, pixelRatio, filename);
   }
@@ -324,6 +399,7 @@ async function exportDesignOnly(
   layout: CanvasLayout,
   options: ExportOptions,
   filename: string,
+  designKey: string,
 ): Promise<void> {
   const pixelRatio = (options.dpi ?? 600) / 96;
 
@@ -360,7 +436,9 @@ async function exportDesignOnly(
   stage.getLayers().forEach((l: { batchDraw: () => void }) => l.batchDraw());
 
   if (options.format === 'png') {
-    downloadCanvas(canvas, `${filename}.png`);
+    if (!(await deliverExportBlob(canvas, layout, filename, designKey, !!options.forHost))) {
+      downloadCanvas(canvas, `${filename}.png`);
+    }
   } else {
     downloadAsSVG(canvas, layout, pixelRatio, filename);
   }

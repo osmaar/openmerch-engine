@@ -13,6 +13,8 @@ export const products = pgTable('products', {
   zones: jsonb('zones').notNull().default('[]'),
   variants: jsonb('variants').default('[]'),
   variantLabel: varchar('variant_label', { length: 50 }),
+  // { woocommerce?: { productId: string; zoneId?: string } }
+  externalIds: jsonb('external_ids').default('{}'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -31,6 +33,10 @@ export const designs = pgTable('designs', {
   productionFiles: jsonb('production_files'), // { [zoneId]: url }
   productionStatus: varchar('production_status', { length: 20 }), // null | queued | processing | completed | failed
   productionError: text('production_error'),
+  // Which storefront integration created this design — null for the standalone/admin editor.
+  // Lets a merchant running multiple storefronts against one OpenMerch instance tell them
+  // apart in the admin panel (Designs list, order line items).
+  source: varchar('source', { length: 20 }), // null | woocommerce | shopify
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
@@ -120,15 +126,50 @@ export const orders = pgTable('orders', {
   id: uuid('id').primaryKey().defaultRandom(),
   orderId: varchar('order_id', { length: 50 }).notNull().unique(),
   customerName: varchar('customer_name', { length: 255 }).notNull(),
-  productName: varchar('product_name', { length: 255 }).notNull(),
-  designId: uuid('design_id').references(() => designs.id),
   status: varchar('status', { length: 50 }).notNull().default('pending'),
   total: integer('total').notNull().default(0),
-  designFiles: jsonb('design_files'),
+  // ISO 4217 code (e.g. "USD", "MXN") — WooCommerce's webhook payload always carries one at
+  // the top level. Defaults to USD for rows created outside that webhook (e.g. the
+  // dev-only POST /orders test endpoint) rather than leaving it null.
+  currency: varchar('currency', { length: 3 }).notNull().default('USD'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// One row per customized line item on an order — an order can carry more than one
+// (a customer buying two different custom-designed products in the same checkout).
+// Unique on (orderId, designKey) so a WooCommerce webhook retry for the same order
+// never inserts the same line item twice.
+export const orderDesigns = pgTable('order_designs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'cascade' }).notNull(),
+  designId: uuid('design_id').references(() => designs.id),
+  // The storefront's own per-line design reference (e.g. WooCommerce's `_design_key` line
+  // item meta) — kept even when designId can't be resolved, so the raw delivery isn't lost.
+  designKey: varchar('design_key', { length: 255 }).notNull(),
+  productName: varchar('product_name', { length: 255 }).notNull(),
+  designUrl: text('design_url'),
+  designFilename: varchar('design_filename', { length: 255 }),
+  designDimensions: varchar('design_dimensions', { length: 50 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
-  index('orders_design_id_idx').on(table.designId),
+  index('order_designs_order_id_idx').on(table.orderId),
+  index('order_designs_design_id_idx').on(table.designId),
+  unique('order_designs_order_design_key_unique').on(table.orderId, table.designKey),
+]);
+
+// One row per inbound request to a storefront order webhook (accepted or rejected) — lets the
+// admin panel show "a delivery came in and was rejected" even though the storefront (e.g.
+// WooCommerce) never surfaces that to anyone on the OpenMerch side.
+export const webhookDeliveries = pgTable('webhook_deliveries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  source: varchar('source', { length: 30 }).notNull(),
+  success: boolean('success').notNull(),
+  reasonCode: varchar('reason_code', { length: 50 }).notNull(),
+  orderId: varchar('order_id', { length: 50 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('webhook_deliveries_created_at_idx').on(table.createdAt),
 ]);
 
 // Languages table

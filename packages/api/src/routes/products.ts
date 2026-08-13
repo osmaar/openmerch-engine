@@ -20,6 +20,24 @@ const zoneSchema = {
   },
 } as const;
 
+// Links to the same product in external e-commerce platforms (e.g. { woocommerce: { productId, zoneId? } }),
+// used by their plugins/integrations to resolve which OpenMerch product/zone to render.
+const externalIdsSchema = {
+  type: 'object',
+  additionalProperties: true,
+  properties: {
+    woocommerce: {
+      type: 'object',
+      additionalProperties: true,
+      properties: {
+        productId: { type: 'string' },
+        zoneId: { type: 'string' },
+      },
+      required: ['productId'],
+    },
+  },
+} as const;
+
 const productSchema = {
   type: 'object',
   properties: {
@@ -34,6 +52,7 @@ const productSchema = {
     zones: { type: 'array', items: zoneSchema },
     variants: { type: ['array', 'null'], items: { type: 'object', additionalProperties: true } },
     variantLabel: { type: ['string', 'null'] },
+    externalIds: { ...externalIdsSchema, type: ['object', 'null'] },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
   },
@@ -51,6 +70,7 @@ const createProductBodySchema = {
     printingTechniques: { type: 'array', items: { type: 'string' } },
     active: { type: 'boolean' },
     zones: { type: 'array', items: zoneSchema },
+    externalIds: externalIdsSchema,
   },
   required: ['name', 'slug', 'zones'],
 } as const;
@@ -68,6 +88,7 @@ const updateProductBodySchema = {
     zones: { type: 'array', items: zoneSchema },
     variants: { type: 'array', items: { type: 'object', additionalProperties: true } },
     variantLabel: { type: ['string', 'null'] },
+    externalIds: externalIdsSchema,
   },
 } as const;
 
@@ -103,7 +124,7 @@ export async function productRoutes(app: FastifyInstance) {
     },
   );
 
-  app.post<{ Body: { name: string; slug: string; description?: string; price?: number; categories?: string[]; printingTechniques?: string[]; active?: boolean; zones: unknown[] } }>(
+  app.post<{ Body: { name: string; slug: string; description?: string; price?: number; categories?: string[]; printingTechniques?: string[]; active?: boolean; zones: unknown[]; externalIds?: unknown } }>(
     '/api/v1/products',
     {
       schema: {
@@ -123,12 +144,13 @@ export async function productRoutes(app: FastifyInstance) {
         printingTechniques: req.body.printingTechniques ?? [],
         active: req.body.active ?? true,
         zones: req.body.zones,
+        externalIds: req.body.externalIds ?? {},
       }).returning();
       return product;
     },
   );
 
-  app.put<{ Params: { id: string }; Body: { name?: string; slug?: string; description?: string; price?: number; categories?: string[]; printingTechniques?: string[]; active?: boolean; zones?: unknown[]; variants?: unknown[]; variantLabel?: string | null } }>(
+  app.put<{ Params: { id: string }; Body: { name?: string; slug?: string; description?: string; price?: number; categories?: string[]; printingTechniques?: string[]; active?: boolean; zones?: unknown[]; variants?: unknown[]; variantLabel?: string | null; externalIds?: unknown } }>(
     '/api/v1/products/:id',
     {
       schema: {
@@ -151,6 +173,7 @@ export async function productRoutes(app: FastifyInstance) {
       if (req.body.zones !== undefined) updates.zones = req.body.zones;
       if (req.body.variants !== undefined) updates.variants = req.body.variants;
       if (req.body.variantLabel !== undefined) updates.variantLabel = req.body.variantLabel;
+      if (req.body.externalIds !== undefined) updates.externalIds = req.body.externalIds;
 
       const [product] = await db.update(products).set(updates).where(eq(products.id, req.params.id)).returning();
       if (!product) return reply.code(404).send({ error: 'Product not found', code: 'PRODUCT_NOT_FOUND' });

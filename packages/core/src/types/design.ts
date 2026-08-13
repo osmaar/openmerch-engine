@@ -75,6 +75,27 @@ export interface TextEffect {
   offset: number;
 }
 
+/**
+ * Metadata handed alongside the exported PNG `Blob` when a host embedding the
+ * editor (e.g. a Shopify/WooCommerce storefront) supplies an `onExport`
+ * callback — enough for the host to identify the design and size it for
+ * print without the editor knowing anything about carts/checkout.
+ */
+export interface DesignExportMeta {
+  /** Opaque identifier for this design (the saved {@link Design.id}, or a freshly generated one if unsaved). */
+  designKey: string;
+  /** Suggested filename for the exported file, e.g. `"design-<designKey>.png"`. */
+  filename: string;
+  /** Physical print width in millimeters. */
+  widthMm: number;
+  /** Physical print height in millimeters. */
+  heightMm: number;
+  /** The {@link Product.id} this design was created for. */
+  productId: string;
+  /** The selected {@link ProductVariant.id}, if the product has variants. */
+  variantId?: string;
+}
+
 export interface ShapeLayer extends BaseLayer {
   type: 'shape';
   shapeType: 'rect' | 'circle' | 'triangle' | 'star' | 'line' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow' | 'rounded-rect' | 'cross';

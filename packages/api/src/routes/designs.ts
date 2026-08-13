@@ -2,7 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
 import { designs, products } from '../db/schema.js';
 import { eq, count, and, or, isNull, notInArray } from 'drizzle-orm';
-import { computeProductionJobId, enqueueProductionFiles } from '../jobs/queues.js';
+import { computeProductionJobId, enqueueProductionFiles, enqueueAbandonedDesignsCleanupNow } from '../jobs/queues.js';
+import { findAbandonedDesigns } from '../jobs/workers/abandoned-designs-cleanup.worker.js';
 import { errorResponseSchema, successResponseSchema, uuidIdParamSchema } from '../schemas/common.js';
 
 const designSchema = {
@@ -30,6 +31,8 @@ const designSchema = {
     },
     productionStatus: { type: ['string', 'null'], enum: [null, 'queued', 'processing', 'completed', 'failed'] },
     productionError: { type: ['string', 'null'] },
+    // Which storefront integration created this design — null for the standalone/admin editor.
+    source: { type: ['string', 'null'], enum: [null, 'woocommerce', 'shopify'] },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
   },
@@ -45,6 +48,7 @@ const createDesignBodySchema = {
     status: { type: 'string', enum: ['draft', 'cart', 'paid', 'cancelled'] },
     sizes: { type: 'object', additionalProperties: { type: 'integer' } },
     productColor: { type: 'string' },
+    source: { type: 'string', enum: ['woocommerce', 'shopify'] },
   },
   required: ['productId', 'designData'],
 } as const;
@@ -62,7 +66,7 @@ const updateDesignBodySchema = {
 } as const;
 
 export async function designRoutes(app: FastifyInstance) {
-  app.post<{ Body: { productId: string; name?: string; designData: unknown; status?: string; sizes?: Record<string, number>; productColor?: string } }>(
+  app.post<{ Body: { productId: string; name?: string; designData: unknown; status?: string; sizes?: Record<string, number>; productColor?: string; source?: string } }>(
     '/api/v1/designs',
     {
       schema: {
@@ -90,6 +94,7 @@ export async function designRoutes(app: FastifyInstance) {
         status: req.body.status ?? 'draft',
         sizes: req.body.sizes ?? {},
         productColor: req.body.productColor ?? null,
+        source: req.body.source ?? null,
       }).returning();
       return design;
     },
@@ -235,6 +240,58 @@ export async function designRoutes(app: FastifyInstance) {
 
       const jobId = await enqueueProductionFiles(claimed.id, claimed.designData, claimed.productColor);
       return { jobId, status: 'queued' as const, designId: req.params.id };
+    },
+  );
+
+  app.get(
+    '/api/v1/designs/cleanup-abandoned/preview',
+    {
+      schema: {
+        tags: ['Designs'],
+        summary: 'Preview which draft/cart designs the next abandoned-designs sweep would delete',
+        description:
+          'Read-only — runs the same eligibility check as the scheduled cleanup job (see `pnpm worker`) without ' +
+          'deleting anything. A design qualifies once its status (draft/cart) has sat past its retention window ' +
+          '(ABANDONED_DRAFT_RETENTION_DAYS / ABANDONED_CART_RETENTION_DAYS) and it was never linked to a real order.',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              count: { type: 'integer' },
+              designs: { type: 'array', items: designSchema },
+            },
+            required: ['count', 'designs'],
+          },
+        },
+      },
+    },
+    async () => {
+      const candidates = await findAbandonedDesigns(Date.now());
+      return { count: candidates.length, designs: candidates };
+    },
+  );
+
+  app.post(
+    '/api/v1/designs/cleanup-abandoned/run',
+    {
+      schema: {
+        tags: ['Designs'],
+        summary: 'Run the abandoned-designs sweep now',
+        description:
+          'Enqueues an immediate cleanup sweep on the same BullMQ queue as the daily scheduled job — actually ' +
+          'processed by the worker process (`pnpm worker`), not this API process.',
+        response: {
+          200: {
+            type: 'object',
+            properties: { jobId: { type: 'string' } },
+            required: ['jobId'],
+          },
+        },
+      },
+    },
+    async () => {
+      const jobId = await enqueueAbandonedDesignsCleanupNow();
+      return { jobId };
     },
   );
 }
