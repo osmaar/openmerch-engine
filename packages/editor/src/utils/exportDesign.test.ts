@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computePrintZoneCropRect } from './exportDesign.js';
+import { computePrintZoneCropRect, buildExportMeta } from './exportDesign.js';
 
 describe('computePrintZoneCropRect()', () => {
   it('re-expresses the print zone relative to the mockup crop origin, then scales by pixelRatio', () => {
@@ -38,5 +38,32 @@ describe('computePrintZoneCropRect()', () => {
     expect(atRatio1.pzH).toBe(90);
     expect(atRatio625.pzW).toBe(150 * 6.25);
     expect(atRatio625.pzH).toBe(90 * 6.25);
+  });
+});
+
+describe('buildExportMeta()', () => {
+  it('derives widthMm/heightMm from the print-zone layout and appends .png to the filename', () => {
+    const layout = { printX: 0, printY: 0, printW: 200, printH: 300, pxPerMM: 2 };
+
+    const meta = buildExportMeta(layout, 'shirt_default_abc123', 'abc123', 'prod-1', null);
+
+    expect(meta).toEqual({
+      designKey: 'abc123',
+      filename: 'shirt_default_abc123.png',
+      widthMm: 100,
+      heightMm: 150,
+      productId: 'prod-1',
+    });
+  });
+
+  it('includes variantId only when one is provided', () => {
+    const layout = { printX: 0, printY: 0, printW: 100, printH: 100, pxPerMM: 1 };
+
+    const withVariant = buildExportMeta(layout, 'design', 'key', 'prod-1', 'variant-1');
+    const withoutVariant = buildExportMeta(layout, 'design', 'key', 'prod-1', null);
+
+    expect(withVariant.variantId).toBe('variant-1');
+    expect(withoutVariant.variantId).toBeUndefined();
+    expect('variantId' in withoutVariant).toBe(false);
   });
 });

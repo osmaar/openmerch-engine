@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Title, Paper, TextInput, PasswordInput, Button, Group, Text, Stack, Badge, Anchor, Divider, Select, Switch, NumberInput, FileButton, SimpleGrid,
+  Title, Paper, TextInput, PasswordInput, Button, Group, Text, Stack, Badge, Anchor, Divider, Select, Switch, NumberInput, FileButton, SimpleGrid, ColorInput,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Save, ExternalLink, Upload, Trash2 } from 'lucide-react';
@@ -23,6 +23,12 @@ export function SettingsPage() {
   const [contactEmail, setContactEmail] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
   const [faviconDisplay, setFaviconDisplay] = useState('');
+  // Storefront plugin embed button (WooCommerce/Shopify "Customize" button) — has no effect
+  // on the standalone editor's own UI, only on plugins that read GET /api/v1/settings/public.
+  const [embedButtonColor, setEmbedButtonColor] = useState('#e65100');
+  const [embedButtonTextColor, setEmbedButtonTextColor] = useState('#ffffff');
+  const [embedButtonWidth, setEmbedButtonWidth] = useState('auto');
+  const [embedButtonStyle, setEmbedButtonStyle] = useState('solid');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -46,6 +52,10 @@ export function SettingsPage() {
           // Show friendly name: "Uploaded file" for internal paths, full URL for external
           setFaviconDisplay(s.value.startsWith('/') ? t('Uploaded file') : s.value);
         }
+        if (s.key === 'embed_button_color' && s.value) setEmbedButtonColor(s.value);
+        if (s.key === 'embed_button_text_color' && s.value) setEmbedButtonTextColor(s.value);
+        if (s.key === 'embed_button_width' && s.value) setEmbedButtonWidth(s.value);
+        if (s.key === 'embed_button_style' && s.value) setEmbedButtonStyle(s.value);
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -61,6 +71,10 @@ export function SettingsPage() {
         { key: 'default_currency', value: defaultCurrency },
         { key: 'contact_email', value: contactEmail },
         { key: 'favicon_url', value: faviconUrl },
+        { key: 'embed_button_color', value: embedButtonColor },
+        { key: 'embed_button_text_color', value: embedButtonTextColor },
+        { key: 'embed_button_width', value: embedButtonWidth },
+        { key: 'embed_button_style', value: embedButtonStyle },
       ];
       if (unsplashKey) {
         entries.push({ key: 'unsplash_key', value: unsplashKey, isSecret: true });
@@ -179,6 +193,47 @@ export function SettingsPage() {
               checked={showBranding}
               onChange={(e) => setShowBranding(e.currentTarget.checked)}
             />
+          </Paper>
+
+          {/* Storefront Plugin Embed Button */}
+          <Paper p="lg" radius="md" withBorder>
+            <Text fw={600} size="sm" mb="xs">{t('Storefront Plugin — Customize Button')}</Text>
+            <Text size="xs" c="dimmed" mb="sm">
+              {t('Only applies to the "Customize" button rendered by the WooCommerce/Shopify plugin on the storefront\'s product page — has no effect on the editor\'s own UI.')}
+            </Text>
+            <Text size="xs" c="dimmed" mb="sm">
+              {t('Changes can take up to 30 seconds to appear on the storefront — the plugin caches this briefly so it never slows down a customer\'s page load.')}
+            </Text>
+            <SimpleGrid cols={2} spacing="md">
+              <ColorInput
+                label={t('Button color')}
+                value={embedButtonColor}
+                onChange={setEmbedButtonColor}
+              />
+              <ColorInput
+                label={t('Text color')}
+                value={embedButtonTextColor}
+                onChange={setEmbedButtonTextColor}
+              />
+              <Select
+                label={t('Width')}
+                data={[
+                  { value: 'auto', label: t('Auto (fits text)') },
+                  { value: 'full', label: t('Full width') },
+                ]}
+                value={embedButtonWidth}
+                onChange={(v) => setEmbedButtonWidth(v ?? 'auto')}
+              />
+              <Select
+                label={t('Style')}
+                data={[
+                  { value: 'solid', label: t('Solid') },
+                  { value: 'outline', label: t('Outline') },
+                ]}
+                value={embedButtonStyle}
+                onChange={(v) => setEmbedButtonStyle(v ?? 'solid')}
+              />
+            </SimpleGrid>
           </Paper>
 
           {/* API Keys */}

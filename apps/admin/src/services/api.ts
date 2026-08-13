@@ -43,6 +43,9 @@ export interface Product {
   zones: unknown[];
   variants?: unknown[];
   variantLabel?: string | null;
+  /** Links to the same product in external e-commerce platforms (e.g. WooCommerce),
+   *  used by their plugins to resolve which OpenMerch product/zone to render. */
+  externalIds?: { woocommerce?: { productId: string; zoneId?: string } } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +79,8 @@ export interface Design {
   productionFiles: Record<string, ProductionZoneFiles> | null;
   productionStatus: ProductionStatus;
   productionError: string | null;
+  /** Which storefront integration created this design — null for the standalone/admin editor. */
+  source: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -200,15 +205,29 @@ export const deletePrintingType = (id: string) =>
   request<{ success: boolean }>(`/printing-types/${id}`, { method: 'DELETE' });
 
 // ─── Orders ──────────────────────────────────────────────────
+/** One customized line item on an order — an order can carry more than one. */
+export interface OrderDesignLine {
+  id: string;
+  designId: string | null;
+  designKey: string;
+  productName: string;
+  designUrl: string | null;
+  designFilename: string | null;
+  designDimensions: string | null;
+  productionStatus: ProductionStatus;
+  source: string | null;
+  createdAt: string;
+}
+
 export interface Order {
   id: string;
   orderId: string;
   customerName: string;
-  productName: string;
-  designId: string | null;
   status: string;
   total: number;
-  designFiles: unknown;
+  /** ISO 4217 code, e.g. "USD", "MXN" — from the storefront's own order currency. */
+  currency: string;
+  designs: OrderDesignLine[];
   createdAt: string;
   updatedAt: string;
 }
@@ -219,6 +238,17 @@ export const updateOrderStatus = (id: string, status: string) =>
   request<Order>(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
 export const deleteOrder = (id: string) =>
   request<{ success: boolean }>(`/orders/${id}`, { method: 'DELETE' });
+
+/** One inbound request to the WooCommerce order webhook endpoint, accepted or rejected. */
+export interface WebhookDelivery {
+  id: string;
+  success: boolean;
+  reasonCode: string;
+  orderId: string | null;
+  createdAt: string;
+}
+
+export const listWooCommerceWebhookLog = () => request<WebhookDelivery[]>('/orders/webhook/woocommerce/log');
 
 // ─── Languages ───────────────────────────────────────────────
 export interface Language {

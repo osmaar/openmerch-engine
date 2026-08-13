@@ -1,0 +1,25 @@
+{
+    "name": "openmerch/openmerch-woocommerce",
+    "description": "Unit tests for the OpenMerch WooCommerce plugin's own logic (not WordPress/WooCommerce's behavior).",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "brain/monkey": "^2.6"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OpenMerch\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test-integration-install": "sh tests-integration/install.sh",
+        "test-integration": "php tests-integration/.wp-tests/phpunit.phar --bootstrap tests-integration/bootstrap.php -c tests-integration/phpunit.xml.dist"
+    }
+}

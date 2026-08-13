@@ -41,6 +41,33 @@ export const config = {
     url: process.env.REMBG_URL ?? '',
   },
 
+  // Secret configured on the WooCommerce webhook (wp-admin) used to verify the
+  // HMAC-SHA256 signature of incoming order webhooks. Empty string means the
+  // webhook route treats it as not configured (503) rather than accepting
+  // unverifiable requests.
+  woocommerce: {
+    webhookSecret: process.env.WOOCOMMERCE_WEBHOOK_SECRET ?? '',
+  },
+
+  // Abandoned-design cleanup: permanently deletes draft/cart designs (and their production
+  // files in MinIO) that were never linked to a real order and haven't been edited in a
+  // while. "cart" gets a longer grace period than "draft" — a design a customer actually
+  // added to a cart carries more intent than one they merely started sketching.
+  cleanup: {
+    enabled: process.env.ABANDONED_DESIGNS_CLEANUP_ENABLED !== 'false',
+    abandonedDraftRetentionMs: Number(process.env.ABANDONED_DRAFT_RETENTION_DAYS ?? 7) * 24 * 60 * 60 * 1000,
+    abandonedCartRetentionMs: Number(process.env.ABANDONED_CART_RETENTION_DAYS ?? 30) * 24 * 60 * 60 * 1000,
+  },
+
+  // webhook_deliveries (see orders-webhook-woocommerce.ts) is a pure audit log — one row per
+  // inbound webhook request, kept so the Admin Panel can show rejected deliveries. Nothing
+  // ever reads a row older than a few days in practice, so it's purged on the same cadence as
+  // abandoned designs rather than kept forever.
+  webhookDeliveriesCleanup: {
+    enabled: process.env.WEBHOOK_DELIVERIES_CLEANUP_ENABLED !== 'false',
+    retentionMs: Number(process.env.WEBHOOK_DELIVERIES_RETENTION_DAYS ?? 30) * 24 * 60 * 60 * 1000,
+  },
+
   // CORS — comma-separated list of allowed origins, or a single origin.
   // Set explicitly to '*' to opt back into wildcard (not recommended).
   corsOrigin: parseCorsOrigin(),

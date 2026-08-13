@@ -417,6 +417,13 @@ const ADMIN_TEXTS_BY_SECTION = {
     'Printing methods that can apply to this product base',
     'Select printing methods',
     'Enable/Disable product base on the switching products',
+    'WooCommerce Integration',
+    'Link this product to a real product in your WooCommerce store — used by the WordPress plugin to know which OpenMerch template to show.',
+    'WooCommerce Product ID',
+    'The numeric ID of the product in your WooCommerce store',
+    'WooCommerce Zone ID',
+    'Optional — restrict the link to a single print zone of this product',
+    'All zones',
   ],
   'Product Edit — Design': [
     'Product Stages', 'Add Stage', 'Remove stage',

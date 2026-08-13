@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { Stage, Layer, Image, Rect, Group, Transformer } from 'react-konva';
-import type { Product, ProductZone } from '@openmerch/core';
+import type { Product, ProductZone, DesignExportMeta } from '@openmerch/core';
 import { useEditorStore } from '../store/editorStore.js';
 import { useI18nStore, useT } from '../i18n/useTranslation.js';
 import { useImage } from '../hooks/useImage.js';
@@ -22,6 +22,41 @@ interface ProductEditorProps {
   product: Product;
   width?: number;
   height?: number;
+  /**
+   * Called with the exported design's PNG `Blob` (plus sizing/identity
+   * metadata) every time an export completes — from the Print/Download
+   * menu, Ctrl+Shift+S, or Ctrl+P — whether or not the browser download
+   * also fires. Lets a host embedding the editor (e.g. a Shopify/WooCommerce
+   * storefront, in-app or via an iframe) pick up the finished design and put
+   * it in its own cart; the editor never needs to know that host exists.
+   * Existing embedders that don't pass this prop are unaffected — the
+   * browser-download export path is unchanged.
+   */
+  onExport?: (pngBlob: Blob, meta: DesignExportMeta) => void | Promise<void>;
+  /**
+   * Which storefront integration is hosting this editor session (e.g.
+   * 'woocommerce', 'shopify') — stamped onto designs saved during this
+   * session so the admin panel can tell them apart when a merchant runs
+   * more than one storefront against the same OpenMerch instance. Omit for
+   * the standalone/admin editor.
+   */
+  source?: string;
+  /**
+   * Which of `product.variants` to select on load instead of defaulting to the first
+   * one — e.g. the specific iPhone model or mug size a customer already picked in the
+   * host storefront before opening the editor. Ignored if it doesn't match a real
+   * variant id on this product (same guard `setVariant()` already applies).
+   */
+  initialVariantId?: string;
+  /**
+   * Hex color to preselect on load instead of the default white — e.g. matching the
+   * WooCommerce color variation a customer already picked. Purely visual (a tint in the
+   * editor's own canvas, unrelated to print zones), so unlike `initialVariantId` this
+   * only locks the color picker (see ProductTab.tsx) when actually provided — if the host
+   * didn't configure one for this variation, the customer keeps full freedom to pick
+   * their own color in the editor.
+   */
+  initialProductColor?: string;
 }
 
 /**
@@ -29,8 +64,10 @@ interface ProductEditorProps {
  * Fills the viewport (100vw/100vh) — mount as the whole page; `width`/`height` props are currently unused.
  * Wrap with `ErrorBoundary` to catch render errors instead of a blank screen.
  */
-export function ProductEditor({ product: initialProduct }: ProductEditorProps) {
+export function ProductEditor({ product: initialProduct, onExport, source, initialVariantId, initialProductColor }: ProductEditorProps) {
   const setProduct = useEditorStore((s) => s.setProduct);
+  const setVariant = useEditorStore((s) => s.setVariant);
+  const setProductColor = useEditorStore((s) => s.setProductColor);
   const activeZoneId = useEditorStore((s) => s.activeZoneId);
   const addImageLayer = useEditorStore((s) => s.addImageLayer);
   const product = useEditorStore((s) => s.product) ?? initialProduct;
@@ -41,7 +78,42 @@ export function ProductEditor({ product: initialProduct }: ProductEditorProps) {
 
   useEffect(() => {
     setProduct(initialProduct);
-  }, [initialProduct, setProduct]);
+    // Must run after setProduct — that call itself defaults selectedVariantId to
+    // product.variants?.[0], so overriding it only makes sense once that's settled.
+    if (initialVariantId) {
+      setVariant(initialVariantId);
+    }
+  }, [initialProduct, setProduct, initialVariantId, setVariant]);
+
+  useEffect(() => {
+    if (initialProductColor) {
+      setProductColor(initialProductColor);
+    }
+    useEditorStore.setState({ colorLocked: !!initialProductColor });
+    return () => {
+      useEditorStore.setState({ colorLocked: false });
+    };
+  }, [initialProductColor, setProductColor]);
+
+  // Hand the `onExport` prop off to the store as a plain value (not a store
+  // action) so `exportDesign()` — called from NavBar's Print/Download menu
+  // and from the Ctrl+Shift+S / Ctrl+P shortcuts, neither of which is a
+  // descendant this component can pass props to directly — can invoke it
+  // without either the store or `exportDesign` importing React or knowing
+  // about embedding hosts.
+  useEffect(() => {
+    useEditorStore.setState({ onExportCallback: onExport ?? null });
+    return () => {
+      useEditorStore.setState({ onExportCallback: null });
+    };
+  }, [onExport]);
+
+  useEffect(() => {
+    useEditorStore.setState({ embedSource: source ?? null });
+    return () => {
+      useEditorStore.setState({ embedSource: null });
+    };
+  }, [source]);
 
   useEffect(() => {
     const apiBase = (typeof window !== 'undefined' && window.location.port === '3000')

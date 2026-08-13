@@ -5,8 +5,16 @@ import { eq, sql } from 'drizzle-orm';
 import { encrypt, decrypt } from '../utils/crypto.js';
 import { config } from '../config.js';
 
-/** Only settings the public frontend (editor/demo) needs. No business data. */
-const PUBLIC_KEYS = ['store_name', 'show_branding', 'favicon_url'];
+/**
+ * Only settings the public frontend (editor/demo) — and, for the
+ * `embed_button_*` keys, storefront plugins like plugin-woocommerce fetching
+ * this same endpoint server-side to style their own "Customize" button —
+ * need. No business data.
+ */
+const PUBLIC_KEYS = [
+  'store_name', 'show_branding', 'favicon_url',
+  'embed_button_color', 'embed_button_text_color', 'embed_button_width', 'embed_button_style',
+];
 
 /** Placeholder the API sends back instead of a secret's real value. */
 const MASKED_PLACEHOLDER = '••••••••';
@@ -25,7 +33,7 @@ const settingSchema = {
 const publicSettingsResponseSchema = {
   type: 'object',
   additionalProperties: { type: 'string' },
-  description: 'Map of public setting key to value (store_name, show_branding, favicon_url)',
+  description: 'Map of public setting key to value (store_name, show_branding, favicon_url, embed_button_color, embed_button_text_color, embed_button_width, embed_button_style)',
 } as const;
 
 const proxyErrorResponseSchema = {
@@ -117,7 +125,7 @@ export async function settingRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Settings'],
         summary: 'Get public settings',
-        description: 'Safe for the frontend/editor — no secrets, no business data.',
+        description: 'Safe for the frontend/editor and for storefront plugins (WooCommerce, Shopify) to fetch server-side — no secrets, no business data.',
         response: { 200: publicSettingsResponseSchema },
       },
     },

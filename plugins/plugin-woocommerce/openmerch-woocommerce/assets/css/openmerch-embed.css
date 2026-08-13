@@ -1,0 +1,82 @@
+/*
+ * OpenMerch embed styles - WooCommerce single product page.
+ */
+
+/*
+ * Rendered via woocommerce_after_add_to_cart_button, inside the native
+ * `<form class="cart">` right after the Add to Cart button - inline-block
+ * (not the default block-level div) so it sits on the same row as that
+ * button and the quantity input instead of forcing a line break.
+ */
+.openmerch-embed-wrapper {
+	display: inline-block;
+	position: relative;
+	vertical-align: middle;
+	margin: 0 0 0 8px;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+/*
+ * Colors/border/width come from the `style` attribute (see
+ * Openmerch_Editor_Embed::render_embed()) - configured once on the OpenMerch
+ * backend (Settings > Storefront Plugin) rather than hardcoded here, since
+ * this same button styling is meant to apply across every storefront
+ * plugin/integration, not just this WordPress site. This stylesheet only
+ * supplies the shape/spacing that doesn't vary per merchant.
+ */
+.openmerch-customize-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 24px;
+	border-radius: 4px;
+	font-size: 1em;
+	font-weight: 600;
+	cursor: pointer;
+	line-height: 1.2;
+}
+
+.openmerch-customize-button:hover,
+.openmerch-customize-button:focus {
+	/* Darkens whatever background/border color was configured, instead of a
+	 * hardcoded hover color that would look wrong against a custom one. */
+	filter: brightness(0.9);
+}
+
+/*
+ * Absolutely positioned (relative to .openmerch-embed-wrapper above) so this never adds
+ * to the wrapper's own box height. Without that, the wrapper - inline-block with
+ * vertical-align:middle so the button lines up with native Add to Cart - would grow
+ * taller the instant a message appears, and centering that taller box visibly shifts
+ * the button itself up/down relative to Add to Cart right when the customer needs it
+ * to hold still (e.g. right after a validation error).
+ */
+.openmerch-embed-message {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	margin-top: 6px;
+	font-size: 0.9em;
+	line-height: 1.4;
+	white-space: normal;
+	width: max-content;
+	max-width: 280px;
+}
+
+.openmerch-embed-message:empty {
+	display: none;
+}
+
+.openmerch-embed-message.openmerch-embed-message--error {
+	color: #b32d2e;
+}
+
+.openmerch-embed-message.openmerch-embed-message--busy {
+	color: #555;
+}
+
+.openmerch-embed-error {
+	color: #b32d2e;
+	font-weight: 600;
+}

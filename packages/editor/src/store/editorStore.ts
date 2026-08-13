@@ -8,6 +8,7 @@ import type {
   ImageLayer,
   TextLayer,
   ShapeLayer,
+  DesignExportMeta,
 } from '@openmerch/core';
 
 // Undo history entry: snapshot of layers for the active zone
@@ -52,6 +53,30 @@ interface EditorState {
   storeName: string;
   selectedVariantId: string | null;
   cartItems: CartItem[];
+  /**
+   * Set imperatively (via `setState`) by `ProductEditor`'s `onExport` prop —
+   * not a store action, just a hand-off slot so `exportDesign()` can deliver
+   * the exported PNG `Blob` to a host embedding the editor without either
+   * the store or `exportDesign` needing to know about React props.
+   */
+  onExportCallback: ((pngBlob: Blob, meta: DesignExportMeta) => void | Promise<void>) | null;
+  /**
+   * Which storefront integration is hosting this editor session (e.g. 'woocommerce',
+   * 'shopify') — set imperatively by `ProductEditor`'s `source` prop, same hand-off
+   * pattern as `onExportCallback`. Null for the standalone/admin editor. Threaded into
+   * `saveDesign()`/`updateDesign()` calls so the admin panel can tell designs from
+   * different storefronts apart when a merchant runs more than one.
+   */
+  embedSource: string | null;
+  /**
+   * True when the host storefront passed a specific color to preselect (see
+   * `ProductEditor`'s `initialProductColor` prop) - hides the color picker in ProductTab
+   * so the customer can't switch away from the color they already chose there. Unlike
+   * `onExportCallback`-driven locks (product/variant), this is NOT simply "are we
+   * embedded" - a host that didn't configure a color for this variation leaves the
+   * customer free to pick one themselves.
+   */
+  colorLocked: boolean;
 
   setProduct: (product: Product) => void;
   setVariant: (variantId: string) => void;
@@ -132,6 +157,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   storeName: '',
   selectedVariantId: null,
   cartItems: [],
+  onExportCallback: null,
+  embedSource: null,
+  colorLocked: false,
 
   setProduct: (product: Product) => {
     // If the first variant has its own zones, use those as the initial zones

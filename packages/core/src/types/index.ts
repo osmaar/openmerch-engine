@@ -14,6 +14,8 @@ export type { TextLayer } from './design.js';
 export type { TextEffect } from './design.js';
 /** A placed vector shape layer (rect, circle, star, etc.), sized in mm. */
 export type { ShapeLayer } from './design.js';
+/** Metadata delivered alongside the exported PNG `Blob` to an embedding host's `onExport` callback. */
+export type { DesignExportMeta } from './design.js';
 
 /** Catalog entry: a customizable product with its print zones, optional variants and categories. */
 export type { Product } from './product.js';

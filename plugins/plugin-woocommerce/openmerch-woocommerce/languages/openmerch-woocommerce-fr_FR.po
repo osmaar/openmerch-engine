@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenMerch for WooCommerce 1.0.1\n"
+"Report-Msgid-Bugs-To: https://github.com/openmerch/openmerch-engine\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Domain: openmerch-woocommerce\n"
+
+#. Customer-facing: the button next to WooCommerce's native Add to Cart.
+msgid "Customize"
+msgstr "Personnaliser"
+
+#. Customer-facing: shown briefly while the design is being handed off to the cart.
+msgid "Adding your design to the cart..."
+msgstr "Ajout de votre design au panier..."
+
+#. Customer-facing: shown if the WooCommerce add-to-cart AJAX call fails.
+msgid "Something went wrong adding your design to the cart. Please try again."
+msgstr "Une erreur s'est produite lors de l'ajout de votre design au panier. Veuillez réessayer."
+
+#. Customer-facing: shown if window.open() for the editor tab was blocked.
+msgid "Your browser blocked the customizer popup. Please allow popups for this site and try again."
+msgstr "Votre navigateur a bloqué la fenêtre du personnalisateur. Autorisez les fenêtres pop-up pour ce site et réessayez."
+
+#. Customer-facing: cart/order line item label for the attached design filename.
+msgid "Custom design"
+msgstr "Design personnalisé"
+
+#. Customer-facing: cart/order line item label for the design's print dimensions.
+msgid "Print size"
+msgstr "Taille d'impression"
+
+#. Customer-facing: shown in place of the button if the merchant hasn't configured the plugin yet.
+msgid "The OpenMerch editor URL is not configured yet. Set it under WooCommerce > OpenMerch."
+msgstr "L'URL de l'éditeur OpenMerch n'est pas encore configurée. Configurez-la dans WooCommerce > OpenMerch."
+
+#. Customer-facing: shown if Customize is clicked before a full variation (size/color/model) is selected.
+msgid "Please select all product options above before customizing."
+msgstr "Veuillez sélectionner toutes les options du produit avant de personnaliser."

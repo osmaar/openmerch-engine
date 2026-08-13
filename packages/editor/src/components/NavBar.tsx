@@ -21,6 +21,10 @@ import { MM_PER_INCH } from '@openmerch/core';
 export function NavBar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const t = useT();
+  // Embedded in a host storefront (WooCommerce/Shopify) — "Add to Cart" hands the design off
+  // to that host's own cart (see AddToCartButton below) instead of OpenMerch's in-editor one,
+  // so the in-editor cart icon/dropdown would only ever show 0 items and has nothing to do here.
+  const isEmbedded = useEditorStore((s) => !!s.onExportCallback);
 
   const toggle = (id: string) => {
     setActiveMenu(activeMenu === id ? null : id);
@@ -59,8 +63,12 @@ export function NavBar() {
 
       {/* Right items */}
       <NavItem label={t('Languages')} icon={Globe} isActive={activeMenu === 'lang'} onClick={() => toggle('lang')} hideLabel />
-      <CartPrice />
-      <CartBadge isActive={activeMenu === 'cart'} onClick={() => toggle('cart')} title={t('My Cart')} />
+      {!isEmbedded && (
+        <>
+          <CartPrice />
+          <CartBadge isActive={activeMenu === 'cart'} onClick={() => toggle('cart')} title={t('My Cart')} />
+        </>
+      )}
       <AddToCartButton onAdded={() => setActiveMenu('cart')} />
       <button
         style={{
@@ -79,7 +87,17 @@ export function NavBar() {
           alignItems: 'center',
           gap: 4,
         }}
-        onClick={() => { window.history.back(); }}
+        onClick={() => {
+          // Opened via window.open() (WooCommerce/Shopify "Customize" button) rather than
+          // navigated to directly - there's no browser history to go back to (the tab starts
+          // with a single history entry), so history.back() would be a dead end. Closing
+          // instead hands focus straight back to the storefront tab that opened this one.
+          if (window.opener && window.parent === window) {
+            window.close();
+          } else {
+            window.history.back();
+          }
+        }}
         title={t('Back to Shop')}
       >
         <ArrowLeft size={12} />
@@ -109,6 +127,7 @@ function CartBadge({ isActive, onClick, title }: { isActive: boolean; onClick: (
 function AddToCartButton({ onAdded }: { onAdded: () => void }) {
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [showExportSuccess, setShowExportSuccess] = useState(false);
   const t = useT();
 
   const showToast = (message: string, type: 'error' | 'success') => {
@@ -121,8 +140,12 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
     const store = useEditorStore.getState();
     if (!store.design || !store.product) return;
 
+    // Sizes/quantity is OpenMerch's own checkout concept (see ProductTab.tsx) - hidden
+    // entirely when embedded, since the host storefront's own form already collected
+    // exactly one size and quantity before the customer ever opened this editor. Enforcing
+    // "pick a quantity" here would be validating UI that no longer exists in that case.
     const totalUnits = Object.values(store.sizes).reduce((a, b) => a + b, 0);
-    if (totalUnits === 0) {
+    if (totalUnits === 0 && !store.onExportCallback) {
       showToast(t('Select quantity in the Product tab before adding to cart.'), 'error');
       return;
     }
@@ -142,6 +165,10 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
         status: 'cart',
         sizes: store.sizes,
         productColor: store.productColor,
+        // Undefined (not null) so JSON.stringify omits the key entirely when this is the
+        // standalone/admin editor — the API only accepts source on creation and defaults
+        // it to null itself.
+        source: store.embedSource ?? undefined,
       };
 
       let result;
@@ -149,6 +176,30 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
         result = await updateDesign(store.savedDesignId, { ...data, status: 'cart' });
       } else {
         result = await saveDesign(data);
+      }
+      useEditorStore.setState({ savedDesignId: result.id });
+
+      // Embedded in a host storefront (WooCommerce/Shopify, via ProductEditor's
+      // `onExport` prop) — hand the finished design off through the real export
+      // pipeline (composites the PNG, then delivers it to the host) instead of
+      // OpenMerch's own in-editor cart, which the host never sees.
+      if (store.onExportCallback) {
+        // buildExportMeta() (exportDesign.ts) uses `design.id` as the exported design's
+        // `designKey`, which the host attaches to its cart/order line item (WooCommerce:
+        // `_design_key`) and later hands back in its order webhook to resolve which `designs`
+        // row to generate production files for (orders-webhook-woocommerce.ts's
+        // resolveDesign()). `design.id` is normally a client-only id picked when the design
+        // was created in this session — syncing it to the server-assigned `result.id` here is
+        // what makes that resolution actually find this row instead of a UUID that matches
+        // nothing in the database.
+        useEditorStore.setState({ design: { ...store.design, id: result.id } });
+        await exportDesign({ format: 'png', includeBase: true, hideOverflow: true, forHost: true });
+        // A toast alone disappears in 3s with no clear next step - since this design was
+        // just handed off to a host storefront's own cart (see the callback wired up in
+        // ProductEditor's `onExport`), show a confirmation the customer has to act on
+        // instead of silently vanishing.
+        setShowExportSuccess(true);
+        return;
       }
 
       const productImage = store.product.zones[0]?.baseImageUrl ?? '';
@@ -233,6 +284,74 @@ function AddToCartButton({ onAdded }: { onAdded: () => void }) {
           {toast.message}
         </div>
       )}
+      {showExportSuccess && (
+        <ExportSuccessModal onClose={() => setShowExportSuccess(false)} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Shown after a design is handed off to a host storefront's cart (see the
+ * embedded `onExport` branch in `handleAddToCart` above) — only reached once
+ * `exportDesign()` resolves without throwing, which for hosts that implement
+ * the `openmerch:added-to-cart`/`openmerch:add-to-cart-error` ack (e.g.
+ * `openmerch-embed.js` for WooCommerce, via `waitForHostAck` in the hosted
+ * embed page's `App.tsx`) means the host's own add-to-cart call actually
+ * succeeded, not just that the design finished uploading. Hosts that don't
+ * implement that ack still reach this modal after a timeout, same as before.
+ * "Back to store" hands control back to the host either way.
+ */
+function ExportSuccessModal({ onClose }: { onClose: () => void }) {
+  const t = useT();
+
+  const handleBackToStore = () => {
+    if (window.opener && window.parent === window) {
+      window.close();
+    } else {
+      onClose();
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000,
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 12, padding: '32px 40px', textAlign: 'center',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.3)', maxWidth: 360,
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%', border: '3px solid #27ae60',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+        }}>
+          <Check size={28} color="#27ae60" />
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 24 }}>
+          {t('Your design has been sent to the store!')}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button
+            onClick={handleBackToStore}
+            style={{
+              padding: '10px 16px', borderWidth: 0, borderRadius: 6, background: '#27ae60',
+              color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            {t('Back to store')}
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 16px', borderWidth: 1, borderStyle: 'solid', borderColor: '#ddd',
+              borderRadius: 6, background: '#fff', color: '#555', fontSize: 13, cursor: 'pointer',
+            }}
+          >
+            {t('Keep designing')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

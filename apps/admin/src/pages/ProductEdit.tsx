@@ -99,6 +99,10 @@ export function ProductEdit() {
   const [printingTechniques, setPrintingTechniques] = useState<string[]>([]);
   const [active, setActive] = useState(true);
 
+  // WooCommerce link (externalIds.woocommerce)
+  const [wooProductId, setWooProductId] = useState('');
+  const [wooZoneId, setWooZoneId] = useState<string | null>(null);
+
   // Design stages (main product zones)
   const [stages, setStages] = useState<Stage[]>([
     {
@@ -135,6 +139,8 @@ export function ProductEdit() {
         setCategories(p.categories ?? []);
         setPrintingTechniques(p.printingTechniques ?? []);
         setActive(p.active);
+        setWooProductId(p.externalIds?.woocommerce?.productId ?? '');
+        setWooZoneId(p.externalIds?.woocommerce?.zoneId ?? null);
         // Load variants
         if (p.variants && (p.variants as VariantData[]).length > 0) {
           setVariants((p.variants as VariantData[]).map((v) => ({
@@ -220,6 +226,9 @@ export function ProductEdit() {
           })),
         })),
         variantLabel: variantLabel || null,
+        externalIds: wooProductId.trim()
+          ? { woocommerce: { productId: wooProductId.trim(), zoneId: wooZoneId ?? undefined } }
+          : {},
       };
       if (isNew) {
         await createProduct(data as Parameters<typeof createProduct>[0]);
@@ -377,6 +386,37 @@ export function ProductEdit() {
                 checked={active}
                 onChange={(e) => setActive(e.currentTarget.checked)}
                 size="md"
+              />
+            </Stack>
+          </Paper>
+
+          <Paper p="lg" radius="md" withBorder mt="md">
+            <Stack gap="md">
+              <div>
+                <Text fw={600} size="sm">{t('WooCommerce Integration')}</Text>
+                <Text size="xs" c="dimmed" mt={2}>
+                  {t('Link this product to a real product in your WooCommerce store — used by the WordPress plugin to know which OpenMerch template to show.')}
+                </Text>
+              </div>
+
+              <TextInput
+                label={t('WooCommerce Product ID')}
+                description={t('The numeric ID of the product in your WooCommerce store')}
+                placeholder="123"
+                value={wooProductId}
+                onChange={(e) => setWooProductId(e.target.value)}
+              />
+
+              <Select
+                label={t('WooCommerce Zone ID')}
+                description={t('Optional — restrict the link to a single print zone of this product')}
+                placeholder={t('All zones')}
+                data={stages.map((s) => ({ value: s.id, label: s.name }))}
+                value={wooZoneId}
+                onChange={setWooZoneId}
+                disabled={!wooProductId.trim()}
+                clearable
+                searchable
               />
             </Stack>
           </Paper>

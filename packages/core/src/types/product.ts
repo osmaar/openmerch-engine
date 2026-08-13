@@ -12,6 +12,11 @@ export interface Product {
   variants?: ProductVariant[];
   /** Label for the variant selector (e.g. "Device", "Size", "Dimensions"). */
   variantLabel?: string;
+  /** Links to the same product in external e-commerce platforms, used by their
+   *  plugins/integrations to resolve which OpenMerch product/zone to render. */
+  externalIds?: {
+    woocommerce?: { productId: string; zoneId?: string };
+  };
 }
 
 export interface ProductVariant {
