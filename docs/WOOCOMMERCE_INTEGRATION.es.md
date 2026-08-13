@@ -291,7 +291,6 @@ Archivos: `packages/api/src/jobs/queues.ts`, `packages/api/src/jobs/workers/webh
 - **Cancelación activa de jobs de producción en reembolsos**: decisión explícita de no construirlo (sección 6) — se avisa visualmente en vez de automatizar.
 - **`designs.status` nunca pasa a `'paid'` automáticamente**: el webhook de órdenes actualiza `orders.status` y encola producción, pero no existe hoy un paso que marque el `designs.status` correspondiente como `'paid'`. La limpieza de diseños abandonados (sección 10.2) no depende de esto — se protege vía `order_designs.designId`, no vía `designs.status` — pero es una inconsistencia de datos real que valdría la pena cerrar.
 - **La página de Órdenes del Admin Panel no se refresca sola** — carga los datos una vez al entrar; si un webhook llega después, hay que recargar la página a mano para verlo.
-- **Quedaron 3 productos de prueba de sesiones anteriores** en el catálogo de WooCommerce ("Custom T-Shirt (OpenMerch)", "Mousepad XXL", "iPhone Case Test") mezclados con los 12 productos reales del catálogo de OpenMerch — no se borraron porque uno de ellos (Mousepad XXL) quedó referenciado por una orden real de prueba durante esta sesión.
 
 ---
 
